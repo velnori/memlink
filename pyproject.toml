@@ -48,7 +48,7 @@ openclaw = "memlink.openclaw_writer:OpenClawWriter"
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=8",
+    "pytest>=9.1.1",
     "pytest-cov>=5",
     "mypy>=1",
     "ruff>=0.6",
