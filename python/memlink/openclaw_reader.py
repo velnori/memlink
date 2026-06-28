@@ -11,12 +11,11 @@ from __future__ import annotations
 
 import json
 import re
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from urllib.parse import unquote
 
 from ._frontmatter import parse_frontmatter as _parse_frontmatter
-
 from .models import Memory, Source
 from .plugin import Capabilities, FormatPlugin, ReadResult
 

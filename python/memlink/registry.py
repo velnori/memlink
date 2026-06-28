@@ -78,11 +78,11 @@ def _ensure_loaded() -> None:
 
 
 def _discover_builtins() -> None:
+    from .generic_reader import GenericReader
     from .ombre_reader import OmbreReader
     from .ombre_writer import OmbreWriter
     from .openclaw_reader import OpenClawReader
     from .openclaw_writer import OpenClawWriter
-    from .generic_reader import GenericReader
 
     register_reader(OmbreReader)
     register_writer(OmbreWriter)
@@ -102,13 +102,13 @@ def _discover_entry_points() -> None:
                 try:
                     cls = ep.load()
                     if not isinstance(cls, type):
-                        warnings.warn(f"Entry point '{ep.name}' in {group} is not a class — skipping")
+                        warnings.warn(f"Entry point '{ep.name}' in {group} is not a class — skipping", stacklevel=2)
                         continue
                     if group == "memlink.readers":
                         register_reader(cls)
                     else:
                         register_writer(cls)
                 except Exception as e:
-                    warnings.warn(f"Failed to load plugin '{ep.name}' from {group}: {e}")
+                    warnings.warn(f"Failed to load plugin '{ep.name}' from {group}: {e}", stacklevel=2)
         except Exception:
             pass

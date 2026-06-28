@@ -10,7 +10,7 @@ Uses mtime+size for concurrent modification detection.
 from __future__ import annotations
 
 from collections.abc import Iterable
-from datetime import date, datetime, timezone
+from datetime import date, datetime
 from pathlib import Path
 
 import yaml
@@ -332,8 +332,8 @@ def _update_memory_index(root: Path, new_entries: list[tuple[str, str | None]]) 
         st = index_path.stat()
         if (int(st.st_mtime * 1000), st.st_size) != stat_before:
             raise ConcurrentModificationError(
-                f"MEMORY.md was modified during conversion.\n"
-                f"  Please re-run or use --rebuild-index."
+                "MEMORY.md was modified during conversion.\n"
+                "  Please re-run or use --rebuild-index."
             )
 
     index_path.write_text("\n".join(lines) + "\n", encoding="utf-8")

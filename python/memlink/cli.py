@@ -145,8 +145,8 @@ def _cmd_formats() -> None:
 
 
 def _cmd_convert(args) -> None:
-    from .registry import get_reader, get_writer
     from .converter import analyze_conversion
+    from .registry import get_reader, get_writer
 
     src_plugin = get_reader(args.from_fmt)
     writer_kwargs = {}
@@ -190,8 +190,8 @@ def _print_compatibility(analysis, total: int, verbosity: int) -> None:
             print("Compatibility: fully supported")
         return
 
-    ICONS = {"lost": "[!]", "degraded": "[~]", "preserved": "[ok]"}
-    TITLES = {"lost": "Not supported", "degraded": "Degraded", "preserved": "Preserved via metadata"}
+    icons = {"lost": "[!]", "degraded": "[~]", "preserved": "[ok]"}
+    titles = {"lost": "Not supported", "degraded": "Degraded", "preserved": "Preserved via metadata"}
 
     # Group by severity
     by_sev: dict[str, list] = {}
@@ -204,19 +204,19 @@ def _print_compatibility(analysis, total: int, verbosity: int) -> None:
         items = by_sev.get(sev, [])
         if not items:
             continue
-        title = TITLES.get(sev, sev)
-        print(f"  {ICONS.get(sev, '?')} {title}:")
+        title = titles.get(sev, sev)
+        print(f"  {icons.get(sev, '?')} {title}:")
         for imp in items:
             pct = f" ({imp.count * 100 // total}%)" if verbosity >= 1 else ""
             print(f"    {imp.label}: {imp.count} field values{pct}")
             if verbosity >= 2:
                 print(f"      → {imp.reason}")
             if verbosity >= 2 and imp.recoverable:
-                print(f"      → Recoverable via roundtrip")
+                print("      → Recoverable via roundtrip")
 
 
 def _cmd_validate(args) -> None:
-    from .validators import validate_schema, validate_semantic, validate_roundtrip
+    from .validators import validate_roundtrip, validate_schema, validate_semantic
 
     if args.level == "schema":
         issues = validate_schema(args.source)
@@ -255,10 +255,9 @@ def _cmd_validate(args) -> None:
 
 def _cmd_diff(args) -> None:
     from .registry import get_reader
-    from .converter import ConversionAnalysis
 
     dir1, dir2 = args.source
-    ignore = set((args.ignore or "").split(","))
+    set((args.ignore or "").split(","))
 
     r1 = get_reader(_detect_format(dir1))
     r2 = get_reader(_detect_format(dir2))
@@ -357,9 +356,8 @@ def _detect_format(path: Path) -> str:
 
 def _cmd_inspect(args) -> None:
     from .registry import get_reader, list_formats
-    from .models import Memory
 
-    text = args.file.read_text(encoding="utf-8")
+    args.file.read_text(encoding="utf-8")
     fmt = args.format
 
     # Auto-detect format

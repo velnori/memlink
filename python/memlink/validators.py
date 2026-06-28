@@ -5,13 +5,13 @@ Error codes use the MLxxx namespace for stable CI/IDE references.
 
 from __future__ import annotations
 
+import contextlib
 import re
-from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 
+from ._frontmatter import parse_frontmatter as _parse_frontmatter
 from .plugin import Severity, ValidationIssue
-
 
 # ── Error codes ───────────────────────────────────────────────────
 
@@ -52,8 +52,6 @@ class ErrorCode(str, Enum):
 
 
 # ── Schema validation ──────────────────────────────────────────────
-
-from ._frontmatter import parse_frontmatter as _parse_frontmatter
 
 
 def _load_canonical_schema() -> dict | None:
@@ -129,10 +127,8 @@ def validate_schema(path: Path) -> list[ValidationIssue]:
 
         # JSON Schema validation
         if schema and fm:
-            try:
+            with contextlib.suppress(Exception):
                 _validate_against_schema(fm, body, schema, md_file, issues)
-            except Exception:
-                pass
 
     return issues
 
@@ -180,24 +176,30 @@ def _validate_against_schema(fm: dict, body: str, schema: dict, file: Path,
 
         # Pattern validation (string fields)
         pattern = prop.get("pattern")
-        if pattern and isinstance(value, str):
-            if not re.match(pattern, value):
-                issues.append(ValidationIssue(
-                    code=ErrorCode.INVALID_SCHEMA, severity=Severity.WARNING,
-                    path=str(file), field=field,
-                    message=f"Value '{value}' does not match pattern {pattern}",
-                ))
+        if pattern and isinstance(value, str) and not re.match(pattern, value):
+            issues.append(ValidationIssue(
+                code=ErrorCode.INVALID_SCHEMA, severity=Severity.WARNING,
+                path=str(file), field=field,
+                message=f"Value '{value}' does not match pattern {pattern}",
+            ))
 
 
 def _check_json_type(value, types: list[str]) -> bool:
     for t in types:
-        if t == "string" and isinstance(value, str): return True
-        if t == "number" and isinstance(value, (int, float)): return True
-        if t == "integer" and isinstance(value, int) and not isinstance(value, bool): return True
-        if t == "boolean" and isinstance(value, bool): return True
-        if t == "array" and isinstance(value, list): return True
-        if t == "object" and isinstance(value, dict): return True
-        if t == "null" and value is None: return True
+        if t == "string" and isinstance(value, str):
+            return True
+        if t == "number" and isinstance(value, (int, float)):
+            return True
+        if t == "integer" and isinstance(value, int) and not isinstance(value, bool):
+            return True
+        if t == "boolean" and isinstance(value, bool):
+            return True
+        if t == "array" and isinstance(value, list):
+            return True
+        if t == "object" and isinstance(value, dict):
+            return True
+        if t == "null" and value is None:
+            return True
     return False
 
 
@@ -278,17 +280,16 @@ def validate_semantic(path: Path) -> list[ValidationIssue]:
 
         # Datetime format
         created = fm.get("created") or fm.get("created_at")
-        if isinstance(created, str):
-            if not _is_iso_datetime(created):
-                issues.append(ValidationIssue(
-                    code=ErrorCode.INVALID_DATETIME,
-                    severity=Severity.WARNING,
-                    path=file_path,
-                    memory_id=mem_id,
-                    field="created",
-                    message=f"Datetime '{created}' is not valid ISO 8601",
-                    suggestion="Use format: 2024-01-01T10:00:00Z",
-                ))
+        if isinstance(created, str) and not _is_iso_datetime(created):
+            issues.append(ValidationIssue(
+                code=ErrorCode.INVALID_DATETIME,
+                severity=Severity.WARNING,
+                path=file_path,
+                memory_id=mem_id,
+                field="created",
+                message=f"Datetime '{created}' is not valid ISO 8601",
+                suggestion="Use format: 2024-01-01T10:00:00Z",
+            ))
 
     return issues
 

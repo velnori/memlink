@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import math
 from collections.abc import Iterable
-from datetime import datetime, timezone
 from pathlib import Path
 
 from .models import Memory, sanitize_id

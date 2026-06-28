@@ -13,6 +13,7 @@ Bear + iA Writer + plain notes = 0 core code changes.
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 from datetime import date, datetime
 from pathlib import Path
@@ -103,10 +104,7 @@ class GenericReader(FormatPlugin):
 
             # Domain
             domain = fm.get("category") or fm.get("folder") or fm.get("type")
-            if isinstance(domain, str):
-                domains = [domain.strip()]
-            else:
-                domains = [rel.parts[0]] if len(rel.parts) > 1 else []
+            domains = [domain.strip()] if isinstance(domain, str) else [rel.parts[0]] if len(rel.parts) > 1 else []
 
             # Kind: infer from type/status fields
             kind = _infer_kind(fm, tags)
@@ -123,10 +121,8 @@ class GenericReader(FormatPlugin):
             extensions = {}
             for k, v in fm.items():
                 if k not in _KNOWN_FIELDS:
-                    try:
+                    with contextlib.suppress(Exception):
                         extensions[str(k)] = sanitize(v)
-                    except Exception:
-                        pass
 
             # Original metadata snapshot
             memlink_original = {}

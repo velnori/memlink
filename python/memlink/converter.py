@@ -7,7 +7,6 @@ Compare Engine shared by diff, validate, and roundtrip.
 
 from __future__ import annotations
 
-import hashlib
 import time
 import unicodedata
 from dataclasses import dataclass, field
@@ -16,7 +15,7 @@ from pathlib import Path
 from typing import Literal
 
 from .models import Memory
-from .plugin import Capabilities, FormatPlugin, Severity, ValidationIssue
+from .plugin import FormatPlugin, Severity, ValidationIssue
 
 # ── Capability registry ────────────────────────────────────────────
 
@@ -288,7 +287,8 @@ def _compare_field(name: str, ov, rv, opts: CompareOptions) -> str | None:
             return f"{name}: {_fmt(ov)} != {_fmt(rv)}"
 
     # Datetime comparison
-    from datetime import datetime, timezone as tz
+    from datetime import datetime
+    from datetime import timezone as tz
     if isinstance(ov, datetime) and isinstance(rv, datetime):
         dt_ov = ov.astimezone(tz.utc) if ov.tzinfo else ov.replace(tzinfo=tz.utc)
         dt_rv = rv.astimezone(tz.utc) if rv.tzinfo else rv.replace(tzinfo=tz.utc)
@@ -310,7 +310,7 @@ def _compare_field(name: str, ov, rv, opts: CompareOptions) -> str | None:
         rv_norm = _normalize_str(rv, opts, strip=(name in opts.strip_fields))
         if ov_norm != rv_norm:
             # Show first differing position
-            for i, (a, b) in enumerate(zip(ov_norm, rv_norm)):
+            for i, (a, b) in enumerate(zip(ov_norm, rv_norm, strict=False)):
                 if a != b:
                     ctx = max(0, i - 20)
                     return f"{name}: ...{ov_norm[ctx:i+30]}... != ...{rv_norm[ctx:i+30]}..."
@@ -407,7 +407,7 @@ def run_roundtrip(
 
     Uses registry only — no hardcoded format classes.
     """
-    from .registry import get_reader, get_writer, list_formats
+    from .registry import get_reader, get_writer
 
     start = time.perf_counter()
     all_warnings: list[str] = []
@@ -437,8 +437,8 @@ def run_roundtrip(
                                only_in_original=[], only_in_restored=[], issues=[])
 
     # Roundtrip
-    import tempfile
     import shutil
+    import tempfile
     tmp_dir = None
     try:
         tmp_dir = tempfile.mkdtemp()

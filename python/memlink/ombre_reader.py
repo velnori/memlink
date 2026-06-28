@@ -10,6 +10,7 @@ import hashlib
 from datetime import datetime
 from pathlib import Path
 
+from ._frontmatter import parse_frontmatter as _parse_ombre_frontmatter
 from .models import Memory, Source
 from .plugin import Capabilities, FormatPlugin, ReadResult
 
@@ -124,9 +125,6 @@ class OmbreReader(FormatPlugin):
 
 
 # ── Helpers ─────────────────────────────────────────────────────────
-
-
-from ._frontmatter import parse_frontmatter as _parse_ombre_frontmatter
 
 
 def _parse_ombre_tags(fm: dict) -> list[str]:

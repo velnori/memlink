@@ -5,7 +5,7 @@ See spec/canonical-v1.md for the full schema specification.
 
 import re
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Literal, Union
 
 # JSON-compatible value type (recursive)

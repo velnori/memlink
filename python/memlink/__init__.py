@@ -2,9 +2,9 @@
 
 __version__ = "0.1.0"
 
+from .converter import ConversionAnalysis, FeatureImpact, analyze_conversion, compare_memories
 from .models import JSONValue, Memory, Relationship, Source
 from .plugin import Capabilities, FormatPlugin, ReadResult, Severity, ValidationIssue
-from .converter import ConversionAnalysis, FeatureImpact, analyze_conversion, compare_memories
 from .registry import get_reader, get_writer, list_formats
 
 __all__ = [
