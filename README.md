@@ -66,7 +66,17 @@ memlink convert --from generic --to openclaw \
 memlink formats
 ```
 
-**What just happened:** A plain Markdown file was read into Canonical Memory format, then written as an OpenClaw memory. The Compatibility Report tells you exactly what was preserved or dropped — no silent data loss.
+**What just happened:** A plain Markdown file was read into Canonical Memory format, then written as an OpenClaw memory.
+
+Sample output:
+
+```
+Read:     1 memories from generic
+Warnings: 0
+Time:     0.00s
+```
+
+You should now see an OpenClaw-style memory file in `/tmp/memlink-output/`. The Compatibility Report tells you exactly what was preserved or dropped — no silent data loss.
 
 ---
 
@@ -74,9 +84,9 @@ memlink formats
 
 | Format | Read | Write | Status |
 |--------|------|-------|--------|
-| Ombre Brain | ✅ | ✅ | Stable |
-| OpenClaw | ✅ | ✅ | Stable |
-| Generic Markdown | ✅ | — | Stable |
+| Ombre Brain | ✅ | ✅ | Implemented in v0.1.1 |
+| OpenClaw | ✅ | ✅ | Implemented in v0.1.1 |
+| Generic Markdown | ✅ | — | Implemented in v0.1.1 |
 
 **Generic Markdown** works with YAML-frontmatter Markdown used by tools like Obsidian, Logseq, Bear, and plain Markdown. Tool-specific extensions are preserved as metadata or reported as compatibility notes.
 
@@ -104,8 +114,10 @@ MemLink is honest about what transfers and what doesn't.
 - Format-specific fields are preserved in metadata when possible.
 - Compatibility reports explain what changed.
 
+*Example compatibility report:*
+
 ```
-$ memlink convert --from ombre --to openclaw -s ombre/ -T openclaw/
+$ memlink convert --from ombre --to openclaw -s ~/.claude/ombre-buckets -T ./memories/
 
   Read:     117 memories from ombre
 
