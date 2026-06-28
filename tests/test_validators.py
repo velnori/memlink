@@ -28,12 +28,10 @@ class TestValidateSchema:
         assert len(missing) == 2
 
     def test_invalid_yaml_detected(self):
-        # YAML parse failure is handled as non-dict frontmatter → INVALID_SCHEMA
-        # The current invalid-yaml fixture still parses (yaml.safe_load is lenient).
-        # When YAML fails to parse at all, it returns ({}, text) — no error raised.
-        # This test verifies no crash; a truly unparseable fixture would need
-        # a different error injection approach.
-        pass
+        # Truly broken file (no frontmatter at all) → reader skips, validator sees no .md files
+        # A file without '---' delimiter is treated as body-only
+        issues = validate_schema(FIXTURES / "test_edge_cases" / "broken")
+        assert isinstance(issues, list)  # No crash — gracefully handled
 
     def test_openclaw_files_valid(self):
         # OpenClaw uses filename as id — frontmatter may lack explicit id.
@@ -52,14 +50,15 @@ class TestValidateSemantic:
         assert errors == []
 
     def test_duplicate_id_detected(self):
-        # The broken/ directory has no-id.md which gets id="",
-        # but dynamic/user/ has two files that share no id
-        pass  # TODO: add explicit duplicate fixture
+        issues = validate_semantic(FIXTURES / "test_edge_cases" / "duplicate")
+        dups = [i for i in issues if i.code == ErrorCode.DUPLICATE_ID]
+        assert len(dups) == 1
+        assert dups[0].severity == Severity.ERROR
 
     def test_body_empty_info(self):
-        # minimal.md has body "minimal content — no optional fields"
-        # That's not empty. We'd need an actual empty body fixture.
-        pass
+        issues = validate_semantic(FIXTURES / "test_edge_cases" / "empty_body")
+        empty = [i for i in issues if i.code == ErrorCode.BODY_EMPTY]
+        assert len(empty) >= 1
 
     def test_valence_out_of_range(self):
         issues = validate_semantic(FIXTURES / "ombre_samples" / "dynamic")

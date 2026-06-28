@@ -82,11 +82,13 @@ def _discover_builtins() -> None:
     from .ombre_writer import OmbreWriter
     from .openclaw_reader import OpenClawReader
     from .openclaw_writer import OpenClawWriter
+    from .generic_reader import GenericReader
 
     register_reader(OmbreReader)
     register_writer(OmbreWriter)
     register_reader(OpenClawReader)
     register_writer(OpenClawWriter)
+    register_reader(GenericReader)
 
 
 def _discover_entry_points() -> None:
