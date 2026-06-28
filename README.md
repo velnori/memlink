@@ -1,6 +1,8 @@
-# memlink — AI Memory Interoperability Layer
+# memlink
 
-> What Pandoc did for documents, memlink does for AI memories. One canonical format. Any memory system. Zero lock-in.
+> A canonical interchange format for AI memories — like Pandoc, but for AI memory systems.
+
+Built for developers building AI assistants, memory platforms, and agent frameworks.
 
 [![CI](https://github.com/velnori/memlink/actions/workflows/test.yml/badge.svg)](https://github.com/velnori/memlink/actions/workflows/test.yml)
 [![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue)](https://www.python.org/)
@@ -11,6 +13,8 @@
 ---
 
 ## Why memlink?
+
+Different AI tools store memories differently. memlink lets them exchange memories without every project writing custom converters.
 
 **Without memlink** — 10 memory formats need 45 converters. Every new format makes it worse:
 
@@ -59,8 +63,8 @@ memlink formats
 | Ombre Brain | ✅ | ✅ | Stable |
 | OpenClaw | ✅ | ✅ | Stable |
 | Generic Markdown | ✅ | — | Stable |
-| Mem0 | 🚧 | — | Planned v0.2 |
-| Zep | 🚧 | — | Planned v0.3 |
+| *Mem0* | 🚧 | — | *v0.2* |
+| *Zep* | 🚧 | — | *v0.3* |
 
 **3 plugins, 7+ apps interoperable.** Generic alone covers Obsidian, Logseq, Bear, iA Writer, and plain Markdown — every app that uses YAML frontmatter.
 
@@ -113,17 +117,13 @@ No silent data loss. No surprises.
 ```yaml
 id: "project-alpha"
 name: "Project Alpha Kickoff"
-body: "## Decisions\n- Use TypeScript"
-kind: dynamic              # dynamic | permanent | emotion
-status: active
+body: "..."
+kind: dynamic
 tags: [meeting, planning]
-domains: [work, project]
-created_at: "2024-06-28T10:00:00Z"
-importance_score: 0.8
-valence: 0.7
+metadata: { ... }
 ```
 
-Full spec: [spec/canonical-v1.md](spec/canonical-v1.md) · JSON Schema: [spec/canonical-v1.schema.json](spec/canonical-v1.schema.json)
+See [spec/canonical-v1.md](spec/canonical-v1.md) for the full specification. [JSON Schema](spec/canonical-v1.schema.json) also available.
 
 ---
 
