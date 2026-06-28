@@ -6,7 +6,7 @@ Built for developers building AI assistants, memory platforms, and agent framewo
 
 [![CI](https://github.com/velnori/memlink/actions/workflows/test.yml/badge.svg)](https://github.com/velnori/memlink/actions/workflows/test.yml)
 [![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue)](https://www.python.org/)
-[![PyPI](https://img.shields.io/badge/pypi-memlink--bridge-blue)](https://pypi.org/project/memlink-bridge/)
+[![PyPI version](https://img.shields.io/pypi/v/memlink-bridge)](https://pypi.org/project/memlink-bridge/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-261230)](https://github.com/astral-sh/ruff)
 
