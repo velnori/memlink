@@ -167,6 +167,26 @@ def _validate_against_schema(fm: dict, body: str, schema: dict, file: Path,
                 path=str(file), field=field,
                 message=f"Type mismatch: expected {expected}, got {type(value).__name__}",
             ))
+            continue
+
+        # Enum validation
+        enum_vals = prop.get("enum")
+        if enum_vals and value not in enum_vals:
+            issues.append(ValidationIssue(
+                code=ErrorCode.INVALID_SCHEMA, severity=Severity.WARNING,
+                path=str(file), field=field,
+                message=f"Invalid value '{value}' — allowed: {enum_vals}",
+            ))
+
+        # Pattern validation (string fields)
+        pattern = prop.get("pattern")
+        if pattern and isinstance(value, str):
+            if not re.match(pattern, value):
+                issues.append(ValidationIssue(
+                    code=ErrorCode.INVALID_SCHEMA, severity=Severity.WARNING,
+                    path=str(file), field=field,
+                    message=f"Value '{value}' does not match pattern {pattern}",
+                ))
 
 
 def _check_json_type(value, types: list[str]) -> bool:
