@@ -1,7 +1,5 @@
 """Tests for OpenClaw → Canonical reader."""
 
-from datetime import datetime
-from pathlib import Path
 
 import pytest
 

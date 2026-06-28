@@ -1,10 +1,6 @@
 """Tests for Canonical → Ombre writer."""
 
-import math
 from datetime import datetime, timezone
-from pathlib import Path
-
-import pytest
 
 from memlink.models import Memory
 from memlink.ombre_writer import OmbreWriter
@@ -93,9 +89,10 @@ class TestOmbreWriter:
         assert any("archived" in w.lower() for w in warnings)
 
     def test_restore_original_timezone(self, tmp_path):
+        tz = "2024-01-01T10:00:00+08:00"
         mem = Memory(id="test", name="Test", body="Content", kind="dynamic", domains=["user"],
                      created_at=datetime(2024, 1, 1, 2, 0, 0, tzinfo=timezone.utc),
-                     metadata={"memlink": {"original": {"created_tz": "2024-01-01T10:00:00+08:00"}}})
+                     metadata={"memlink": {"original": {"created_tz": tz}}})
         writer = OmbreWriter()
         writer.write([mem], tmp_path)
         content = (tmp_path / "dynamic" / "user" / "test.md").read_text()
@@ -141,7 +138,8 @@ class TestOmbreWriter:
         assert file_path.exists()
 
     def test_yaml_special_chars_quoted(self, tmp_path):
-        mem = Memory(id="test", name="Project: Alpha", body="Content", kind="dynamic", domains=["user"])
+        mem = Memory(id="test", name="Project: Alpha", body="Content",
+                     kind="dynamic", domains=["user"])
         writer = OmbreWriter()
         writer.write([mem], tmp_path)
         content = (tmp_path / "dynamic" / "user" / "test.md").read_text()

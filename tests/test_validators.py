@@ -2,8 +2,6 @@
 
 from pathlib import Path
 
-import pytest
-
 from memlink.plugin import Severity
 from memlink.validators import ErrorCode, validate_schema, validate_semantic
 

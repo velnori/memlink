@@ -1,6 +1,5 @@
 """Tests for Generic Markdown Reader."""
 
-from pathlib import Path
 
 import pytest
 

@@ -7,7 +7,7 @@ import pytest
 import yaml
 
 from memlink.models import Memory, Source
-from memlink.openclaw_writer import OpenClawWriter, ConcurrentModificationError
+from memlink.openclaw_writer import OpenClawWriter
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -149,5 +149,4 @@ class TestDailyNotesMode:
         writer.write(sample_memories, tmp_path)
 
         # Read back via OpenClaw reader
-        from memlink.openclaw_reader import OpenClawReader
         # (Phase 2 — will verify roundtrip then)

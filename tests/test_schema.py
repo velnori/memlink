@@ -3,8 +3,6 @@
 import json
 from pathlib import Path
 
-import pytest
-
 SPEC_DIR = Path(__file__).parent.parent / "spec"
 SCHEMA_PATH = SPEC_DIR / "canonical-v1.schema.json"
 

@@ -1,9 +1,7 @@
 """Tests for Canonical Memory data model and sanitize_id."""
 
-import pytest
 
 from memlink.models import (
-    JSONValue,
     Memory,
     Relationship,
     Source,
