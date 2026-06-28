@@ -50,7 +50,7 @@ openclaw = "memlink.openclaw_writer:OpenClawWriter"
 dev = [
     "pytest>=8",
     "pytest-cov>=5",
-    "mypy>=1",
+    "mypy>=2.1.0",
     "ruff>=0.6",
 ]
 docs = [
