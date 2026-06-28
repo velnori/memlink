@@ -29,13 +29,13 @@ jobs:
           pip install -e ".[dev]"
 
       - name: Lint (ruff)
-        run: ruff check memlink/ tests/
+        run: ruff check python/memlink/ tests/
 
       - name: Format check (ruff)
-        run: ruff format --check memlink/ tests/
+        run: ruff format --check python/memlink/ tests/
 
       - name: Type check (mypy)
-        run: mypy memlink/
+        run: mypy python/memlink/
 
       - name: Schema validation
         run: python -c 'import json; s=json.load(open("spec/canonical-v1.schema.json")); print("Schema valid:", s["title"])'
