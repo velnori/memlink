@@ -41,4 +41,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 4 fuzz test suites (2.99s)
 - Real Ombre data verified: 118 memories, 100% roundtrip
 
+## [0.1.1] — 2026-06-28
+
+### Fixed
+
+- **Registry stores classes, not instances** — `get_writer("openclaw", output_mode="structured")` now correctly passes construction params
+- **`PluginNotFoundError`** replaces bare `KeyError` with friendly "Available: ombre, openclaw" message
+- **`validate_roundtrip` implemented** — full `run_roundtrip()` with structured `RoundtripReport` (matched/partial/failed)
+- **Compare Engine** — automatic `dataclass.fields()` iteration with `CompareOptions` (unicode/newline normalization, casefold tags, time epsilon). One place for diff, validate, and roundtrip
+- **Dead code removed** — duplicate `_loss_reason` stubs, unused `_is_read_only`/`_is_write_only`
+- **`ErrorCode` split** — `ROUNDTRIP_KIND/BODY/IMPORTANCE/TIME` (ML401-404)
+- **`extensions` type tightened** — `dict[str, Any]` → `dict[str, JSONValue]`
+- `OmbreReader` forces `name` to string (prevents int→str mismatch for numeric names)
+
+### Metrics
+
+- 107 unit tests + 4 fuzz tests
+- Real data roundtrip: 118/118 matched (0.66s)
+
+[0.1.1]: https://github.com/velnori/memlink/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/velnori/memlink/releases/tag/v0.1.0
