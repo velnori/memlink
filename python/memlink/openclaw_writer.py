@@ -1,19 +1,24 @@
 """Canonical Memory → OpenClaw writer.
 
-Writes memory/<id>.md files + updates MEMORY.md index.
-Uses mtime+size for concurrent modification detection (O(1), no SHA256 overhead).
+Supports two output modes:
+  - "daily-notes": Native OpenClaw format (memory/YYYY-MM-DD.md + curated MEMORY.md)
+  - "structured":  ID-indexed format (memory/<id>.md + MEMORY.md index)
+
+Uses mtime+size for concurrent modification detection.
 """
 
 from __future__ import annotations
 
-import os
 from collections.abc import Iterable
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 import yaml
 
 from .models import Memory, sanitize_id
 from .plugin import Capabilities, FormatPlugin
+
+_OUTPUT_MODES = ("daily-notes", "structured")
 
 
 class OpenClawWriter(FormatPlugin):
@@ -26,156 +31,321 @@ class OpenClawWriter(FormatPlugin):
         supported_kinds={"dynamic", "permanent", "emotion"},
     )
 
+    def __init__(self, output_mode: str = "daily-notes"):
+        if output_mode not in _OUTPUT_MODES:
+            raise ValueError(f"Unknown output mode: {output_mode}. Choose from {_OUTPUT_MODES}")
+        self.output_mode = output_mode
+
     def read(self, path):
         raise NotImplementedError("OpenClawWriter is write-only")
 
+    # ── Public API ──────────────────────────────────────────────────
+
     def write(self, memories: Iterable[Memory], path: Path) -> list[str]:
         """Write Canonical memories into OpenClaw format."""
-        memories = list(memories)
-        warnings: list[str] = []
-        memory_dir = path / "memory"
-        feels_dir = memory_dir / "feels"
-        memory_dir.mkdir(parents=True, exist_ok=True)
-
-        new_entries: list[tuple[str, str | None]] = []  # (path, description)
-
-        for mem in memories:
-            # Route by kind + status
-            if mem.status == "archived":
-                continue
-
-            if mem.kind == "emotion":
-                feels_dir.mkdir(parents=True, exist_ok=True)
-                filename = f"{sanitize_id(mem.id)}.md"
-                filepath = feels_dir / filename
-            elif mem.kind == "permanent":
-                filename = f"{sanitize_id(mem.id)}.md"
-                filepath = memory_dir / filename
-            else:
-                filename = f"{sanitize_id(mem.id)}.md"
-                filepath = memory_dir / filename
-
-            # Build frontmatter
-            description = mem.summary or _first_paragraph(mem.body or "", 120)
-            fm: dict = {}
-            if mem.name:
-                fm["name"] = mem.name
-            fm["description"] = description
-
-            meta: dict = {}
-            if mem.domains:
-                meta["domain"] = ", ".join(mem.domains)
-            if mem.tags:
-                meta["tags"] = sorted(mem.tags)
-            if mem.importance_label:
-                meta["importance"] = mem.importance_label
-            elif mem.importance_score is not None:
-                meta["importance"] = mem.importance_score
-            if mem.valence is not None:
-                meta["valence"] = mem.valence
-            if mem.arousal is not None:
-                meta["arousal"] = mem.arousal
-            if mem.created_at is not None:
-                meta["created_at"] = mem.created_at.isoformat()
-            if mem.pinned:
-                meta["pinned"] = True
-            if mem.source and mem.source.uri:
-                meta["source_uri"] = mem.source.uri
-            if mem.checksum:
-                meta["checksum"] = mem.checksum
-            # Preserve memlink roundtrip metadata
-            if mem.metadata:
-                memlink_data = mem.metadata.get("memlink")
-                if memlink_data is not None:
-                    if not isinstance(meta.get("memlink"), dict):
-                        meta["memlink"] = {}
-                    meta["memlink"] = memlink_data  # type: ignore[assignment]
-
-            if meta:
-                fm["metadata"] = meta
-
-            # Serialize
-            fm_yaml = yaml.dump(fm, allow_unicode=True, sort_keys=True, default_flow_style=False)
-            content = f"---\n{fm_yaml}---\n\n{mem.body or ''}"
-            filepath.write_text(content, encoding="utf-8")
-
-            # Track for index
-            idx_path = str(filepath.relative_to(path))
-            idx_path = idx_path.replace("\\", "/")
-            new_entries.append((idx_path, description if mem.summary else None))
-
-        # Update MEMORY.md index
-        index_warnings = _update_memory_index(path, new_entries)
-        warnings.extend(index_warnings)
-        return warnings
+        memories = [m for m in memories if m.status != "archived"]
+        if self.output_mode == "daily-notes":
+            return self._write_daily_notes(memories, path)
+        return self._write_structured(memories, path)
 
     def validate(self, path):
         from .validators import validate_schema
-
         return validate_schema(path)
 
+    # ── Daily Notes mode (native OpenClaw) ─────────────────────────
 
-# ── MEMORY.md helpers ───────────────────────────────────────────────
+    def _write_daily_notes(self, memories: list[Memory], root: Path) -> list[str]:
+        """Write memories grouped by date into memory/YYYY-MM-DD.md.
+
+        MEMORY.md gets curated permanent + high-importance facts.
+        DREAMS.md gets emotion memories.
+        """
+        memory_dir = root / "memory"
+        memory_dir.mkdir(parents=True, exist_ok=True)
+        warnings: list[str] = []
+
+        # Group by date
+        by_date: dict[str, list[Memory]] = {}
+        undated: list[Memory] = []
+        permanent: list[Memory] = []
+        emotion: list[Memory] = []
+
+        for mem in memories:
+            if mem.kind == "emotion":
+                emotion.append(mem)
+            elif mem.kind == "permanent":
+                permanent.append(mem)
+
+            dt = _best_date(mem)
+            if dt is not None:
+                key = dt.strftime("%Y-%m-%d")
+                by_date.setdefault(key, []).append(mem)
+            else:
+                undated.append(mem)
+
+        # Write daily files
+        for day_key in sorted(by_date):
+            day_mems = by_date[day_key]
+            content = _format_daily_file(day_key, day_mems)
+            filepath = memory_dir / f"{day_key}.md"
+            filepath.write_text(content, encoding="utf-8")
+
+        # Write undated as a single file
+        if undated:
+            content = _format_daily_file("undated", undated)
+            (memory_dir / "undated.md").write_text(content, encoding="utf-8")
+            warnings.append(f"{len(undated)} memories without dates written to memory/undated.md")
+
+        # Write MEMORY.md (curated long-term facts)
+        _write_curated_memory_md(root, permanent, emotions=emotion)
+
+        # Write DREAMS.md (emotion / dream diary)
+        if emotion:
+            _write_dreams_md(root, emotion)
+
+        return warnings
+
+    # ── Structured mode (ID-indexed) ────────────────────────────────
+
+    def _write_structured(self, memories: list[Memory], root: Path) -> list[str]:
+        """Write one file per memory: memory/<id>.md + MEMORY.md index."""
+        memory_dir = root / "memory"
+        feels_dir = memory_dir / "feels"
+        memory_dir.mkdir(parents=True, exist_ok=True)
+        warnings: list[str] = []
+        new_entries: list[tuple[str, str | None]] = []
+
+        for mem in memories:
+            if mem.kind == "emotion":
+                feels_dir.mkdir(parents=True, exist_ok=True)
+                filepath = feels_dir / f"{sanitize_id(mem.id)}.md"
+            else:
+                filepath = memory_dir / f"{sanitize_id(mem.id)}.md"
+
+            fm = _build_structured_frontmatter(mem)
+            fm_yaml = yaml.dump(fm, allow_unicode=True, sort_keys=True, default_flow_style=False)
+            filepath.write_text(f"---\n{fm_yaml}---\n\n{mem.body or ''}", encoding="utf-8")
+
+            idx_path = str(filepath.relative_to(root)).replace("\\", "/")
+            new_entries.append((idx_path, mem.summary))
+
+        idx_warnings = _update_memory_index(root, new_entries)
+        warnings.extend(idx_warnings)
+        return warnings
+
+
+# ═══════════════════════════════════════════════════════════════════
+# Daily Notes helpers
+# ═══════════════════════════════════════════════════════════════════
+
+def _best_date(mem: Memory) -> date | None:
+    if mem.created_at is not None:
+        return mem.created_at.date()
+    # Try metadata
+    raw = mem.metadata.get("_created_raw")
+    if isinstance(raw, str):
+        try:
+            return datetime.fromisoformat(raw).date()
+        except (ValueError, TypeError):
+            pass
+    return None
+
+
+def _format_daily_file(day_key: str, memories: list[Memory]) -> str:
+    """Format a single daily notes file with all that day's memories."""
+    lines = [
+        "---",
+        f"title: {day_key}",
+        f"created_at: {day_key if day_key != 'undated' else ''}",
+        "---",
+        "",
+    ]
+    for mem in memories:
+        heading = mem.name or mem.id
+        lines.append(f"## {heading}")
+        lines.append("")
+        if mem.summary:
+            lines.append(f"_{mem.summary}_")
+            lines.append("")
+        if mem.tags:
+            lines.append(f"tags: {', '.join(sorted(mem.tags))}")
+            lines.append("")
+        if mem.body:
+            lines.append(mem.body.strip())
+            lines.append("")
+        lines.append("---")  # YAML frontmatter blocks
+        lines.append("")
+        # Embed machine-readable metadata as HTML comment (human-invisible, roundtrip-safe)
+        if mem.metadata.get("memlink"):
+            _embed_roundtrip_block(lines, mem)
+    return "\n".join(lines)
+
+
+def _embed_roundtrip_block(lines: list[str], mem: Memory) -> None:
+    """Embed roundtrip metadata as an HTML comment block."""
+    import json
+    rt = {
+        "id": mem.id,
+        "kind": mem.kind,
+        "importance_score": mem.importance_score,
+        "importance_label": mem.importance_label,
+        "valence": mem.valence,
+        "arousal": mem.arousal,
+        "pinned": mem.pinned,
+        "domains": mem.domains,
+        "tags": mem.tags,
+        "source_uri": mem.source.uri if mem.source else None,
+        "checksum": mem.checksum,
+        "memlink": mem.metadata.get("memlink"),
+    }
+    lines.append("<!-- memlink-roundtrip")
+    lines.append(json.dumps(rt, indent=2, ensure_ascii=False, default=str))
+    lines.append("-->")
+
+
+def _write_curated_memory_md(root: Path, permanent: list[Memory], emotions: list[Memory] | None = None) -> None:
+    """Write MEMORY.md as curated long-term memory (OpenClaw native style).
+
+    Contains: durable facts from permanent memories + high-importance items.
+    """
+    lines = [
+        "---",
+        "title: Curated Memory",
+        "description: Durable facts, preferences, and decisions",
+        "---",
+        "",
+        "> Auto-generated by [memlink](https://github.com/velnori/memlink).",
+        "> This file contains curated long-term memories. Daily notes are in memory/.",
+        "",
+    ]
+
+    # Sort: permanent first, then by importance
+    all_curated = sorted(permanent, key=lambda m: (0 if m.kind == "permanent" else 1, -(m.importance_score or 0)))
+
+    for mem in all_curated:
+        heading = mem.name or mem.id
+        lines.append(f"## {heading}")
+        lines.append("")
+        if mem.summary:
+            lines.append(f"_{mem.summary}_")
+            lines.append("")
+        if mem.body:
+            lines.append(mem.body.strip())
+            lines.append("")
+        if mem.tags:
+            lines.append(f"tags: {', '.join(sorted(mem.tags))}")
+            lines.append("")
+        _embed_roundtrip_block(lines, mem)
+
+    (root / "MEMORY.md").write_text("\n".join(lines), encoding="utf-8")
+
+
+def _write_dreams_md(root: Path, emotion: list[Memory]) -> None:
+    """Write DREAMS.md with emotion/feel memories (OpenClaw style)."""
+    lines = [
+        "---",
+        "title: Dream Diary",
+        "description: Dreaming sweep summaries and emotional memories",
+        "---",
+        "",
+    ]
+    for mem in emotion:
+        heading = mem.name or mem.id
+        lines.append(f"## {heading}")
+        lines.append("")
+        if mem.summary:
+            lines.append(f"_{mem.summary}_")
+            lines.append("")
+        if mem.body:
+            lines.append(mem.body.strip())
+            lines.append("")
+        if mem.valence is not None or mem.arousal is not None:
+            lines.append(f"valence: {mem.valence} / arousal: {mem.arousal}")
+            lines.append("")
+        _embed_roundtrip_block(lines, mem)
+
+    (root / "DREAMS.md").write_text("\n".join(lines), encoding="utf-8")
+
+
+# ═══════════════════════════════════════════════════════════════════
+# Structured helpers (ID-indexed)
+# ═══════════════════════════════════════════════════════════════════
+
+def _build_structured_frontmatter(mem: Memory) -> dict:
+    fm: dict = {}
+    if mem.name:
+        fm["name"] = mem.name
+    fm["description"] = mem.summary or _first_paragraph(mem.body or "", 120)
+
+    meta: dict = {}
+    if mem.domains:
+        meta["domain"] = ", ".join(mem.domains)
+    if mem.tags:
+        meta["tags"] = sorted(mem.tags)
+    if mem.importance_label:
+        meta["importance"] = mem.importance_label
+    elif mem.importance_score is not None:
+        meta["importance"] = mem.importance_score
+    if mem.valence is not None:
+        meta["valence"] = mem.valence
+    if mem.arousal is not None:
+        meta["arousal"] = mem.arousal
+    if mem.created_at is not None:
+        meta["created_at"] = mem.created_at.isoformat()
+    if mem.pinned:
+        meta["pinned"] = True
+    if mem.source and mem.source.uri:
+        meta["source_uri"] = mem.source.uri
+    if mem.checksum:
+        meta["checksum"] = mem.checksum
+    if mem.metadata.get("memlink"):
+        meta["memlink"] = mem.metadata["memlink"]
+
+    if meta:
+        fm["metadata"] = meta
+    return fm
 
 
 def _update_memory_index(root: Path, new_entries: list[tuple[str, str | None]]) -> list[str]:
-    """Update MEMORY.md with incremental entries. Detects concurrent modification."""
     index_path = root / "MEMORY.md"
-    warnings: list[str] = []
-
-    # Read existing index
-    existing: dict[str, str] = {}  # path → description
+    existing: dict[str, str] = {}
     if index_path.exists():
-        stat_before = _stat_tuple(index_path)
-        text_before = index_path.read_text(encoding="utf-8")
-        existing = _parse_memory_index(text_before)
+        stat_before = (int(index_path.stat().st_mtime * 1000), index_path.stat().st_size)
+        existing = _parse_memory_index(index_path.read_text(encoding="utf-8"))
     else:
         stat_before = None
-        text_before = None
 
-    # Merge: new entries overwrite existing with same basename
     for rel_path, desc in new_entries:
-        stem = Path(rel_path).stem  # abc123
-        # Find and remove any existing entry with same stem
-        keys_to_remove = [k for k in existing if Path(k).stem == stem]
-        for k in keys_to_remove:
+        stem = Path(rel_path).stem
+        for k in [k for k in existing if Path(k).stem == stem]:
             del existing[k]
         existing[rel_path] = desc or ""
 
-    # Generate new index
-    new_lines = ["# Memory Index", ""]
+    lines = ["# Memory Index", ""]
     for rel_path in sorted(existing):
         desc = existing[rel_path]
-        if desc:
-            new_lines.append(f"- {rel_path} — {desc}")
-        else:
-            new_lines.append(f"- {rel_path}")
-
-    new_content = "\n".join(new_lines) + "\n"
+        lines.append(f"- {rel_path} — {desc}" if desc else f"- {rel_path}")
 
     # Concurrent modification check
     if index_path.exists() and stat_before is not None:
-        stat_now = _stat_tuple(index_path)
-        if stat_now != stat_before:
+        st = index_path.stat()
+        if (int(st.st_mtime * 1000), st.st_size) != stat_before:
             raise ConcurrentModificationError(
                 f"MEMORY.md was modified during conversion.\n"
-                f"  Before: mtime={stat_before[0]}, size={stat_before[1]}\n"
-                f"  Now:    mtime={stat_now[0]}, size={stat_now[1]}\n"
                 f"  Please re-run or use --rebuild-index."
             )
 
-    index_path.write_text(new_content, encoding="utf-8")
-    return warnings
+    index_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return []
 
 
 def _parse_memory_index(content: str) -> dict[str, str]:
-    """Parse MEMORY.md index into {path: description} dict."""
     result: dict[str, str] = {}
     for line in content.splitlines():
-        line = line.strip()
-        if not line.startswith("- memory/"):
+        stripped = line.strip()
+        if not stripped.startswith("- memory/"):
             continue
-        entry = line[2:]  # strip "- "
+        entry = stripped[2:]
         if " — " in entry:
             path, desc = entry.split(" — ", 1)
             result[path.strip()] = desc.strip()
@@ -184,13 +354,7 @@ def _parse_memory_index(content: str) -> dict[str, str]:
     return result
 
 
-def _stat_tuple(p: Path) -> tuple[int, int]:
-    st = p.stat()
-    return (int(st.st_mtime * 1000), st.st_size)
-
-
 def _first_paragraph(text: str, max_chars: int) -> str:
-    """Extract first paragraph up to max_chars."""
     para = text.split("\n\n")[0].replace("\n", " ").strip()
     if len(para) <= max_chars:
         return para
