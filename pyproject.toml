@@ -41,6 +41,7 @@ memlink = "memlink.cli:main"
 [project.entry-points."memlink.readers"]
 ombre = "memlink.ombre_reader:OmbreReader"
 openclaw = "memlink.openclaw_reader:OpenClawReader"
+generic = "memlink.generic_reader:GenericReader"
 
 [project.entry-points."memlink.writers"]
 ombre = "memlink.ombre_writer:OmbreWriter"

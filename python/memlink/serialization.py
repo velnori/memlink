@@ -8,7 +8,7 @@ excessive nesting depth.
 from __future__ import annotations
 
 import warnings
-from datetime import datetime
+from datetime import date, datetime
 
 
 def sanitize(obj, _depth: int = 0, _max_depth: int = 100, _seen: set[int] | None = None):
@@ -36,8 +36,10 @@ def sanitize(obj, _depth: int = 0, _max_depth: int = 100, _seen: set[int] | None
     if obj is None or isinstance(obj, (bool, int, float, str)):
         return obj
 
-    # datetime → ISO 8601 string
+    # datetime / date → ISO 8601 string
     if isinstance(obj, datetime):
+        return obj.isoformat()
+    if isinstance(obj, date):
         return obj.isoformat()
 
     # Circular reference detection (mutable containers only)
