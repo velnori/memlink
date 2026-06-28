@@ -42,3 +42,4 @@ docs/建议*.md
 
 # MkDocs build output
 site/
+MEMORY.md
