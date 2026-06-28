@@ -24,17 +24,24 @@ Zep   ──┘                └──→ Your Format
 ## Quick Start
 
 ```bash
-pip install memlink
+# Install (PyPI coming soon — use git for now)
+git clone https://github.com/velnori/memlink.git
+cd memlink
+pip install -e .
+
+# Inspect a memory
+memlink inspect tests/fixtures/ombre_samples/dynamic/user/sample.md
 
 # Convert Ombre → OpenClaw
 memlink convert --from ombre --to openclaw \
-  -s ~/.claude/ombre-buckets \
-  -t ./memories/
+  -s tests/fixtures/ombre_samples \
+  -T ./my-memories/
 
-# Convert OpenClaw → Ombre
-memlink convert --from openclaw --to ombre \
-  -s ./memory/ \
-  -t ~/.claude/ombre-buckets/
+# Validate roundtrip
+memlink validate -s tests/fixtures/ombre_samples --level schema
+
+# Show installed formats
+memlink formats
 
 # Validate roundtrip integrity
 memlink validate --level roundtrip -s ~/.claude/ombre-buckets/
