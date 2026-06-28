@@ -51,7 +51,9 @@ def _build_parser() -> argparse.ArgumentParser:
         prog="memlink",
         description="AI Memory Interchange Layer — bridge AI memory formats",
     )
-    parser.add_argument("--version", action="version", version="memlink 0.1.0")
+    from . import __version__
+
+    parser.add_argument("--version", action="version", version=f"memlink {__version__}")
     sub = parser.add_subparsers(dest="command")
 
     # convert
@@ -263,10 +265,11 @@ def _cmd_validate(args) -> None:
 
 
 def _cmd_diff(args) -> None:
+    from .converter import CompareOptions, compare_memories
     from .registry import get_reader
 
     dir1, dir2 = args.source
-    set((args.ignore or "").split(","))
+    ignore_fields = set((args.ignore or "").split(",")) if args.ignore else set()
 
     r1 = get_reader(_detect_format(dir1))
     r2 = get_reader(_detect_format(dir2))
@@ -279,17 +282,25 @@ def _cmd_diff(args) -> None:
 
     only_in_1 = sorted(ids1 - ids2)
     only_in_2 = sorted(ids2 - ids1)
-    common = ids1 & ids2
+
+    # Field-level diff with --ignore support
+    opts = CompareOptions(
+        ignore=ignore_fields
+        | {"relationships", "updated_at", "source", "checksum", "metadata", "extensions", "schema_version"},
+    )
+    issues = compare_memories(m1, m2, options=opts)
 
     if args.format == "json":
         import json
 
+        field_errs = sum(1 for i in issues if i.severity == "error")
         print(
             json.dumps(
                 {
                     "only_in_source": len(only_in_1),
                     "only_in_target": len(only_in_2),
-                    "common": len(common),
+                    "field_differs": field_errs,
+                    "details": [{"memory_id": i.memory_id, "field": i.field, "message": i.message} for i in issues[:20]],
                 },
                 indent=2,
             )
@@ -297,7 +308,9 @@ def _cmd_diff(args) -> None:
     else:
         print(f"Only in source: {len(only_in_1)}")
         print(f"Only in target: {len(only_in_2)}")
-        print(f"Common:        {len(common)}")
+        errors = [i for i in issues if i.severity == "error"]
+        warnings = [i for i in issues if i.severity == "warning"]
+        print(f"Field differs: {len(errors)} errors, {len(warnings)} warnings")
 
         if only_in_1:
             print(f"\n  Added ({len(only_in_1)}):")
@@ -307,8 +320,13 @@ def _cmd_diff(args) -> None:
             print(f"\n  Removed ({len(only_in_2)}):")
             for i in only_in_2[:10]:
                 print(f"    - {i}")
+        if errors[:5]:
+            print("\n  Content diffs:")
+            for e in errors[:5]:
+                print(f"    [{e.memory_id}] {e.field}: {e.message[:80]}")
 
-    sys.exit(ExitCode.DIFF_FOUND if only_in_1 or only_in_2 else ExitCode.SUCCESS)
+    has_diff = bool(only_in_1 or only_in_2 or [i for i in issues if i.severity == "error"])
+    sys.exit(ExitCode.DIFF_FOUND if has_diff else ExitCode.SUCCESS)
 
 
 def _cmd_stats(args) -> None:
