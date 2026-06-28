@@ -45,12 +45,6 @@ memlink validate -s tests/fixtures/ombre_samples --level schema
 
 # Show installed formats
 memlink formats
-
-# Validate roundtrip integrity
-memlink validate --level roundtrip -s ~/.claude/ombre-buckets/
-
-# List installed formats
-memlink formats
 ```
 
 ## Supported Formats
