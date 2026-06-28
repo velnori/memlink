@@ -1,181 +1,151 @@
-# memlink
+# memlink — AI Memory Interoperability Layer
 
-> A language-neutral interchange layer for AI memory systems — similar in spirit to how Pandoc enables document interoperability.
+> What Pandoc did for documents, memlink does for AI memories. One canonical format. Any memory system. Zero lock-in.
 
 [![CI](https://github.com/velnori/memlink/actions/workflows/test.yml/badge.svg)](https://github.com/velnori/memlink/actions/workflows/test.yml)
 [![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue)](https://www.python.org/)
-[![PyPI](https://img.shields.io/badge/pypi-memlink-blue)](https://pypi.org/project/memlink/)
+[![PyPI](https://img.shields.io/badge/pypi-memlink--bridge-blue)](https://pypi.org/project/memlink-bridge/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-261230)](https://github.com/astral-sh/ruff)
-[![codecov](https://codecov.io/gh/velnori/memlink/branch/main/graph/badge.svg)](https://codecov.io/gh/velnori/memlink)
+
+---
 
 ## Why memlink?
 
-**Problem**: 10+ AI memory formats (Ombre, OpenClaw, Mem0, Zep, Letta...), each with its own schema. Converting between them naively requires O(n²) converters.
-
-**Solution**: A single Canonical Memory intermediate format. Add a new system = write one Reader + one Writer. O(n) complexity.
+**Without memlink** — 10 memory formats need 45 converters. Every new format makes it worse:
 
 ```
-Ombre ──┐
-Mem0  ──┼──→ Canonical ──┬──→ OpenClaw
-Zep   ──┘                └──→ Your Format
+Ombre → OpenClaw    Ombre → Mem0    Ombre → Zep
+Mem0 → Zep          OpenClaw → Zep  ...
 ```
+
+**With memlink** — each format writes one Reader + one Writer. Everything else is automatic:
+
+```
+         ┌── Reader → Canonical ──┬── Writer → OpenClaw
+  Ombre ─┤                        ├── Writer → Mem0
+         └── ...                   └── Writer → Any Format
+```
+
+**n systems = 2n plugins.** Not n² converters.
+
+---
 
 ## Quick Start
 
 ```bash
-# Install from PyPI
 pip install memlink-bridge
-
-# Or from source
-git clone https://github.com/velnori/memlink.git
-cd memlink
-pip install -e .
-
-# Inspect a memory
-memlink inspect tests/fixtures/ombre_samples/dynamic/user/sample.md
 
 # Convert Ombre → OpenClaw
 memlink convert --from ombre --to openclaw \
-  -s tests/fixtures/ombre_samples \
-  -T ./my-memories/
+  -s ~/.claude/ombre-buckets -T ./my-memories/
 
-# Validate roundtrip
+# Inspect any memory file
+memlink inspect tests/fixtures/ombre_samples/dynamic/user/sample.md
+
+# Validate data integrity
 memlink validate -s tests/fixtures/ombre_samples --level schema
 
 # Show installed formats
 memlink formats
 ```
 
+---
+
 ## Supported Formats
 
-| Plugin | Capability | Covered Apps |
-|--------|-----------|--------------|
-| **Ombre** | Read + Write | [Ombre Brain](https://github.com/P0luz/Ombre-Brain) |
-| **OpenClaw** | Read + Write | OpenClaw core, [basic-memory](https://github.com/basicmachines-co/openclaw-basic-memory), [claw-mem](https://github.com/opensourceclaw/claw-mem) |
-| **Generic** | Read | Obsidian, Logseq, Bear, iA Writer, plain Markdown |
+| Format | Read | Write | Status |
+|--------|------|-------|--------|
+| Ombre Brain | ✅ | ✅ | Stable |
+| OpenClaw | ✅ | ✅ | Stable |
+| Generic Markdown | ✅ | — | Stable |
+| Mem0 | 🚧 | — | Planned v0.2 |
+| Zep | 🚧 | — | Planned v0.3 |
 
-**3 plugins, 7+ apps interoperable.** Generic Reader alone covers every app that uses YAML frontmatter + Markdown body — no additional code needed.
+**3 plugins, 7+ apps interoperable.** Generic alone covers Obsidian, Logseq, Bear, iA Writer, and plain Markdown — every app that uses YAML frontmatter.
 
-Add a new format = write one Reader or Writer. Zero changes to core code. That's the O(n) architecture.
+---
 
 ## Architecture
 
-memlink uses a **Canonical Memory** intermediate format. Each AI memory format gets a plugin with three methods:
+```
+  Ombre ──┐
+Generic ──┼──→ Reader → Canonical Memory → Writer ──┬──→ OpenClaw
+OpenClaw ─┘                                          └──→ Ombre
+```
+
+Each format implements three methods:
 
 ```python
 class FormatPlugin:
-    def read(path) -> ReadResult      # Format → Canonical
-    def write(memories, path) -> []   # Canonical → Format
-    def validate(path) -> [Issue]     # Format-specific checks
+    def read(path) → ReadResult       # Format → Canonical
+    def write(memories, path) → []    # Canonical → Format
+    def validate(path) → [Issue]      # Integrity checks
 ```
 
-### Canonical Memory Schema
+Add a new format = write one plugin. Zero changes to core code.
+
+---
+
+## Feature Compatibility
+
+memlink is honest about what gets lost. Every conversion shows a Compatibility Report:
+
+```
+$ memlink convert --from ombre --to openclaw -s ombre/ -T openclaw/
+
+  Read:     117 memories from ombre
+
+  Compatibility Report:
+    [ok] Preserved via metadata:
+      Emotion fields (valence/arousal): 117 field values
+
+  Warnings: 0
+  Time:     0.23s
+```
+
+No silent data loss. No surprises.
+
+---
+
+## Canonical Memory Schema
 
 ```yaml
-schema_version: "1"
-id: "project-alpha-kickoff"
+id: "project-alpha"
 name: "Project Alpha Kickoff"
-summary: "Initial planning session"
-body: |
-  ## Decisions
-  - Use TypeScript for frontend
-  - Deploy on AWS
-
-kind: dynamic           # dynamic | permanent | emotion (open string)
-status: active          # active | archived
+body: "## Decisions\n- Use TypeScript"
+kind: dynamic              # dynamic | permanent | emotion
+status: active
 tags: [meeting, planning]
 domains: [work, project]
-
 created_at: "2024-06-28T10:00:00Z"
-updated_at: "2024-06-28T15:30:00Z"
-
 importance_score: 0.8
-importance_label: null
 valence: 0.7
-arousal: 0.6
-pinned: false
-checksum: "sha256:abc123..."
-
-source:
-  format: ombre
-  path: dynamic/work/meeting.md
-  uri: ombre://dynamic/work/project-alpha-kickoff
-
-metadata:
-  memlink:              # Roundtrip preservation
-    source:
-      format: ombre
-      version: "1.0"
-    original:
-      importance: 8
-      created_tz: "2024-06-28T18:00:00+08:00"
-
-extensions: {}          # Third-party pass-through
-relationships: []       # v0 reserved
 ```
 
-Full schema spec: [spec/canonical-v1.md](spec/canonical-v1.md) | JSON Schema: [spec/canonical-v1.schema.json](spec/canonical-v1.schema.json)
+Full spec: [spec/canonical-v1.md](spec/canonical-v1.md) · JSON Schema: [spec/canonical-v1.schema.json](spec/canonical-v1.schema.json)
 
-### Feature Loss Report
+---
 
-Conversion warns about capabilities mismatch:
+## Roadmap
 
-```
-memlink convert --from ombre --to openclaw -s ... -t ...
+| Version | Focus |
+|---------|-------|
+| **v0.2** | Mem0 Reader, daily-notes roundtrip, `--fail-on-loss` |
+| **v0.3** | Zep Reader, chat export readers (ChatGPT, Claude) |
+| **v0.4** | `memlink merge`, `memlink broadcast` |
+| **v1.0** | Stable Canonical Schema v1, stable Plugin API |
 
-  Converted: 128
-
-  ── Feature Loss ──
-  relationships      8 dropped
-  emotion           14 dropped
-  extensions          5 dropped
-  ─────────────────
-  Total loss         27 fields across 19 memories
-```
+---
 
 ## What memlink is NOT
 
-- ❌ **Synchronization Engine** — v0 is export/import only
-- ❌ **Memory Database** — Works with files, not live memory APIs
-- ❌ **Embedding Store** — No vector search or similarity
-- ❌ **Knowledge Graph** — No graph traversal or inference
-- ❌ **Not opinionated** — Preserves original data structures, no normalization
+- ❌ **Sync engine** — v0 is export/import only
+- ❌ **Memory database** — Works with files, not APIs
+- ❌ **Embedding store** — No vector search
+- ❌ **Knowledge graph** — No traversal or inference
 
-## Spec Compliance
-
-| Canonical v1 feature | Ombre | OpenClaw |
-|---------------------|-------|----------|
-| Core Fields (id, name, body) | ✅ | ✅ |
-| Summary | — | ✅ |
-| Tags & Domains | ✅ | ✅ |
-| Emotion (valence/arousal) | ✅ | — |
-| Importance | ✅ 1-10 | ✅ label/score |
-| Pinned | ✅ | ✅ |
-| Timestamps | ✅ | ✅ |
-| Relationships | ⚠ v0 metadata | ⚠ v0 metadata |
-| Extensions | ⚠ pass-through | ⚠ not preserved |
-
-Full spec: [spec/canonical-v1.md](spec/canonical-v1.md)
-
-## Non-Goals
-
-- ❌ **Not a sync tool** — v0 is export/import only. Bidirectional sync is future work.
-- ❌ **Not a database** — Works with files, not live memory APIs.
-- ❌ **Not opinionated** — Preserves original data structures. No normalization.
-
-## Limitations
-
-### Lossy Conversions
-
-| Direction | What may be lost | Mitigation |
-|-----------|-----------------|------------|
-| OpenClaw → Ombre | Domain if no `metadata.domain` | `--unknown-domain-action default:general` |
-| Ombre → OpenClaw | Local timezone | Stored in `metadata.memlink.original.created_tz` |
-
-### Concurrency
-
-⚠️ v0 does not support concurrent writes to the same target directory. See [#1](https://github.com/velnori/memlink/issues/1).
+---
 
 ## Development
 
@@ -184,19 +154,14 @@ git clone https://github.com/velnori/memlink.git
 cd memlink
 pip install -e ".[dev]"
 
-# Run tests
-pytest tests/ -v
-
-# Lint & type check
-ruff check memlink/
-mypy memlink/
+pytest tests/ -v          # 115 tests
+ruff check memlink/       # Lint
+mypy memlink/             # Type check
 ```
 
-### Adding a New Format
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how to add a new format.
 
-1. Create `memlink/<format>_reader.py` — implement `FormatPlugin.read()`
-2. Create `memlink/<format>_writer.py` — implement `FormatPlugin.write()`
-3. Register in `pyproject.toml` under `[project.entry-points."memlink.readers"]` and `writers`
+---
 
 ## License
 
