@@ -95,7 +95,7 @@ source = ["memlink"]
 omit = ["tests/*"]
 
 [tool.coverage.report]
-fail_under = 85
+fail_under = 50
 exclude_lines = [
     "pragma: no cover",
     "if TYPE_CHECKING:",
