@@ -108,6 +108,7 @@ def test_reader_deterministic(reader) -> None:
 
 # ── Fixture helpers ────────────────────────────────────────────────
 
+
 def _create_minimal_format_dir(root: Path, fmt: str) -> None:
     if fmt == "ombre":
         d = root / "dynamic" / "general"

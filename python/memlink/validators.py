@@ -57,6 +57,7 @@ class ErrorCode(str, Enum):
 def _load_canonical_schema() -> dict | None:
     """Load the Canonical Memory JSON Schema for validation."""
     import json
+
     schema_path = Path(__file__).parent.parent.parent / "spec" / "canonical-v1.schema.json"
     if not schema_path.exists():
         return None
@@ -85,45 +86,53 @@ def validate_schema(path: Path) -> list[ValidationIssue]:
         try:
             text = md_file.read_text(encoding="utf-8")
         except Exception:
-            issues.append(ValidationIssue(
-                code=ErrorCode.FILE_NOT_FOUND,
-                severity=Severity.ERROR,
-                path=str(md_file),
-                message=f"Cannot read file: {md_file}",
-            ))
+            issues.append(
+                ValidationIssue(
+                    code=ErrorCode.FILE_NOT_FOUND,
+                    severity=Severity.ERROR,
+                    path=str(md_file),
+                    message=f"Cannot read file: {md_file}",
+                )
+            )
             continue
 
         fm, body = _parse_frontmatter(text)
 
         # Check frontmatter is valid dict
         if not isinstance(fm, dict):
-            issues.append(ValidationIssue(
-                code=ErrorCode.INVALID_SCHEMA,
-                severity=Severity.ERROR,
-                path=str(md_file),
-                message="YAML frontmatter did not parse to a dictionary",
-                suggestion="Ensure the file starts with '---' followed by valid YAML key:value pairs",
-            ))
+            issues.append(
+                ValidationIssue(
+                    code=ErrorCode.INVALID_SCHEMA,
+                    severity=Severity.ERROR,
+                    path=str(md_file),
+                    message="YAML frontmatter did not parse to a dictionary",
+                    suggestion="Ensure the file starts with '---' followed by valid YAML key:value pairs",
+                )
+            )
             continue
 
         # Required: id (bucket_id for Ombre)
         mem_id = fm.get("id") or fm.get("bucket_id")
         if not mem_id:
-            issues.append(ValidationIssue(
-                code=ErrorCode.MISSING_ID,
-                severity=Severity.ERROR,
-                path=str(md_file),
-                message="Missing required field: id or bucket_id",
-                suggestion="Add 'id:' or 'bucket_id:' to the frontmatter",
-            ))
+            issues.append(
+                ValidationIssue(
+                    code=ErrorCode.MISSING_ID,
+                    severity=Severity.ERROR,
+                    path=str(md_file),
+                    message="Missing required field: id or bucket_id",
+                    suggestion="Add 'id:' or 'bucket_id:' to the frontmatter",
+                )
+            )
         elif not isinstance(mem_id, (str, int, float)):
-            issues.append(ValidationIssue(
-                code=ErrorCode.MISSING_ID,
-                severity=Severity.ERROR,
-                path=str(md_file),
-                field="id",
-                message=f"id must be a string, got {type(mem_id).__name__}",
-            ))
+            issues.append(
+                ValidationIssue(
+                    code=ErrorCode.MISSING_ID,
+                    severity=Severity.ERROR,
+                    path=str(md_file),
+                    field="id",
+                    message=f"id must be a string, got {type(mem_id).__name__}",
+                )
+            )
 
         # JSON Schema validation
         if schema and fm:
@@ -133,8 +142,7 @@ def validate_schema(path: Path) -> list[ValidationIssue]:
     return issues
 
 
-def _validate_against_schema(fm: dict, body: str, schema: dict, file: Path,
-                              issues: list[ValidationIssue]) -> None:
+def _validate_against_schema(fm: dict, body: str, schema: dict, file: Path, issues: list[ValidationIssue]) -> None:
     mem_dict = {
         "schema_version": "1",
         "id": str(fm.get("id") or fm.get("bucket_id") or ""),
@@ -158,30 +166,42 @@ def _validate_against_schema(fm: dict, body: str, schema: dict, file: Path,
         types = expected if isinstance(expected, list) else [expected]
         type_ok = _check_json_type(value, types)
         if not type_ok:
-            issues.append(ValidationIssue(
-                code=ErrorCode.INVALID_SCHEMA, severity=Severity.WARNING,
-                path=str(file), field=field,
-                message=f"Type mismatch: expected {expected}, got {type(value).__name__}",
-            ))
+            issues.append(
+                ValidationIssue(
+                    code=ErrorCode.INVALID_SCHEMA,
+                    severity=Severity.WARNING,
+                    path=str(file),
+                    field=field,
+                    message=f"Type mismatch: expected {expected}, got {type(value).__name__}",
+                )
+            )
             continue
 
         # Enum validation
         enum_vals = prop.get("enum")
         if enum_vals and value not in enum_vals:
-            issues.append(ValidationIssue(
-                code=ErrorCode.INVALID_SCHEMA, severity=Severity.WARNING,
-                path=str(file), field=field,
-                message=f"Invalid value '{value}' — allowed: {enum_vals}",
-            ))
+            issues.append(
+                ValidationIssue(
+                    code=ErrorCode.INVALID_SCHEMA,
+                    severity=Severity.WARNING,
+                    path=str(file),
+                    field=field,
+                    message=f"Invalid value '{value}' — allowed: {enum_vals}",
+                )
+            )
 
         # Pattern validation (string fields)
         pattern = prop.get("pattern")
         if pattern and isinstance(value, str) and not re.match(pattern, value):
-            issues.append(ValidationIssue(
-                code=ErrorCode.INVALID_SCHEMA, severity=Severity.WARNING,
-                path=str(file), field=field,
-                message=f"Value '{value}' does not match pattern {pattern}",
-            ))
+            issues.append(
+                ValidationIssue(
+                    code=ErrorCode.INVALID_SCHEMA,
+                    severity=Severity.WARNING,
+                    path=str(file),
+                    field=field,
+                    message=f"Value '{value}' does not match pattern {pattern}",
+                )
+            )
 
 
 def _check_json_type(value, types: list[str]) -> bool:
@@ -222,14 +242,16 @@ def validate_semantic(path: Path) -> list[ValidationIssue]:
         if mem_id:
             key = mem_id.casefold()
             if key in seen_ids:
-                issues.append(ValidationIssue(
-                    code=ErrorCode.DUPLICATE_ID,
-                    severity=Severity.ERROR,
-                    path=file_path,
-                    memory_id=mem_id,
-                    message=f"Duplicate ID '{mem_id}' (case-insensitive match with '{seen_ids[key].name}')",
-                    suggestion="Memory IDs must be unique within a dataset.",
-                ))
+                issues.append(
+                    ValidationIssue(
+                        code=ErrorCode.DUPLICATE_ID,
+                        severity=Severity.ERROR,
+                        path=file_path,
+                        memory_id=mem_id,
+                        message=f"Duplicate ID '{mem_id}' (case-insensitive match with '{seen_ids[key].name}')",
+                        suggestion="Memory IDs must be unique within a dataset.",
+                    )
+                )
             else:
                 seen_ids[key] = md_file
 
@@ -239,14 +261,16 @@ def validate_semantic(path: Path) -> list[ValidationIssue]:
             try:
                 v = float(valence)
                 if not (0.0 <= v <= 1.0):
-                    issues.append(ValidationIssue(
-                        code=ErrorCode.VALUE_OUT_OF_RANGE,
-                        severity=Severity.WARNING,
-                        path=file_path,
-                        memory_id=mem_id,
-                        field="valence",
-                        message=f"valence={v} is outside [0.0, 1.0]",
-                    ))
+                    issues.append(
+                        ValidationIssue(
+                            code=ErrorCode.VALUE_OUT_OF_RANGE,
+                            severity=Severity.WARNING,
+                            path=file_path,
+                            memory_id=mem_id,
+                            field="valence",
+                            message=f"valence={v} is outside [0.0, 1.0]",
+                        )
+                    )
             except (ValueError, TypeError):
                 pass
 
@@ -256,40 +280,46 @@ def validate_semantic(path: Path) -> list[ValidationIssue]:
             try:
                 a = float(arousal)
                 if not (0.0 <= a <= 1.0):
-                    issues.append(ValidationIssue(
-                        code=ErrorCode.VALUE_OUT_OF_RANGE,
-                        severity=Severity.WARNING,
-                        path=file_path,
-                        memory_id=mem_id,
-                        field="arousal",
-                        message=f"arousal={a} is outside [0.0, 1.0]",
-                    ))
+                    issues.append(
+                        ValidationIssue(
+                            code=ErrorCode.VALUE_OUT_OF_RANGE,
+                            severity=Severity.WARNING,
+                            path=file_path,
+                            memory_id=mem_id,
+                            field="arousal",
+                            message=f"arousal={a} is outside [0.0, 1.0]",
+                        )
+                    )
             except (ValueError, TypeError):
                 pass
 
         # Body empty warning (info level, not an error)
         if not body.strip():
-            issues.append(ValidationIssue(
-                code=ErrorCode.BODY_EMPTY,
-                severity=Severity.INFO,
-                path=file_path,
-                memory_id=mem_id,
-                message="Body is empty",
-                suggestion="Consider adding content or a summary.",
-            ))
+            issues.append(
+                ValidationIssue(
+                    code=ErrorCode.BODY_EMPTY,
+                    severity=Severity.INFO,
+                    path=file_path,
+                    memory_id=mem_id,
+                    message="Body is empty",
+                    suggestion="Consider adding content or a summary.",
+                )
+            )
 
         # Datetime format
         created = fm.get("created") or fm.get("created_at")
         if isinstance(created, str) and not _is_iso_datetime(created):
-            issues.append(ValidationIssue(
-                code=ErrorCode.INVALID_DATETIME,
-                severity=Severity.WARNING,
-                path=file_path,
-                memory_id=mem_id,
-                field="created",
-                message=f"Datetime '{created}' is not valid ISO 8601",
-                suggestion="Use format: 2024-01-01T10:00:00Z",
-            ))
+            issues.append(
+                ValidationIssue(
+                    code=ErrorCode.INVALID_DATETIME,
+                    severity=Severity.WARNING,
+                    path=file_path,
+                    memory_id=mem_id,
+                    field="created",
+                    message=f"Datetime '{created}' is not valid ISO 8601",
+                    suggestion="Use format: 2024-01-01T10:00:00Z",
+                )
+            )
 
     return issues
 
@@ -297,26 +327,29 @@ def validate_semantic(path: Path) -> list[ValidationIssue]:
 # ── Roundtrip validation ───────────────────────────────────────────
 
 
-def validate_roundtrip(path: Path, source_format: str = "ombre",
-                       intermediate_format: str = "openclaw") -> list[ValidationIssue]:
+def validate_roundtrip(
+    path: Path, source_format: str = "ombre", intermediate_format: str = "openclaw"
+) -> list[ValidationIssue]:
     """Validate A→B→A canonical consistency (semantic, not byte-level)."""
     from .converter import run_roundtrip
+
     try:
         report = run_roundtrip(path, source_format, intermediate_format)
         return report.issues
     except Exception as e:
-        return [ValidationIssue(
-            code=ErrorCode.VALIDATION_ERROR, severity=Severity.ERROR,
-            message=f"Roundtrip validation failed: {e}",
-        )]
+        return [
+            ValidationIssue(
+                code=ErrorCode.VALIDATION_ERROR,
+                severity=Severity.ERROR,
+                message=f"Roundtrip validation failed: {e}",
+            )
+        ]
 
 
 # ── Helpers ────────────────────────────────────────────────────────
 
 
-_ISO_RE = re.compile(
-    r"^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2})?([+-]\d{2}:?\d{2}|Z)?$"
-)
+_ISO_RE = re.compile(r"^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2})?([+-]\d{2}:?\d{2}|Z)?$")
 
 
 def _is_iso_datetime(s: str) -> bool:

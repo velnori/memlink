@@ -50,6 +50,7 @@ class OpenClawWriter(FormatPlugin):
 
     def validate(self, path):
         from .validators import validate_schema
+
         return validate_schema(path)
 
     # ── Daily Notes mode (native OpenClaw) ─────────────────────────
@@ -138,6 +139,7 @@ class OpenClawWriter(FormatPlugin):
 # Daily Notes helpers
 # ═══════════════════════════════════════════════════════════════════
 
+
 def _best_date(mem: Memory) -> date | None:
     if mem.created_at is not None:
         return mem.created_at.date()
@@ -184,6 +186,7 @@ def _format_daily_file(day_key: str, memories: list[Memory]) -> str:
 def _embed_roundtrip_block(lines: list[str], mem: Memory) -> None:
     """Embed roundtrip metadata as an HTML comment block."""
     import json
+
     rt = {
         "id": mem.id,
         "kind": mem.kind,
@@ -271,6 +274,7 @@ def _write_dreams_md(root: Path, emotion: list[Memory]) -> None:
 # Structured helpers (ID-indexed)
 # ═══════════════════════════════════════════════════════════════════
 
+
 def _build_structured_frontmatter(mem: Memory) -> dict:
     fm: dict = {}
     if mem.name:
@@ -332,8 +336,7 @@ def _update_memory_index(root: Path, new_entries: list[tuple[str, str | None]]) 
         st = index_path.stat()
         if (int(st.st_mtime * 1000), st.st_size) != stat_before:
             raise ConcurrentModificationError(
-                "MEMORY.md was modified during conversion.\n"
-                "  Please re-run or use --rebuild-index."
+                "MEMORY.md was modified during conversion.\n  Please re-run or use --rebuild-index."
             )
 
     index_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -359,7 +362,7 @@ def _first_paragraph(text: str, max_chars: int) -> str:
     para = text.split("\n\n")[0].replace("\n", " ").strip()
     if len(para) <= max_chars:
         return para
-    return para[:max_chars - 3].rsplit(" ", 1)[0] + "..."
+    return para[: max_chars - 3].rsplit(" ", 1)[0] + "..."
 
 
 class ConcurrentModificationError(RuntimeError):

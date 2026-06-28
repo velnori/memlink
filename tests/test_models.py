@@ -1,6 +1,5 @@
 """Tests for Canonical Memory data model and sanitize_id."""
 
-
 from memlink.models import (
     Memory,
     Relationship,

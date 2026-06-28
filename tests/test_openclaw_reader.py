@@ -1,6 +1,5 @@
 """Tests for OpenClaw → Canonical reader."""
 
-
 import pytest
 
 from memlink.openclaw_reader import OpenClawReader
@@ -10,7 +9,8 @@ from memlink.openclaw_reader import OpenClawReader
 def openclaw_dir(tmp_path):
     memory_dir = tmp_path / "memory"
     memory_dir.mkdir()
-    (memory_dir / "test-memory.md").write_text("""---
+    (memory_dir / "test-memory.md").write_text(
+        """---
 name: Test Memory
 description: A test memory for unit tests
 metadata:
@@ -20,18 +20,23 @@ metadata:
   created_at: 2024-01-01T10:00:00Z
 ---
 This is the body content.
-""", encoding="utf-8")
+""",
+        encoding="utf-8",
+    )
 
     feels_dir = memory_dir / "feels"
     feels_dir.mkdir()
-    (feels_dir / "excited.md").write_text("""---
+    (feels_dir / "excited.md").write_text(
+        """---
 name: Excited about launch
 metadata:
   valence: 0.8
   arousal: 0.7
 ---
 Feeling great!
-""", encoding="utf-8")
+""",
+        encoding="utf-8",
+    )
 
     (tmp_path / "MEMORY.md").write_text("""# Memory Index
 - memory/test-memory.md - Test memory
@@ -122,12 +127,15 @@ Body
     def test_chinese_and_emoji(self, tmp_path):
         memory_dir = tmp_path / "memory"
         memory_dir.mkdir()
-        (memory_dir / "chinese-emoji.md").write_text("""---
+        (memory_dir / "chinese-emoji.md").write_text(
+            """---
 name: 项目启动会 🚀
 description: 很兴奋！
 ---
 今天开了很棒的会议 😊
-""", encoding="utf-8")
+""",
+            encoding="utf-8",
+        )
         reader = OpenClawReader()
         result = reader.read(tmp_path)
         mem = result.memories[0]

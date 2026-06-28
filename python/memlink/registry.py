@@ -68,6 +68,7 @@ def list_formats() -> dict[str, dict[str, bool]]:
 
 # ── Lazy loading ───────────────────────────────────────────────────
 
+
 def _ensure_loaded() -> None:
     global _loaded
     if _loaded:

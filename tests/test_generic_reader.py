@@ -1,6 +1,5 @@
 """Tests for Generic Markdown Reader."""
 
-
 import pytest
 
 from memlink.generic_reader import GenericReader
@@ -11,16 +10,20 @@ def obsidian_dir(tmp_path):
     d = tmp_path / "vault" / "notes"
     d.mkdir(parents=True)
 
-    (d / "daily.md").write_text("""---
+    (d / "daily.md").write_text(
+        """---
 title: daily note
 date: 2024-06-28
 tags: [diary, work, archived]
 ---
 ## Tasks
 - [ ] do stuff
-""", encoding="utf-8")
+""",
+        encoding="utf-8",
+    )
 
-    (d / "project.md").write_text("""---
+    (d / "project.md").write_text(
+        """---
 title: memlink
 tags: [oss, python]
 category: dev
@@ -28,7 +31,9 @@ created: 2024-06-15T10:00:00+08:00
 ---
 # memlink
 bridge for AI memories.
-""", encoding="utf-8")
+""",
+        encoding="utf-8",
+    )
 
     (d / "plain.md").write_text("No frontmatter here\nJust text.", encoding="utf-8")
     return tmp_path / "vault"

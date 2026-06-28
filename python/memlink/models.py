@@ -15,11 +15,16 @@ JSONValue = Union[None, bool, int, float, str, list["JSONValue"], dict[str, "JSO
 _FILENAME_RESERVED = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 
 # Windows reserved device names
-_RESERVED_NAMES: frozenset[str] = frozenset({
-    "CON", "PRN", "AUX", "NUL",
-    *(f"COM{i}" for i in range(1, 10)),
-    *(f"LPT{i}" for i in range(1, 10)),
-})
+_RESERVED_NAMES: frozenset[str] = frozenset(
+    {
+        "CON",
+        "PRN",
+        "AUX",
+        "NUL",
+        *(f"COM{i}" for i in range(1, 10)),
+        *(f"LPT{i}" for i in range(1, 10)),
+    }
+)
 
 
 def sanitize_id(raw: str) -> str:

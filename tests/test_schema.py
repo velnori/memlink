@@ -27,10 +27,27 @@ def test_schema_all_core_fields_present():
     schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
     props = schema["properties"]
     expected = [
-        "schema_version", "id", "name", "source", "summary", "body",
-        "kind", "status", "tags", "domains", "created_at", "updated_at",
-        "valence", "arousal", "importance_score", "importance_label",
-        "pinned", "checksum", "metadata", "extensions", "relationships",
+        "schema_version",
+        "id",
+        "name",
+        "source",
+        "summary",
+        "body",
+        "kind",
+        "status",
+        "tags",
+        "domains",
+        "created_at",
+        "updated_at",
+        "valence",
+        "arousal",
+        "importance_score",
+        "importance_label",
+        "pinned",
+        "checksum",
+        "metadata",
+        "extensions",
+        "relationships",
     ]
     for field in expected:
         assert field in props, f"Field '{field}' missing from JSON Schema"
@@ -75,8 +92,13 @@ def _check_type(field: str, value, prop: dict) -> None:
         return
     types = expected_type if isinstance(expected_type, list) else [expected_type]
     type_map = {
-        "string": str, "integer": int, "number": (int, float),
-        "boolean": bool, "array": list, "object": dict, "null": type(None),
+        "string": str,
+        "integer": int,
+        "number": (int, float),
+        "boolean": bool,
+        "array": list,
+        "object": dict,
+        "null": type(None),
     }
     valid = any(t in types and isinstance(value, type_map.get(t, object)) for t in types)
     assert valid, f"Field '{field}': expected {expected_type}, got {type(value).__name__}"

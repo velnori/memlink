@@ -64,12 +64,12 @@ ImpactSeverity = Literal["lost", "degraded", "preserved"]
 
 @dataclass
 class FeatureImpact:
-    feature: str            # e.g. "emotion"
-    label: str              # Human label: "Emotion fields (valence/arousal)"
-    count: int              # Number of field instances affected
+    feature: str  # e.g. "emotion"
+    label: str  # Human label: "Emotion fields (valence/arousal)"
+    count: int  # Number of field instances affected
     severity: ImpactSeverity
     reason: str
-    recoverable: bool       # Can roundtrip recover this?
+    recoverable: bool  # Can roundtrip recover this?
 
 
 @dataclass
@@ -79,6 +79,7 @@ class ConversionAnalysis:
 
 
 # ── Public API ─────────────────────────────────────────────────────
+
 
 def check_compatibility(source: FormatPlugin, target: FormatPlugin) -> list[str]:
     """Return capability mismatch warnings (human-readable)."""
@@ -108,59 +109,92 @@ def analyze_conversion(
     emo_count = sum(1 for m in memories if m.valence is not None or m.arousal is not None)
     if emo_count and not tc.emotion:
         meta = _cap_meta("emotion")
-        impacts.append(FeatureImpact(
-            feature="emotion", label=meta["label"], count=emo_count,
-            severity="preserved" if sc.emotion else "degraded",
-            reason=meta["preserved_reason"], recoverable=True,
-        ))
+        impacts.append(
+            FeatureImpact(
+                feature="emotion",
+                label=meta["label"],
+                count=emo_count,
+                severity="preserved" if sc.emotion else "degraded",
+                reason=meta["preserved_reason"],
+                recoverable=True,
+            )
+        )
 
     # Relationships
     rel_count = sum(1 for m in memories if m.relationships)
     if rel_count and not tc.relationships:
         meta = _cap_meta("relationships")
-        impacts.append(FeatureImpact(
-            feature="relationships", label=meta["label"], count=rel_count,
-            severity="preserved", reason=meta["preserved_reason"], recoverable=True,
-        ))
+        impacts.append(
+            FeatureImpact(
+                feature="relationships",
+                label=meta["label"],
+                count=rel_count,
+                severity="preserved",
+                reason=meta["preserved_reason"],
+                recoverable=True,
+            )
+        )
 
     # Summary
     sum_count = sum(1 for m in memories if m.summary)
     if sum_count and not tc.summary:
         meta = _cap_meta("summary")
-        impacts.append(FeatureImpact(
-            feature="summary", label=meta["label"], count=sum_count,
-            severity="preserved", reason=meta["preserved_reason"], recoverable=True,
-        ))
+        impacts.append(
+            FeatureImpact(
+                feature="summary",
+                label=meta["label"],
+                count=sum_count,
+                severity="preserved",
+                reason=meta["preserved_reason"],
+                recoverable=True,
+            )
+        )
 
     # Importance label → score
     lbl_count = sum(1 for m in memories if m.importance_label)
     if lbl_count and not tc.importance_label:
         meta = _cap_meta("importance_label")
-        impacts.append(FeatureImpact(
-            feature="importance_label", label=meta["label"], count=lbl_count,
-            severity="degraded", reason=meta["preserved_reason"], recoverable=False,
-        ))
+        impacts.append(
+            FeatureImpact(
+                feature="importance_label",
+                label=meta["label"],
+                count=lbl_count,
+                severity="degraded",
+                reason=meta["preserved_reason"],
+                recoverable=False,
+            )
+        )
 
     # Extensions
     ext_count = sum(1 for m in memories if m.extensions)
     if ext_count and not tc.preserve_unknown_fields:
         meta = _cap_meta("extensions")
-        impacts.append(FeatureImpact(
-            feature="extensions", label=meta["label"], count=ext_count,
-            severity="lost", reason=meta["lost_reason"], recoverable=False,
-        ))
+        impacts.append(
+            FeatureImpact(
+                feature="extensions",
+                label=meta["label"],
+                count=ext_count,
+                severity="lost",
+                reason=meta["lost_reason"],
+                recoverable=False,
+            )
+        )
 
     # Unsupported kinds
     kind_count = sum(1 for m in memories if tc.supported_kinds and m.kind not in tc.supported_kinds)
     if kind_count:
         meta = _cap_meta("unsupported_kind")
         supported = ", ".join(sorted(tc.supported_kinds)) if tc.supported_kinds else "none"
-        impacts.append(FeatureImpact(
-            feature="unsupported_kind", label=meta["label"],
-            count=kind_count, severity="degraded",
-            reason=f"Target only supports kinds: {supported} (falling back to dynamic)",
-            recoverable=False,
-        ))
+        impacts.append(
+            FeatureImpact(
+                feature="unsupported_kind",
+                label=meta["label"],
+                count=kind_count,
+                severity="degraded",
+                reason=f"Target only supports kinds: {supported} (falling back to dynamic)",
+                recoverable=False,
+            )
+        )
 
     return ConversionAnalysis(impacts=impacts)
 
@@ -193,17 +227,25 @@ def convert(
 # Compare Engine — shared by diff, validate, roundtrip
 # ═══════════════════════════════════════════════════════════════════
 
+
 @dataclass
 class CompareOptions:
     """Configurable comparison rules for Memory fields."""
 
-    ignore: set[str] = field(default_factory=lambda: {
-        "relationships", "updated_at", "source", "checksum",
-        "metadata", "extensions", "schema_version",
-    })
-    normalize_unicode: bool = True     # NFC normalization
-    normalize_newlines: bool = True    # CRLF → LF
-    sort_lists: bool = True            # tags, domains
+    ignore: set[str] = field(
+        default_factory=lambda: {
+            "relationships",
+            "updated_at",
+            "source",
+            "checksum",
+            "metadata",
+            "extensions",
+            "schema_version",
+        }
+    )
+    normalize_unicode: bool = True  # NFC normalization
+    normalize_newlines: bool = True  # CRLF → LF
+    sort_lists: bool = True  # tags, domains
     time_epsilon: timedelta = field(default_factory=lambda: timedelta(seconds=1))
     casefold_tags: bool = True
 
@@ -238,16 +280,26 @@ def compare_memories(
 
     # Lost memories
     for mid in sorted(orig_ids - rest_ids):
-        issues.append(ValidationIssue(
-            code="ML400", severity=Severity.ERROR, memory_id=mid,
-            field="id", message="Memory lost in roundtrip",
-        ))
+        issues.append(
+            ValidationIssue(
+                code="ML400",
+                severity=Severity.ERROR,
+                memory_id=mid,
+                field="id",
+                message="Memory lost in roundtrip",
+            )
+        )
     # Unexpected memories
     for mid in sorted(rest_ids - orig_ids):
-        issues.append(ValidationIssue(
-            code="ML400", severity=Severity.ERROR, memory_id=mid,
-            field="id", message="Unexpected memory in roundtrip",
-        ))
+        issues.append(
+            ValidationIssue(
+                code="ML400",
+                severity=Severity.ERROR,
+                memory_id=mid,
+                field="id",
+                message="Unexpected memory in roundtrip",
+            )
+        )
 
     # Compare common memories — iterate dataclass fields automatically
     for mid in sorted(orig_ids & rest_ids):
@@ -264,11 +316,15 @@ def compare_memories(
 
             diff = _compare_field(fld, ov, rv, opts)
             if diff:
-                issues.append(ValidationIssue(
-                    code=_field_error_code(fld),
-                    severity=Severity.WARNING if fld in {"tags", "importance_score"} else Severity.ERROR,
-                    memory_id=mid, field=fld, message=diff,
-                ))
+                issues.append(
+                    ValidationIssue(
+                        code=_field_error_code(fld),
+                        severity=Severity.WARNING if fld in {"tags", "importance_score"} else Severity.ERROR,
+                        memory_id=mid,
+                        field=fld,
+                        message=diff,
+                    )
+                )
 
     return issues
 
@@ -289,6 +345,7 @@ def _compare_field(name: str, ov, rv, opts: CompareOptions) -> str | None:
     # Datetime comparison
     from datetime import datetime
     from datetime import timezone as tz
+
     if isinstance(ov, datetime) and isinstance(rv, datetime):
         dt_ov = ov.astimezone(tz.utc) if ov.tzinfo else ov.replace(tzinfo=tz.utc)
         dt_rv = rv.astimezone(tz.utc) if rv.tzinfo else rv.replace(tzinfo=tz.utc)
@@ -313,7 +370,7 @@ def _compare_field(name: str, ov, rv, opts: CompareOptions) -> str | None:
             for i, (a, b) in enumerate(zip(ov_norm, rv_norm, strict=False)):
                 if a != b:
                     ctx = max(0, i - 20)
-                    return f"{name}: ...{ov_norm[ctx:i+30]}... != ...{rv_norm[ctx:i+30]}..."
+                    return f"{name}: ...{ov_norm[ctx : i + 30]}... != ...{rv_norm[ctx : i + 30]}..."
             return f"{name}: lengths {len(ov_norm)} != {len(rv_norm)}"
         return None
 
@@ -350,9 +407,16 @@ def _normalize_list(lst: list, opts: CompareOptions) -> list:
 
 def _field_error_code(field: str) -> str:
     codes = {
-        "kind": "ML401", "body": "ML402", "importance_score": "ML403",
-        "importance_label": "ML403", "created_at": "ML404", "updated_at": "ML404",
-        "id": "ML400", "name": "ML401", "tags": "ML401", "domains": "ML401",
+        "kind": "ML401",
+        "body": "ML402",
+        "importance_score": "ML403",
+        "importance_label": "ML403",
+        "created_at": "ML404",
+        "updated_at": "ML404",
+        "id": "ML400",
+        "name": "ML401",
+        "tags": "ML401",
+        "domains": "ML401",
     }
     return codes.get(field, "ML401")
 
@@ -367,12 +431,13 @@ def _fmt(v) -> str:
 # Roundtrip
 # ═══════════════════════════════════════════════════════════════════
 
+
 @dataclass
 class RoundtripReport:
     total: int
     matched: int
-    partial: int       # warnings only (degraded)
-    failed: int         # errors (lost / content mismatch)
+    partial: int  # warnings only (degraded)
+    failed: int  # errors (lost / content mismatch)
     only_in_original: list[str]
     only_in_restored: list[str]
     issues: list[ValidationIssue]
@@ -382,16 +447,23 @@ class RoundtripReport:
 
     def to_dict(self) -> dict:
         return {
-            "total": self.total, "matched": self.matched,
-            "partial": self.partial, "failed": self.failed,
+            "total": self.total,
+            "matched": self.matched,
+            "partial": self.partial,
+            "failed": self.failed,
             "only_in_original": self.only_in_original,
             "only_in_restored": self.only_in_restored,
             "duration": self.duration,
             "warnings": self.warnings,
             "schema_version": self.schema_version,
             "issues": [
-                {"code": i.code, "severity": i.severity,
-                 "memory_id": i.memory_id, "field": i.field, "message": i.message}
+                {
+                    "code": i.code,
+                    "severity": i.severity,
+                    "memory_id": i.memory_id,
+                    "field": i.field,
+                    "message": i.message,
+                }
                 for i in self.issues
             ],
         }
@@ -416,29 +488,41 @@ def run_roundtrip(
     try:
         reader = get_reader(source_format)
     except Exception as e:
-        return RoundtripReport(total=0, matched=0, partial=0, failed=1,
-                               only_in_original=[], only_in_restored=[],
-                               issues=[ValidationIssue(code="ML301", severity=Severity.ERROR,
-                                                        message=str(e))])
+        return RoundtripReport(
+            total=0,
+            matched=0,
+            partial=0,
+            failed=1,
+            only_in_original=[],
+            only_in_restored=[],
+            issues=[ValidationIssue(code="ML301", severity=Severity.ERROR, message=str(e))],
+        )
 
     # Read original
     try:
         result = reader.read(source_path)
     except Exception as e:
-        return RoundtripReport(total=0, matched=0, partial=0, failed=1,
-                               only_in_original=[], only_in_restored=[],
-                               issues=[ValidationIssue(code="ML200", severity=Severity.ERROR,
-                                                        message=f"Read failed: {e}")])
+        return RoundtripReport(
+            total=0,
+            matched=0,
+            partial=0,
+            failed=1,
+            only_in_original=[],
+            only_in_restored=[],
+            issues=[ValidationIssue(code="ML200", severity=Severity.ERROR, message=f"Read failed: {e}")],
+        )
 
     all_warnings.extend(result.warnings)
     original = {m.id: m for m in result.memories}
     if not original:
-        return RoundtripReport(total=0, matched=0, partial=0, failed=0,
-                               only_in_original=[], only_in_restored=[], issues=[])
+        return RoundtripReport(
+            total=0, matched=0, partial=0, failed=0, only_in_original=[], only_in_restored=[], issues=[]
+        )
 
     # Roundtrip
     import shutil
     import tempfile
+
     tmp_dir = None
     try:
         tmp_dir = tempfile.mkdtemp()
@@ -450,10 +534,15 @@ def run_roundtrip(
             if intermediate_format == "openclaw":
                 iw = get_writer(intermediate_format, output_mode="structured")
         except Exception as e:
-            return RoundtripReport(total=len(original), matched=0, partial=0, failed=len(original),
-                                   only_in_original=[], only_in_restored=[],
-                                   issues=[ValidationIssue(code="ML301", severity=Severity.ERROR,
-                                                            message=str(e))])
+            return RoundtripReport(
+                total=len(original),
+                matched=0,
+                partial=0,
+                failed=len(original),
+                only_in_original=[],
+                only_in_restored=[],
+                issues=[ValidationIssue(code="ML301", severity=Severity.ERROR, message=str(e))],
+            )
 
         iw.write(result.memories, tmp / "intermediate")
 
@@ -501,10 +590,14 @@ def run_roundtrip(
             matched += 1
 
     return RoundtripReport(
-        total=len(original), matched=matched, partial=partial, failed=failed,
+        total=len(original),
+        matched=matched,
+        partial=partial,
+        failed=failed,
         only_in_original=sorted(orig_ids - rest_ids),
         only_in_restored=sorted(rest_ids - orig_ids),
-        issues=issues, warnings=all_warnings,
+        issues=issues,
+        warnings=all_warnings,
         duration=time.perf_counter() - start,
         schema_version="1",
     )

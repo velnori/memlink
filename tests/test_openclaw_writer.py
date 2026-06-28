@@ -53,6 +53,7 @@ def sample_memories():
 
 # ── Structured mode (default for backward compat) ───────────────────
 
+
 class TestStructuredMode:
     def test_writes_dynamic_to_memory_dir(self, tmp_path, sample_memories):
         writer = OpenClawWriter(output_mode="structured")
@@ -97,6 +98,7 @@ class TestStructuredMode:
 
 
 # ── Daily Notes mode (native OpenClaw) ──────────────────────────────
+
 
 class TestDailyNotesMode:
     def test_writes_date_based_files(self, tmp_path, sample_memories):

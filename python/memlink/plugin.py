@@ -28,9 +28,9 @@ class ValidationIssue:
 
     code: str  # "ML001" — see spec for full list
     severity: Severity
-    path: str | None = None      # file path
+    path: str | None = None  # file path
     memory_id: str | None = None  # memory ID within the file
-    field: str | None = None      # affected field name
+    field: str | None = None  # affected field name
     message: str = ""
     suggestion: str | None = None  # actionable fix hint
 

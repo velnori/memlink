@@ -115,6 +115,7 @@ class OmbreWriter(FormatPlugin):
 
 # ── Field helpers ──────────────────────────────────────────────────
 
+
 def _pick_domain(mem: Memory, warnings: list[str]) -> str:
     """Pick domain directory name. Returns empty string if no domain."""
     if not mem.domains:

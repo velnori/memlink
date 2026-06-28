@@ -50,22 +50,13 @@ def sanitize(obj, _depth: int = 0, _max_depth: int = 100, _seen: set[int] | None
         _seen = _seen | {obj_id}
 
     if isinstance(obj, dict):
-        return {
-            str(k): sanitize(v, _depth + 1, _max_depth, _seen)
-            for k, v in obj.items()
-        }
+        return {str(k): sanitize(v, _depth + 1, _max_depth, _seen) for k, v in obj.items()}
 
     if isinstance(obj, (list, tuple)):
-        return [
-            sanitize(item, _depth + 1, _max_depth, _seen)
-            for item in obj
-        ]
+        return [sanitize(item, _depth + 1, _max_depth, _seen) for item in obj]
 
     if isinstance(obj, (set, frozenset)):
-        return sorted(
-            sanitize(item, _depth + 1, _max_depth, _seen)
-            for item in obj
-        )
+        return sorted(sanitize(item, _depth + 1, _max_depth, _seen) for item in obj)
 
     # Unknown type → string with warning
     warnings.warn(

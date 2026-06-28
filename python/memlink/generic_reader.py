@@ -25,16 +25,34 @@ from .plugin import Capabilities, FormatPlugin, ReadResult
 from .serialization import sanitize
 
 # Known frontmatter fields — others go to extensions
-_KNOWN_FIELDS = frozenset({
-    "id", "title", "name", "tags", "category", "folder", "type", "status",
-    "description", "summary", "created", "date", "updated", "pinned",
-})
+_KNOWN_FIELDS = frozenset(
+    {
+        "id",
+        "title",
+        "name",
+        "tags",
+        "category",
+        "folder",
+        "type",
+        "status",
+        "description",
+        "summary",
+        "created",
+        "date",
+        "updated",
+        "pinned",
+    }
+)
 
 # Type/status → kind mapping
 _TYPE_TO_KIND: dict[str, str] = {
-    "permanent": "permanent", "pinned": "permanent",
-    "emotion": "emotion", "feel": "emotion", "journal": "emotion",
-    "archived": "dynamic", "draft": "dynamic",
+    "permanent": "permanent",
+    "pinned": "permanent",
+    "emotion": "emotion",
+    "feel": "emotion",
+    "journal": "emotion",
+    "archived": "dynamic",
+    "draft": "dynamic",
 }
 
 
@@ -63,14 +81,16 @@ class GenericReader(FormatPlugin):
             # No frontmatter → whole file as body, filename as title
             if not text.startswith("---"):
                 mem_id = md_file.stem
-                memories.append(Memory(
-                    id=mem_id,
-                    name=md_file.stem.replace("-", " ").replace("_", " "),
-                    body=text.strip() or None,
-                    kind="dynamic",
-                    source=Source(format="generic", path=str(rel)),
-                    checksum=_sha256(text),
-                ))
+                memories.append(
+                    Memory(
+                        id=mem_id,
+                        name=md_file.stem.replace("-", " ").replace("_", " "),
+                        body=text.strip() or None,
+                        kind="dynamic",
+                        source=Source(format="generic", path=str(rel)),
+                        checksum=_sha256(text),
+                    )
+                )
                 stats["parsed"] += 1
                 continue
 
@@ -132,29 +152,31 @@ class GenericReader(FormatPlugin):
                 except Exception:
                     memlink_original[str(k)] = str(v)
 
-            memories.append(Memory(
-                id=mem_id,
-                name=name,
-                summary=fm.get("description") or fm.get("summary"),
-                body=body.strip() or None,
-                kind=kind,
-                status=status,
-                tags=tags,
-                domains=domains,
-                created_at=created_at,
-                updated_at=updated_at,
-                pinned=bool(fm.get("pinned", False)),
-                checksum=_sha256(body),
-                extensions=extensions,  # type: ignore[arg-type]
-                source=Source(format="generic", path=str(rel)),
-                metadata={
-                    "memlink": {
-                        "source": {"format": "generic", "version": "1.0"},
-                        "schema_version": "1",
-                        "original": memlink_original,
+            memories.append(
+                Memory(
+                    id=mem_id,
+                    name=name,
+                    summary=fm.get("description") or fm.get("summary"),
+                    body=body.strip() or None,
+                    kind=kind,
+                    status=status,
+                    tags=tags,
+                    domains=domains,
+                    created_at=created_at,
+                    updated_at=updated_at,
+                    pinned=bool(fm.get("pinned", False)),
+                    checksum=_sha256(body),
+                    extensions=extensions,  # type: ignore[arg-type]
+                    source=Source(format="generic", path=str(rel)),
+                    metadata={
+                        "memlink": {
+                            "source": {"format": "generic", "version": "1.0"},
+                            "schema_version": "1",
+                            "original": memlink_original,
+                        },
                     },
-                },
-            ))
+                )
+            )
             stats["parsed"] += 1
 
         return ReadResult(memories=memories, warnings=warnings, stats=stats)
@@ -164,10 +186,12 @@ class GenericReader(FormatPlugin):
 
     def validate(self, path):
         from .validators import validate_schema
+
         return validate_schema(path)
 
 
 # ── Helpers ─────────────────────────────────────────────────────────
+
 
 def _sha256(s: str) -> str:
     return hashlib.sha256(s.encode("utf-8")).hexdigest()

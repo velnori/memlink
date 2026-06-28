@@ -25,7 +25,7 @@ class OpenClawReader(FormatPlugin):
     version_supported = ">=1,<3"
     capabilities = Capabilities(
         summary=True,
-        importance_label=True,   # "high"/"medium"/"low"
+        importance_label=True,  # "high"/"medium"/"low"
         preserve_unknown_fields=True,
         supported_kinds={"dynamic", "permanent", "emotion"},
     )
@@ -174,10 +174,12 @@ class OpenClawReader(FormatPlugin):
 
     def validate(self, path):
         from .validators import validate_schema
+
         return validate_schema(path)
 
 
 # ── Pipeline helpers ───────────────────────────────────────────────
+
 
 def _parse_memory_index(path: Path) -> dict[str, str]:
     """Parse MEMORY.md index, supporting multiple format variants."""
@@ -206,6 +208,7 @@ def _extract_id(file: Path, metadata: dict) -> str:
     # If decoded contains path separators, sanitize
     if "/" in decoded or "\\" in decoded:
         from .models import sanitize_id
+
         return sanitize_id(decoded)
     return decoded
 

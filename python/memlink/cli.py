@@ -45,6 +45,7 @@ def main(argv: list[str] | None = None) -> None:
 
 # ── Parser ─────────────────────────────────────────────────────────
 
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="memlink",
@@ -59,8 +60,12 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument("--to", "-t", dest="to_fmt", required=True, help="Target format (ombre, openclaw)")
     p.add_argument("--source", "-s", type=Path, required=True, help="Source directory")
     p.add_argument("--target", "-T", type=Path, required=True, help="Target directory")
-    p.add_argument("--output-mode", choices=["daily-notes", "structured"], default="daily-notes",
-                   help="OpenClaw output mode (default: daily-notes)")
+    p.add_argument(
+        "--output-mode",
+        choices=["daily-notes", "structured"],
+        default="daily-notes",
+        help="OpenClaw output mode (default: daily-notes)",
+    )
     p.add_argument("--kind", "-k", nargs="+", help="Only convert specific kind(s)")
     p.add_argument("--dry-run", action="store_true", help="Parse only, don't write")
     p.add_argument("--include-archived", action="store_true")
@@ -107,6 +112,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
 # ── Dispatch ───────────────────────────────────────────────────────
 
+
 def _dispatch(args) -> None:
     if args.command == "formats":
         _cmd_formats()
@@ -132,8 +138,10 @@ def _dispatch(args) -> None:
 
 # ── Commands ───────────────────────────────────────────────────────
 
+
 def _cmd_formats() -> None:
     from .registry import list_formats
+
     fmts = list_formats()
     if not fmts:
         print("No format plugins installed.")
@@ -232,6 +240,7 @@ def _cmd_validate(args) -> None:
 
     if args.format == "json":
         import json
+
         out = {
             "total": len(errors) + len(warnings),
             "errors": [{"code": e.code, "path": e.path, "message": e.message} for e in errors],
@@ -274,11 +283,17 @@ def _cmd_diff(args) -> None:
 
     if args.format == "json":
         import json
-        print(json.dumps({
-            "only_in_source": len(only_in_1),
-            "only_in_target": len(only_in_2),
-            "common": len(common),
-        }, indent=2))
+
+        print(
+            json.dumps(
+                {
+                    "only_in_source": len(only_in_1),
+                    "only_in_target": len(only_in_2),
+                    "common": len(common),
+                },
+                indent=2,
+            )
+        )
     else:
         print(f"Only in source: {len(only_in_1)}")
         print(f"Only in target: {len(only_in_2)}")
@@ -329,14 +344,14 @@ def _cmd_stats(args) -> None:
     print(f"Total:     {n} memories ({fmt})")
     for k, v in sorted(kinds.items()):
         bar = "█" * (v * 20 // n) if n else ""
-        print(f"  {k:<12} {v:>4} ({v*100//n:>2}%) {bar}")
+        print(f"  {k:<12} {v:>4} ({v * 100 // n:>2}%) {bar}")
     print(f"Domains:   {len(domains)} unique")
     if domains:
         top = sorted(domains.items(), key=lambda x: x[1], reverse=True)[:5]
         for d, c in top:
             print(f"  {d:<20} {c}")
-    print(f"Tags:      {total_tags/n:.1f} avg per memory" if n else "Tags: 0")
-    print(f"Body:      {total_body//n} chars avg" if n else "Body: 0")
+    print(f"Tags:      {total_tags / n:.1f} avg per memory" if n else "Tags: 0")
+    print(f"Body:      {total_body // n} chars avg" if n else "Body: 0")
     if oldest:
         print(f"Oldest:    {oldest.date()}")
     if newest:
@@ -405,7 +420,7 @@ def _cmd_inspect(args) -> None:
     print(f"  valence/arousal: {mem.valence}/{mem.arousal}")
     print(f"  pinned:          {mem.pinned}")
     if mem.body:
-        body_preview = mem.body[:200].replace('\n', ' ')
+        body_preview = mem.body[:200].replace("\n", " ")
         print(f"  body:            {body_preview}{'...' if len(mem.body or '') > 200 else ''}")
     if result.warnings:
         print(f"\nWarnings: {len(result.warnings)}")
