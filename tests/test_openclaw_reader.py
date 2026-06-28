@@ -119,7 +119,7 @@ Body
 """)
         reader = OpenClawReader()
         result = reader.read(tmp_path)
-        assert result.memories[0].domains == ["_unknown"]
+        assert result.memories[0].domains == []
 
     def test_chinese_and_emoji(self, tmp_path):
         memory_dir = tmp_path / "memory"

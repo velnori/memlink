@@ -60,21 +60,27 @@ class OmbreWriter(FormatPlugin):
     # ── Single memory write ───────────────────────────────────────
 
     def _write_one(self, mem: Memory, root: Path, warnings: list[str]) -> None:
-        # Kind → type
+        original = (mem.metadata.get("memlink") or {}).get("original") or {}
+
+        # Kind → type (check original for roundtrip preservation)
         ombre_type = _KIND_TO_TYPE.get(mem.kind)
         if not ombre_type:
-            warnings.append(f"{mem.id}: Unknown kind '{mem.kind}' → 'dynamic'")
-            ombre_type = "dynamic"
+            # Try to recover from original metadata (e.g. archived)
+            orig_type = original.get("type")
+            if orig_type:
+                ombre_type = str(orig_type)
+            else:
+                warnings.append(f"{mem.id}: Unknown kind '{mem.kind}' → 'dynamic'")
+                ombre_type = "dynamic"
 
-        # Domain → directory name
+        # Domain → directory name (empty = no domain subdir)
         domain = _pick_domain(mem, warnings)
 
         # ID → bucket_id
-        original = (mem.metadata.get("memlink") or {}).get("original") or {}
         bucket_id = str(original.get("id") or original.get("bucket_id") or mem.id)
 
         # Create directory
-        type_dir = root / ombre_type / domain
+        type_dir = root / ombre_type / domain if domain else root / ombre_type
         type_dir.mkdir(parents=True, exist_ok=True)
 
         # Build frontmatter (fixed order, Ombre style)
@@ -82,7 +88,8 @@ class OmbreWriter(FormatPlugin):
         _add_field(fm_lines, "bucket_id", bucket_id)
         _add_field(fm_lines, "name", mem.name or "", quote_if_special=True)
         _add_field(fm_lines, "type", ombre_type, quote_if_special=True)
-        _add_field(fm_lines, "domain", _format_domains(mem.domains))
+        if mem.domains:
+            _add_field(fm_lines, "domain", _format_domains(mem.domains))
         _add_field(fm_lines, "tags", ", ".join(sorted(mem.tags)) if mem.tags else "")
         _add_field(fm_lines, "importance", _importance_for_ombre(mem, original, warnings))
         if mem.valence is not None:
@@ -110,16 +117,11 @@ class OmbreWriter(FormatPlugin):
 # ── Field helpers ──────────────────────────────────────────────────
 
 def _pick_domain(mem: Memory, warnings: list[str]) -> str:
-    """Pick Ombre domain from Canonical domains list."""
+    """Pick domain directory name. Returns empty string if no domain."""
     if not mem.domains:
-        return "general"  # No warning for empty — many Ombre memories have no domain
-    # Filter out _unknown
+        return ""
     valid = [d for d in mem.domains if d != "_unknown"]
-    if not valid:
-        return "general"
-    if len(valid) > 1:
-        warnings.append(f"{mem.id}: {len(valid)} domains, using '{valid[0]}' as directory")
-    return valid[0]
+    return valid[0] if valid else ""
 
 
 def _importance_for_ombre(mem: Memory, original: dict, warnings: list[str]) -> int:

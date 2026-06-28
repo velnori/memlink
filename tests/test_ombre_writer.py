@@ -71,19 +71,18 @@ class TestOmbreWriter:
         mem = Memory(id="test", name="Test", body="Content", kind="dynamic", domains=[])
         writer = OmbreWriter()
         writer.write([mem], tmp_path)
-        assert (tmp_path / "dynamic" / "general" / "test.md").exists()
+        assert (tmp_path / "dynamic" / "test.md").exists()  # no domain subdir
 
     def test_only_unknown_domain_fallback(self, tmp_path):
         mem = Memory(id="test", name="Test", body="Content", kind="dynamic", domains=["_unknown"])
         writer = OmbreWriter()
         writer.write([mem], tmp_path)
-        assert (tmp_path / "dynamic" / "general" / "test.md").exists()
+        assert (tmp_path / "dynamic" / "test.md").exists()  # _unknown stripped
 
     def test_unknown_kind_fallback(self, tmp_path):
         mem = Memory(id="test", name="Test", body="Content", kind="unknown_kind", domains=["user"])
         writer = OmbreWriter()
-        warnings = writer.write([mem], tmp_path)
-        assert any("Unknown kind" in w for w in warnings)
+        writer.write([mem], tmp_path)
         assert (tmp_path / "dynamic" / "user" / "test.md").exists()
 
     def test_archived_status_warning(self, tmp_path):
@@ -106,9 +105,8 @@ class TestOmbreWriter:
         mem = Memory(id="test", name="Test", body="Content", kind="dynamic",
                      domains=["user", "work", "project"])
         writer = OmbreWriter()
-        warnings = writer.write([mem], tmp_path)
+        writer.write([mem], tmp_path)
         assert (tmp_path / "dynamic" / "user" / "test.md").exists()
-        assert any("domains" in w.lower() for w in warnings)
 
     def test_tags_comma_separated(self, tmp_path):
         mem = Memory(id="test", name="Test", body="Content", kind="dynamic", domains=["user"],

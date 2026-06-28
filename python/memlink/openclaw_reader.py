@@ -239,13 +239,10 @@ def _infer_domains(metadata: dict) -> list[str]:
     domain = metadata.get("domain")
     if isinstance(domain, str) and domain.strip():
         return [d.strip() for d in domain.split(",") if d.strip()]
-    # Explicit empty domain → empty list (intentional, not missing)
-    if isinstance(domain, str) and domain == "":
-        return []
     mtype = metadata.get("type")
     if isinstance(mtype, str) and mtype.strip():
         return [mtype.strip()]
-    return ["_unknown"]
+    return []  # No domain info → empty (many formats allow this)
 
 
 def _infer_importance(metadata: dict, fm: dict) -> tuple[float | None, str | None]:

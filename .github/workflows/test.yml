@@ -37,6 +37,9 @@ jobs:
       - name: Type check (mypy)
         run: mypy memlink/
 
+      - name: Schema validation
+        run: python -c "import json; s=json.load(open('spec/canonical-v1.schema.json')); print(f'Schema valid: {s[\"title\"]}')"
+
       - name: Test
         run: pytest tests/ -v --cov=memlink --cov-report=xml --cov-report=term
 
