@@ -159,7 +159,7 @@ class GenericReader(FormatPlugin):
                     summary=fm.get("description") or fm.get("summary"),
                     body=body.strip() or None,
                     kind=kind,
-                    status=status,
+                    status=status,  # type: ignore[arg-type]
                     tags=tags,
                     domains=domains,
                     created_at=created_at,

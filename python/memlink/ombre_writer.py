@@ -59,7 +59,7 @@ class OmbreWriter(FormatPlugin):
     # ── Single memory write ───────────────────────────────────────
 
     def _write_one(self, mem: Memory, root: Path, warnings: list[str]) -> None:
-        original = (mem.metadata.get("memlink") or {}).get("original") or {}
+        original: dict = (mem.metadata.get("memlink") or {}).get("original") or {}  # type: ignore[assignment,union-attr]
 
         # Kind → type (check original for roundtrip preservation)
         ombre_type = _KIND_TO_TYPE.get(mem.kind)
@@ -90,12 +90,12 @@ class OmbreWriter(FormatPlugin):
         if mem.domains:
             _add_field(fm_lines, "domain", _format_domains(mem.domains))
         _add_field(fm_lines, "tags", ", ".join(sorted(mem.tags)) if mem.tags else "")
-        _add_field(fm_lines, "importance", _importance_for_ombre(mem, original, warnings))
+        _add_field(fm_lines, "importance", _importance_for_ombre(mem, original, warnings))  # type: ignore[arg-type]
         if mem.valence is not None:
             _add_field(fm_lines, "valence", mem.valence)
         if mem.arousal is not None:
             _add_field(fm_lines, "arousal", mem.arousal)
-        _add_field(fm_lines, "created", _created_for_ombre(mem, original))
+        _add_field(fm_lines, "created", _created_for_ombre(mem, original))  # type: ignore[arg-type]
         if mem.pinned:
             _add_field(fm_lines, "pinned", True)
         fm_lines.append("---")

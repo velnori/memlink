@@ -363,15 +363,15 @@ def _compare_field(name: str, ov, rv, opts: CompareOptions) -> str | None:
 
     # String comparison
     if isinstance(ov, str) and isinstance(rv, str):
-        ov_norm = _normalize_str(ov, opts, strip=(name in opts.strip_fields))
-        rv_norm = _normalize_str(rv, opts, strip=(name in opts.strip_fields))
-        if ov_norm != rv_norm:
+        s_ov = _normalize_str(ov, opts, strip=(name in opts.strip_fields))
+        s_rv = _normalize_str(rv, opts, strip=(name in opts.strip_fields))
+        if s_ov != s_rv:
             # Show first differing position
-            for i, (a, b) in enumerate(zip(ov_norm, rv_norm, strict=False)):
+            for i, (a, b) in enumerate(zip(s_ov, s_rv, strict=False)):
                 if a != b:
                     ctx = max(0, i - 20)
-                    return f"{name}: ...{ov_norm[ctx : i + 30]}... != ...{rv_norm[ctx : i + 30]}..."
-            return f"{name}: lengths {len(ov_norm)} != {len(rv_norm)}"
+                    return f"{name}: ...{s_ov[ctx : i + 30]}... != ...{s_rv[ctx : i + 30]}..."
+            return f"{name}: lengths {len(s_ov)} != {len(s_rv)}"
         return None
 
     # General
