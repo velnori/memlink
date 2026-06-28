@@ -280,6 +280,8 @@ def _build_structured_frontmatter(mem: Memory) -> dict:
     meta: dict = {}
     if mem.domains:
         meta["domain"] = ", ".join(mem.domains)
+    else:
+        meta["domain"] = ""  # explicit empty — reader knows it's intentional
     if mem.tags:
         meta["tags"] = sorted(mem.tags)
     if mem.importance_label:
