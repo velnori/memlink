@@ -54,7 +54,7 @@ dev = [
     "ruff>=0.6",
 ]
 docs = [
-    "mkdocs-material>=9",
+    "mkdocs-material>=9.7.6",
 ]
 
 [tool.ruff]
