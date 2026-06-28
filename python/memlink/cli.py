@@ -146,10 +146,13 @@ def _cmd_formats() -> None:
 
 def _cmd_convert(args) -> None:
     from .registry import get_reader, get_writer
-    from .converter import convert, analyze_conversion
+    from .converter import analyze_conversion
 
     src_plugin = get_reader(args.from_fmt)
-    dst_plugin = get_writer(args.to_fmt)
+    writer_kwargs = {}
+    if args.to_fmt == "openclaw":
+        writer_kwargs["output_mode"] = args.output_mode
+    dst_plugin = get_writer(args.to_fmt, **writer_kwargs)
 
     # Read first to compute analysis
     result = src_plugin.read(args.source)
@@ -213,12 +216,14 @@ def _print_compatibility(analysis, total: int, verbosity: int) -> None:
 
 
 def _cmd_validate(args) -> None:
-    from .validators import validate_schema, validate_semantic
+    from .validators import validate_schema, validate_semantic, validate_roundtrip
 
     if args.level == "schema":
         issues = validate_schema(args.source)
     elif args.level == "semantic":
         issues = validate_semantic(args.source)
+    elif args.level == "roundtrip":
+        issues = validate_roundtrip(args.source)
     else:
         issues = []
 
@@ -411,40 +416,3 @@ def _cmd_inspect(args) -> None:
 
 
 # ── Helpers ────────────────────────────────────────────────────────
-
-def _loss_reason(src, dst, field: str) -> str:
-    """Legacy stub — kept for backward compat with tests. Use converter.analyze_conversion()."""
-    from .converter import _cap_meta
-    return _cap_meta(field).get("lost_reason", "Format limitation")
-
-
-def _is_read_only(plugin) -> bool:
-    try:
-        plugin.read(Path("."))
-        return False
-    except NotImplementedError:
-        return True
-    except Exception:
-        return False
-
-
-def _is_write_only(plugin) -> bool:
-    try:
-        plugin.write([], Path("."))
-        return False
-    except NotImplementedError:
-        return True
-    except Exception:
-        return False
-
-
-def _loss_reason(src, dst, field: str) -> str:
-    sc = src.capabilities
-    tc = dst.capabilities
-    reasons = {
-        "relationships": "Target plugin capability=false",
-        "emotion": "Target plugin capability=false",
-    }
-    if not tc.preserve_unknown_fields:
-        return "Target cannot preserve unknown extensions"
-    return reasons.get(field, "Format limitation")

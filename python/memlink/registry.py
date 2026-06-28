@@ -1,41 +1,62 @@
-"""Unified plugin registry — entry_points + built-in plugin registration.
+"""Unified plugin registry — stores classes, not instances.
 
-Separates Reader and Writer per format. A format like "ombre" has both
-an OmbreReader and an OmbreWriter, registered under the same name.
+Separates Reader and Writer per format. get_reader/get_writer create
+fresh instances on each call, supporting **kwargs for construction params.
 """
 
 from __future__ import annotations
 
+import warnings
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .plugin import FormatPlugin
 
-_readers: dict[str, FormatPlugin] = {}
-_writers: dict[str, FormatPlugin] = {}
+_readers: dict[str, type[FormatPlugin]] = {}
+_writers: dict[str, type[FormatPlugin]] = {}
 _loaded: bool = False
 
 
-def register_reader(plugin: FormatPlugin) -> None:
-    _readers[plugin.name] = plugin
+class PluginNotFoundError(KeyError):
+    """Raised when a requested format plugin is not registered."""
+
+    def __init__(self, name: str, kind: str = "format", available: list[str] | None = None):
+        self.name = name
+        self.kind = kind
+        self.available = sorted(available or [])
+        msg = f"No {kind} for '{name}'"
+        if self.available:
+            msg += f". Available: {', '.join(self.available)}"
+        super().__init__(msg)
 
 
-def register_writer(plugin: FormatPlugin) -> None:
-    _writers[plugin.name] = plugin
+def register_reader(cls: type[FormatPlugin]) -> None:
+    """Register a Reader class (not an instance)."""
+    _readers[cls.name] = cls
 
 
-def get_reader(name: str) -> FormatPlugin:
+def register_writer(cls: type[FormatPlugin]) -> None:
+    """Register a Writer class (not an instance)."""
+    _writers[cls.name] = cls
+
+
+def get_reader(name: str, **kwargs) -> FormatPlugin:
+    """Get a fresh Reader instance. Supports constructor kwargs."""
     _ensure_loaded()
     if name not in _readers:
-        raise KeyError(f"No reader for '{name}'. Available: {sorted(_readers)}")
-    return _readers[name]
+        raise PluginNotFoundError(name, kind="reader", available=list(_readers))
+    return _readers[name](**kwargs)
 
 
-def get_writer(name: str) -> FormatPlugin:
+def get_writer(name: str, **kwargs) -> FormatPlugin:
+    """Get a fresh Writer instance. Supports constructor kwargs.
+
+    Example: get_writer("openclaw", output_mode="structured")
+    """
     _ensure_loaded()
     if name not in _writers:
-        raise KeyError(f"No writer for '{name}'. Available: {sorted(_writers)}")
-    return _writers[name]
+        raise PluginNotFoundError(name, kind="writer", available=list(_writers))
+    return _writers[name](**kwargs)
 
 
 def list_formats() -> dict[str, dict[str, bool]]:
@@ -44,6 +65,8 @@ def list_formats() -> dict[str, dict[str, bool]]:
     names = sorted(set(_readers) | set(_writers))
     return {n: {"reader": n in _readers, "writer": n in _writers} for n in names}
 
+
+# ── Lazy loading ───────────────────────────────────────────────────
 
 def _ensure_loaded() -> None:
     global _loaded
@@ -60,10 +83,10 @@ def _discover_builtins() -> None:
     from .openclaw_reader import OpenClawReader
     from .openclaw_writer import OpenClawWriter
 
-    register_reader(OmbreReader())
-    register_writer(OmbreWriter())
-    register_reader(OpenClawReader())
-    register_writer(OpenClawWriter())
+    register_reader(OmbreReader)
+    register_writer(OmbreWriter)
+    register_reader(OpenClawReader)
+    register_writer(OpenClawWriter)
 
 
 def _discover_entry_points() -> None:
@@ -75,12 +98,15 @@ def _discover_entry_points() -> None:
         try:
             for ep in entry_points(group=group):
                 try:
-                    instance = ep.load()()
+                    cls = ep.load()
+                    if not isinstance(cls, type):
+                        warnings.warn(f"Entry point '{ep.name}' in {group} is not a class — skipping")
+                        continue
                     if group == "memlink.readers":
-                        register_reader(instance)
+                        register_reader(cls)
                     else:
-                        register_writer(instance)
-                except Exception:
-                    pass
+                        register_writer(cls)
+                except Exception as e:
+                    warnings.warn(f"Failed to load plugin '{ep.name}' from {group}: {e}")
         except Exception:
             pass

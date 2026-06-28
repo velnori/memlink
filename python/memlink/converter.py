@@ -1,17 +1,22 @@
-"""Conversion pipeline + Compatibility Analysis.
+"""Conversion pipeline + Compatibility Analysis + Compare Engine.
 
 Coordinates the flow between a source Reader and target Writer.
 Provides structured ConversionAnalysis for CLI/GUI/API consumption.
+Compare Engine shared by diff, validate, and roundtrip.
 """
 
 from __future__ import annotations
 
+import hashlib
+import time
+import unicodedata
 from dataclasses import dataclass, field
+from datetime import timedelta
 from pathlib import Path
 from typing import Literal
 
 from .models import Memory
-from .plugin import Capabilities, FormatPlugin
+from .plugin import Capabilities, FormatPlugin, Severity, ValidationIssue
 
 # ── Capability registry ────────────────────────────────────────────
 
@@ -183,3 +188,323 @@ def convert(
         "warnings": result.warnings + compat + write_warnings,
         "analysis": analysis,
     }
+
+
+# ═══════════════════════════════════════════════════════════════════
+# Compare Engine — shared by diff, validate, roundtrip
+# ═══════════════════════════════════════════════════════════════════
+
+@dataclass
+class CompareOptions:
+    """Configurable comparison rules for Memory fields."""
+
+    ignore: set[str] = field(default_factory=lambda: {
+        "relationships", "updated_at", "source", "checksum",
+        "metadata", "extensions", "schema_version",
+    })
+    normalize_unicode: bool = True     # NFC normalization
+    normalize_newlines: bool = True    # CRLF → LF
+    sort_lists: bool = True            # tags, domains
+    time_epsilon: timedelta = field(default_factory=lambda: timedelta(seconds=1))
+    casefold_tags: bool = True
+
+    # Fields compared as-is (no normalization)
+    exact_fields: set[str] = field(default_factory=lambda: {"id", "kind", "name"})
+
+    # Fields compared with strip()
+    strip_fields: set[str] = field(default_factory=lambda: {"body", "summary"})
+
+
+def compare_memories(
+    original: list[Memory] | dict[str, Memory],
+    restored: list[Memory] | dict[str, Memory],
+    options: CompareOptions | None = None,
+) -> list[ValidationIssue]:
+    """Compare two sets of Memories — shared by diff, validate, roundtrip.
+
+    Uses automatic field iteration over dataclass fields.
+    One place to maintain — new Canonical fields covered automatically.
+    """
+    opts = options or CompareOptions()
+
+    # Normalize to dict
+    if isinstance(original, list):
+        original = {m.id: m for m in original}
+    if isinstance(restored, list):
+        restored = {m.id: m for m in restored}
+
+    issues: list[ValidationIssue] = []
+    orig_ids = set(original)
+    rest_ids = set(restored)
+
+    # Lost memories
+    for mid in sorted(orig_ids - rest_ids):
+        issues.append(ValidationIssue(
+            code="ML400", severity=Severity.ERROR, memory_id=mid,
+            field="id", message="Memory lost in roundtrip",
+        ))
+    # Unexpected memories
+    for mid in sorted(rest_ids - orig_ids):
+        issues.append(ValidationIssue(
+            code="ML400", severity=Severity.ERROR, memory_id=mid,
+            field="id", message="Unexpected memory in roundtrip",
+        ))
+
+    # Compare common memories — iterate dataclass fields automatically
+    for mid in sorted(orig_ids & rest_ids):
+        o, r = original[mid], restored[mid]
+        for fld in Memory.__dataclass_fields__:
+            if fld in opts.ignore:
+                continue
+            ov = getattr(o, fld, None)
+            rv = getattr(r, fld, None)
+
+            # Checksum shortcut for body
+            if fld == "body" and o.checksum and r.checksum and o.checksum == r.checksum:
+                continue
+
+            diff = _compare_field(fld, ov, rv, opts)
+            if diff:
+                issues.append(ValidationIssue(
+                    code=_field_error_code(fld),
+                    severity=Severity.WARNING if fld in {"tags", "importance_score"} else Severity.ERROR,
+                    memory_id=mid, field=fld, message=diff,
+                ))
+
+    return issues
+
+
+def _compare_field(name: str, ov, rv, opts: CompareOptions) -> str | None:
+    """Compare a single field value. Returns diff string or None if equal."""
+    # Exact match
+    if name in opts.exact_fields:
+        return f"{name}: {_fmt(ov)} != {_fmt(rv)}" if ov != rv else None
+
+    # Float comparison
+    if isinstance(ov, (int, float)) and isinstance(rv, (int, float)):
+        if name == "importance_score" and abs(ov - rv) <= 0.01:
+            return None
+        if ov != rv:
+            return f"{name}: {_fmt(ov)} != {_fmt(rv)}"
+
+    # Datetime comparison
+    from datetime import datetime, timezone as tz
+    if isinstance(ov, datetime) and isinstance(rv, datetime):
+        dt_ov = ov.astimezone(tz.utc) if ov.tzinfo else ov.replace(tzinfo=tz.utc)
+        dt_rv = rv.astimezone(tz.utc) if rv.tzinfo else rv.replace(tzinfo=tz.utc)
+        if abs((dt_ov - dt_rv).total_seconds()) > opts.time_epsilon.total_seconds():
+            return f"{name}: {_fmt(ov)} != {_fmt(rv)}"
+        return None
+
+    # List comparison (tags, domains)
+    if isinstance(ov, list) and isinstance(rv, list):
+        ov_norm = _normalize_list(ov, opts)
+        rv_norm = _normalize_list(rv, opts)
+        if ov_norm != rv_norm:
+            return f"{name}: {ov_norm} != {rv_norm}"
+        return None
+
+    # String comparison
+    if isinstance(ov, str) and isinstance(rv, str):
+        ov_norm = _normalize_str(ov, opts, strip=(name in opts.strip_fields))
+        rv_norm = _normalize_str(rv, opts, strip=(name in opts.strip_fields))
+        if ov_norm != rv_norm:
+            # Show first differing position
+            for i, (a, b) in enumerate(zip(ov_norm, rv_norm)):
+                if a != b:
+                    ctx = max(0, i - 20)
+                    return f"{name}: ...{ov_norm[ctx:i+30]}... != ...{rv_norm[ctx:i+30]}..."
+            return f"{name}: lengths {len(ov_norm)} != {len(rv_norm)}"
+        return None
+
+    # General
+    if ov != rv:
+        return f"{name}: {_fmt(ov)} != {_fmt(rv)}"
+    return None
+
+
+def _normalize_str(s: str, opts: CompareOptions, strip: bool = False) -> str:
+    if opts.normalize_unicode:
+        s = unicodedata.normalize("NFC", s)
+    if opts.normalize_newlines:
+        s = s.replace("\r\n", "\n").replace("\r", "\n")
+    if strip:
+        s = s.strip()
+    return s
+
+
+def _normalize_list(lst: list, opts: CompareOptions) -> list:
+    result = []
+    for item in lst:
+        if isinstance(item, str):
+            s = _normalize_str(item, opts)
+            if opts.casefold_tags:
+                s = s.casefold()
+            result.append(s)
+        else:
+            result.append(item)
+    if opts.sort_lists:
+        result = sorted(result, key=str)
+    return result
+
+
+def _field_error_code(field: str) -> str:
+    codes = {
+        "kind": "ML401", "body": "ML402", "importance_score": "ML403",
+        "importance_label": "ML403", "created_at": "ML404", "updated_at": "ML404",
+        "id": "ML400", "name": "ML401", "tags": "ML401", "domains": "ML401",
+    }
+    return codes.get(field, "ML401")
+
+
+def _fmt(v) -> str:
+    if isinstance(v, str) and len(v) > 60:
+        return repr(v[:57] + "...")
+    return repr(v)
+
+
+# ═══════════════════════════════════════════════════════════════════
+# Roundtrip
+# ═══════════════════════════════════════════════════════════════════
+
+@dataclass
+class RoundtripReport:
+    total: int
+    matched: int
+    partial: int       # warnings only (degraded)
+    failed: int         # errors (lost / content mismatch)
+    only_in_original: list[str]
+    only_in_restored: list[str]
+    issues: list[ValidationIssue]
+    duration: float = 0.0
+    warnings: list[str] = field(default_factory=list)
+    schema_version: str = "1"
+
+    def to_dict(self) -> dict:
+        return {
+            "total": self.total, "matched": self.matched,
+            "partial": self.partial, "failed": self.failed,
+            "only_in_original": self.only_in_original,
+            "only_in_restored": self.only_in_restored,
+            "duration": self.duration,
+            "warnings": self.warnings,
+            "schema_version": self.schema_version,
+            "issues": [
+                {"code": i.code, "severity": i.severity,
+                 "memory_id": i.memory_id, "field": i.field, "message": i.message}
+                for i in self.issues
+            ],
+        }
+
+
+def run_roundtrip(
+    source_path: Path,
+    source_format: str,
+    intermediate_format: str = "openclaw",
+    keep_temp: Path | None = None,
+) -> RoundtripReport:
+    """Run full roundtrip: source → intermediate → source, returning structured report.
+
+    Uses registry only — no hardcoded format classes.
+    """
+    from .registry import get_reader, get_writer, list_formats
+
+    start = time.perf_counter()
+    all_warnings: list[str] = []
+
+    # Validate formats
+    try:
+        reader = get_reader(source_format)
+    except Exception as e:
+        return RoundtripReport(total=0, matched=0, partial=0, failed=1,
+                               only_in_original=[], only_in_restored=[],
+                               issues=[ValidationIssue(code="ML301", severity=Severity.ERROR,
+                                                        message=str(e))])
+
+    # Read original
+    try:
+        result = reader.read(source_path)
+    except Exception as e:
+        return RoundtripReport(total=0, matched=0, partial=0, failed=1,
+                               only_in_original=[], only_in_restored=[],
+                               issues=[ValidationIssue(code="ML200", severity=Severity.ERROR,
+                                                        message=f"Read failed: {e}")])
+
+    all_warnings.extend(result.warnings)
+    original = {m.id: m for m in result.memories}
+    if not original:
+        return RoundtripReport(total=0, matched=0, partial=0, failed=0,
+                               only_in_original=[], only_in_restored=[], issues=[])
+
+    # Roundtrip
+    import tempfile
+    import shutil
+    tmp_dir = None
+    try:
+        tmp_dir = tempfile.mkdtemp()
+        tmp = Path(tmp_dir)
+
+        # source → intermediate
+        try:
+            iw = get_writer(intermediate_format)
+            if intermediate_format == "openclaw":
+                iw = get_writer(intermediate_format, output_mode="structured")
+        except Exception as e:
+            return RoundtripReport(total=len(original), matched=0, partial=0, failed=len(original),
+                                   only_in_original=[], only_in_restored=[],
+                                   issues=[ValidationIssue(code="ML301", severity=Severity.ERROR,
+                                                            message=str(e))])
+
+        iw.write(result.memories, tmp / "intermediate")
+
+        # intermediate → Canonical
+        ir = get_reader(intermediate_format)
+        back_result = ir.read(tmp / "intermediate")
+        all_warnings.extend(back_result.warnings)
+        im = back_result.memories
+
+        # Canonical → source
+        sw = get_writer(source_format)
+        sw.write(im, tmp / "restored")
+
+        # Read back
+        restored_result = reader.read(tmp / "restored")
+        all_warnings.extend(restored_result.warnings)
+        restored = {m.id: m for m in restored_result.memories}
+
+        if keep_temp:
+            shutil.copytree(tmp, keep_temp, dirs_exist_ok=True)
+
+    finally:
+        if tmp_dir:
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+
+    # Compare
+    issues = compare_memories(original, restored)
+
+    orig_ids = set(original)
+    rest_ids = set(restored)
+    common = orig_ids & rest_ids
+
+    matched = 0
+    partial = 0
+    failed = len(orig_ids - rest_ids) + len(rest_ids - orig_ids)
+
+    for mid in common:
+        mem_issues = [i for i in issues if i.memory_id == mid]
+        errors = [i for i in mem_issues if i.severity == Severity.ERROR]
+        if errors:
+            failed += 1
+        elif mem_issues:
+            partial += 1
+        else:
+            matched += 1
+
+    return RoundtripReport(
+        total=len(original), matched=matched, partial=partial, failed=failed,
+        only_in_original=sorted(orig_ids - rest_ids),
+        only_in_restored=sorted(rest_ids - orig_ids),
+        issues=issues, warnings=all_warnings,
+        duration=time.perf_counter() - start,
+        schema_version="1",
+    )

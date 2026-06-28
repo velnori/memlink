@@ -77,7 +77,7 @@ class OmbreReader(FormatPlugin):
             # Map fields
             memory = Memory(
                 id=str(mem_id),
-                name=fm.get("name"),
+                name=str(fm["name"]) if fm.get("name") is not None else None,
                 source=Source(
                     format="ombre",
                     path=str(rel),

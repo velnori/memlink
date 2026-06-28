@@ -6,7 +6,7 @@ See spec/canonical-v1.md for the full schema specification.
 import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Literal, Union
+from typing import Literal, Union
 
 # JSON-compatible value type (recursive)
 JSONValue = Union[None, bool, int, float, str, list["JSONValue"], dict[str, "JSONValue"]]
@@ -114,7 +114,7 @@ class Memory:
 
     # Extension layers
     metadata: dict[str, JSONValue] = field(default_factory=dict)
-    extensions: dict[str, Any] = field(default_factory=dict)
+    extensions: dict[str, JSONValue] = field(default_factory=dict)
 
     # Relationships (v0 reserved — stored in metadata.memlink.relationships)
     relationships: list[Relationship] = field(default_factory=list)

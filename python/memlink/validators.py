@@ -45,7 +45,12 @@ class ErrorCode(str, Enum):
 
     # Roundtrip errors (ML400–ML499)
     ROUNDTRIP_ID_MISMATCH = "ML400"
-    ROUNDTRIP_CONTENT_MISMATCH = "ML401"
+    ROUNDTRIP_KIND = "ML401"
+    ROUNDTRIP_BODY = "ML402"
+    ROUNDTRIP_IMPORTANCE = "ML403"
+    ROUNDTRIP_TIME = "ML404"
+    # Legacy alias
+    ROUNDTRIP_CONTENT_MISMATCH = "ML401"  # deprecated — use ROUNDTRIP_KIND
 
 
 # ── Schema validation ──────────────────────────────────────────────
@@ -217,12 +222,18 @@ def validate_semantic(path: Path) -> list[ValidationIssue]:
 # ── Roundtrip validation ───────────────────────────────────────────
 
 
-def validate_roundtrip(path: Path) -> list[ValidationIssue]:
-    """Validate A→B→A canonical consistency (semantic, not byte-level).
-
-    Not implemented until Phase 2.
-    """
-    return []
+def validate_roundtrip(path: Path, source_format: str = "ombre",
+                       intermediate_format: str = "openclaw") -> list[ValidationIssue]:
+    """Validate A→B→A canonical consistency (semantic, not byte-level)."""
+    from .converter import run_roundtrip
+    try:
+        report = run_roundtrip(path, source_format, intermediate_format)
+        return report.issues
+    except Exception as e:
+        return [ValidationIssue(
+            code=ErrorCode.VALIDATION_ERROR, severity=Severity.ERROR,
+            message=f"Roundtrip validation failed: {e}",
+        )]
 
 
 # ── Helpers ────────────────────────────────────────────────────────
