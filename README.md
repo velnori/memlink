@@ -134,6 +134,30 @@ memlink convert --from ombre --to openclaw -s ... -t ...
   Total loss         27 fields across 19 memories
 ```
 
+## What memlink is NOT
+
+- ❌ **Synchronization Engine** — v0 is export/import only
+- ❌ **Memory Database** — Works with files, not live memory APIs
+- ❌ **Embedding Store** — No vector search or similarity
+- ❌ **Knowledge Graph** — No graph traversal or inference
+- ❌ **Not opinionated** — Preserves original data structures, no normalization
+
+## Spec Compliance
+
+| Canonical v1 feature | Ombre | OpenClaw |
+|---------------------|-------|----------|
+| Core Fields (id, name, body) | ✅ | ✅ |
+| Summary | — | ✅ |
+| Tags & Domains | ✅ | ✅ |
+| Emotion (valence/arousal) | ✅ | — |
+| Importance | ✅ 1-10 | ✅ label/score |
+| Pinned | ✅ | ✅ |
+| Timestamps | ✅ | ✅ |
+| Relationships | ⚠ v0 metadata | ⚠ v0 metadata |
+| Extensions | ⚠ pass-through | ⚠ not preserved |
+
+Full spec: [spec/canonical-v1.md](spec/canonical-v1.md)
+
 ## Non-Goals
 
 - ❌ **Not a sync tool** — v0 is export/import only. Bidirectional sync is future work.

@@ -82,6 +82,9 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 pythonpath = ["python"]
 addopts = "-v --tb=short --strict-markers"
+markers = [
+    "slow: slow tests (fuzz, performance)",
+]
 
 [tool.coverage.run]
 source = ["memlink"]
