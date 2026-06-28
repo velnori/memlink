@@ -11,6 +11,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
+from typing import Literal
 
 from .models import Memory
 
@@ -27,10 +28,11 @@ class ValidationIssue:
 
     code: str  # "ML001" — see spec for full list
     severity: Severity
-    file: str | None = None
-    field: str | None = None
+    path: str | None = None      # file path
+    memory_id: str | None = None  # memory ID within the file
+    field: str | None = None      # affected field name
     message: str = ""
-    suggestion: str | None = None
+    suggestion: str | None = None  # actionable fix hint
 
 
 @dataclass
