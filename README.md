@@ -52,12 +52,15 @@ memlink formats
 
 ## Supported Formats
 
-| Format | Read | Write | Roundtrip | Lossless |
-|--------|------|-------|-----------|----------|
-| [Ombre Brain](https://github.com/P0luz/Ombre-Brain) | ✅ | ✅ | ✅ | ✅ |
-| [OpenClaw](https://github.com/basicmachines-co/openclaw-basic-memory) | ✅ | ✅ | ✅ | ⚠️ summary |
-| Mem0 | 🚧 | 🚧 | — | — |
-| Zep | 🚧 | 🚧 | — | — |
+| Plugin | Capability | Covered Apps |
+|--------|-----------|--------------|
+| **Ombre** | Read + Write | [Ombre Brain](https://github.com/P0luz/Ombre-Brain) |
+| **OpenClaw** | Read + Write | OpenClaw core, [basic-memory](https://github.com/basicmachines-co/openclaw-basic-memory), [claw-mem](https://github.com/opensourceclaw/claw-mem) |
+| **Generic** | Read | Obsidian, Logseq, Bear, iA Writer, plain Markdown |
+
+**3 plugins, 7+ apps interoperable.** Generic Reader alone covers every app that uses YAML frontmatter + Markdown body — no additional code needed.
+
+Add a new format = write one Reader or Writer. Zero changes to core code. That's the O(n) architecture.
 
 ## Architecture
 
