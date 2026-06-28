@@ -10,8 +10,6 @@ from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 
-import yaml
-
 from .plugin import Severity, ValidationIssue
 
 
@@ -55,25 +53,7 @@ class ErrorCode(str, Enum):
 
 # ── Schema validation ──────────────────────────────────────────────
 
-
-def _parse_frontmatter(text: str) -> tuple[dict, str]:
-    """Parse YAML frontmatter from a markdown file.
-
-    Returns (frontmatter_dict, body_text). If no frontmatter, returns ({}, text).
-    """
-    if not text.startswith("---"):
-        return {}, text
-
-    parts = text.split("---", 2)
-    if len(parts) < 3:
-        return {}, text
-
-    try:
-        fm = yaml.safe_load(parts[1]) or {}
-    except yaml.YAMLError:
-        return {}, text
-
-    return fm, parts[2]
+from ._frontmatter import parse_frontmatter as _parse_frontmatter
 
 
 def _load_canonical_schema() -> dict | None:

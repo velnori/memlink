@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import unquote
 
-import yaml
+from ._frontmatter import parse_frontmatter as _parse_frontmatter
 
 from .models import Memory, Source
 from .plugin import Capabilities, FormatPlugin, ReadResult
@@ -179,19 +179,6 @@ class OpenClawReader(FormatPlugin):
 
 
 # ── Pipeline helpers ───────────────────────────────────────────────
-
-def _parse_frontmatter(text: str) -> tuple[dict, str]:
-    if not text.startswith("---"):
-        return {}, text
-    parts = text.split("---", 2)
-    if len(parts) < 3:
-        return {}, text
-    try:
-        fm = yaml.safe_load(parts[1])
-        return fm if isinstance(fm, dict) else {}, parts[2]
-    except yaml.YAMLError:
-        return {}, text
-
 
 def _parse_memory_index(path: Path) -> dict[str, str]:
     """Parse MEMORY.md index, supporting multiple format variants."""

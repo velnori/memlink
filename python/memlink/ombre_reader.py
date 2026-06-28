@@ -10,8 +10,6 @@ import hashlib
 from datetime import datetime
 from pathlib import Path
 
-import yaml
-
 from .models import Memory, Source
 from .plugin import Capabilities, FormatPlugin, ReadResult
 
@@ -128,20 +126,7 @@ class OmbreReader(FormatPlugin):
 # ── Helpers ─────────────────────────────────────────────────────────
 
 
-def _parse_ombre_frontmatter(text: str) -> tuple[dict, str]:
-    """Parse Ombre YAML frontmatter. Returns (frontmatter_dict, body_text)."""
-    if not text.startswith("---"):
-        return {}, text
-    parts = text.split("---", 2)
-    if len(parts) < 3:
-        return {}, text
-    try:
-        fm = yaml.safe_load(parts[1])
-        if not isinstance(fm, dict):
-            return {}, text
-        return fm, parts[2]
-    except yaml.YAMLError:
-        return {}, text
+from ._frontmatter import parse_frontmatter as _parse_ombre_frontmatter
 
 
 def _parse_ombre_tags(fm: dict) -> list[str]:
