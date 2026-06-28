@@ -24,7 +24,10 @@ Zep   ──┘                └──→ Your Format
 ## Quick Start
 
 ```bash
-# Install (PyPI coming soon — use git for now)
+# Install from PyPI
+pip install memlink-bridge
+
+# Or from source
 git clone https://github.com/velnori/memlink.git
 cd memlink
 pip install -e .

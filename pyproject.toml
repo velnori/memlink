@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "memlink"
+name = "memlink-bridge"
 version = "0.1.0"
 description = "AI Memory Interchange Layer — language-neutral bridge for AI memory systems"
 readme = "README.md"
