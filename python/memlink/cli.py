@@ -300,7 +300,9 @@ def _cmd_diff(args) -> None:
                     "only_in_source": len(only_in_1),
                     "only_in_target": len(only_in_2),
                     "field_differs": field_errs,
-                    "details": [{"memory_id": i.memory_id, "field": i.field, "message": i.message} for i in issues[:20]],
+                    "details": [
+                        {"memory_id": i.memory_id, "field": i.field, "message": i.message} for i in issues[:20]
+                    ],
                 },
                 indent=2,
             )
