@@ -7,7 +7,7 @@ Supports Obsidian, Logseq, Bear, iA Writer, and plain Markdown notes.
 from __future__ import annotations
 
 import hashlib
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 
 import yaml
@@ -172,8 +172,8 @@ def _sha256(s: str) -> str:
 
 def _infer_kind(fm: dict, tags: list[str]) -> str:
     """Infer Canonical kind from frontmatter type/status fields."""
-    raw_type = str(fm.get("type", "") or "").lower()
-    raw_status = str(fm.get("status", "") or "").lower()
+    raw_type = str(fm.get("type") or "").lower()
+    raw_status = str(fm.get("status") or "").lower()
 
     # Direct type match
     if raw_type in _TYPE_TO_KIND:
@@ -194,11 +194,13 @@ def _infer_kind(fm: dict, tags: list[str]) -> str:
 
 
 def _parse_optional_datetime(val) -> datetime | None:
-    """Parse an optional datetime from string or datetime object."""
+    """Parse an optional datetime from string, date, or datetime object."""
     if val is None:
         return None
     if isinstance(val, datetime):
         return val
+    if isinstance(val, date):
+        return datetime.combine(val, datetime.min.time())
     try:
         return datetime.fromisoformat(str(val))
     except (ValueError, TypeError):

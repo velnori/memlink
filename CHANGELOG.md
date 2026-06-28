@@ -59,5 +59,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 107 unit tests + 4 fuzz tests
 - Real data roundtrip: 118/118 matched (0.66s)
 
+### Added
+
+- **GenericReader** — reads any Markdown+YAML directory (Obsidian, Logseq, Bear, plain notes). Third format, 0 core changes needed.
+
 [0.1.1]: https://github.com/velnori/memlink/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/velnori/memlink/releases/tag/v0.1.0
