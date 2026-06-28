@@ -1,6 +1,10 @@
 # memlink
 
-> A canonical interchange format for AI memories — like Pandoc, but for AI memory systems.
+> Pandoc for AI memories. One canonical schema to bridge AI memory systems.
+
+Stop writing n² converters between memory formats. Write one Reader + one Writer per format. Everything else is automatic.
+
+*Explicit compatibility reports. No silent data loss.*
 
 Built for developers building AI assistants, memory platforms, and agent frameworks.
 
@@ -20,14 +24,14 @@ Different AI tools store memories differently. memlink lets them exchange memori
 
 ```
 Ombre → OpenClaw    Ombre → Mem0    Ombre → Zep
-Mem0 → Zep          OpenClaw → Zep  ...
+Mem0 → Zep          ...
 ```
 
-**With memlink** — each format writes one Reader + one Writer. Everything else is automatic:
+**With memlink** — each format writes one Reader + one Writer:
 
 ```
          ┌── Reader → Canonical ──┬── Writer → OpenClaw
-  Ombre ─┤                        ├── Writer → Mem0
+  Ombre ─┤                        ├── Writer → Any Format
          └── ...                   └── Writer → Any Format
 ```
 
@@ -40,19 +44,26 @@ Mem0 → Zep          OpenClaw → Zep  ...
 ```bash
 pip install memlink-bridge
 
-# Convert Ombre → OpenClaw
-memlink convert --from ombre --to openclaw \
-  -s ~/.claude/ombre-buckets -T ./my-memories/
+# Create a demo memory file
+mkdir -p /tmp/memlink-demo
+cat > /tmp/memlink-demo/hello.md << 'EOF'
+---
+title: Hello MemLink
+tags: [demo]
+---
+This is a memory. memlink can bridge it across AI memory formats.
+EOF
 
-# Inspect any memory file
-memlink inspect tests/fixtures/ombre_samples/dynamic/user/sample.md
-
-# Validate data integrity
-memlink validate -s tests/fixtures/ombre_samples --level schema
+# Convert Generic Markdown → OpenClaw
+memlink convert --from generic --to openclaw \
+  -s /tmp/memlink-demo \
+  -T /tmp/memlink-output
 
 # Show installed formats
 memlink formats
 ```
+
+**What just happened:** A plain Markdown file was read into Canonical Memory format, then written as an OpenClaw memory. The Compatibility Report tells you exactly what was preserved or dropped — no silent data loss.
 
 ---
 
@@ -63,10 +74,45 @@ memlink formats
 | Ombre Brain | ✅ | ✅ | Stable |
 | OpenClaw | ✅ | ✅ | Stable |
 | Generic Markdown | ✅ | — | Stable |
-| *Mem0* | 🚧 | — | *v0.2* |
-| *Zep* | 🚧 | — | *v0.3* |
 
-**3 plugins, 7+ apps interoperable.** Generic alone covers Obsidian, Logseq, Bear, iA Writer, and plain Markdown — every app that uses YAML frontmatter.
+**Generic Markdown** works with YAML-frontmatter Markdown used by tools like Obsidian, Logseq, Bear, and plain Markdown. Tool-specific extensions are preserved as metadata or reported as compatibility notes.
+
+### Planned Formats
+
+Planned formats are roadmap items, **not implemented in v0.1.1**:
+
+| Format | Target |
+|--------|--------|
+| Mem0 Reader | v0.2 |
+| Zep Reader | v0.3 |
+| Chat export readers (ChatGPT, Claude) | later |
+
+---
+
+## Feature Compatibility
+
+MemLink is honest about what transfers and what doesn't.
+
+**Without a compatibility layer:**
+- Format-specific fields can disappear silently.
+
+**With MemLink:**
+- Preserved fields stay in Canonical Memory.
+- Format-specific fields are preserved in metadata when possible.
+- Compatibility reports explain what changed.
+
+```
+$ memlink convert --from ombre --to openclaw -s ombre/ -T openclaw/
+
+  Read:     117 memories from ombre
+
+  Compatibility Report:
+    [ok] Preserved via metadata:
+      Emotion fields (valence/arousal): 117 field values
+
+  Warnings: 0
+  Time:     0.23s
+```
 
 ---
 
@@ -91,39 +137,13 @@ Add a new format = write one plugin. Zero changes to core code.
 
 ---
 
-## Feature Compatibility
+## What memlink is NOT
 
-memlink is honest about what gets lost. Every conversion shows a Compatibility Report:
-
-```
-$ memlink convert --from ombre --to openclaw -s ombre/ -T openclaw/
-
-  Read:     117 memories from ombre
-
-  Compatibility Report:
-    [ok] Preserved via metadata:
-      Emotion fields (valence/arousal): 117 field values
-
-  Warnings: 0
-  Time:     0.23s
-```
-
-No silent data loss. No surprises.
-
----
-
-## Canonical Memory Schema
-
-```yaml
-id: "project-alpha"
-name: "Project Alpha Kickoff"
-body: "..."
-kind: dynamic
-tags: [meeting, planning]
-metadata: { ... }
-```
-
-See [spec/canonical-v1.md](spec/canonical-v1.md) for the full specification. [JSON Schema](spec/canonical-v1.schema.json) also available.
+- ❌ **Sync engine** — v0 is export/import only
+- ❌ **Memory database** — Works with files, not APIs
+- ❌ **Embedding store** — No vector search
+- ❌ **Knowledge graph** — No traversal or inference
+- ❌ **Production ready** — v0.1.1 is an alpha. Use in production at your own discretion.
 
 ---
 
@@ -132,18 +152,9 @@ See [spec/canonical-v1.md](spec/canonical-v1.md) for the full specification. [JS
 | Version | Focus |
 |---------|-------|
 | **v0.2** | Mem0 Reader, daily-notes roundtrip, `--fail-on-loss` |
-| **v0.3** | Zep Reader, chat export readers (ChatGPT, Claude) |
+| **v0.3** | Zep Reader, chat export readers |
 | **v0.4** | `memlink merge`, `memlink broadcast` |
 | **v1.0** | Stable Canonical Schema v1, stable Plugin API |
-
----
-
-## What memlink is NOT
-
-- ❌ **Sync engine** — v0 is export/import only
-- ❌ **Memory database** — Works with files, not APIs
-- ❌ **Embedding store** — No vector search
-- ❌ **Knowledge graph** — No traversal or inference
 
 ---
 
@@ -155,8 +166,8 @@ cd memlink
 pip install -e ".[dev]"
 
 pytest tests/ -v          # 115 tests
-ruff check memlink/       # Lint
-mypy memlink/             # Type check
+ruff check python/memlink/       # Lint
+mypy python/memlink/             # Type check
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for how to add a new format.
