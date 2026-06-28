@@ -114,38 +114,70 @@ def _cmd_formats() -> None:
 
 def _cmd_convert(args) -> None:
     from .registry import get_reader, get_writer
-    from .converter import convert, check_compatibility
+    from .converter import convert, analyze_conversion
 
     src_plugin = get_reader(args.from_fmt)
     dst_plugin = get_writer(args.to_fmt)
 
-    compat = check_compatibility(src_plugin, dst_plugin)
-    if compat and args.verbose:
-        for w in compat:
-            print(f"[compat] {w}")
+    # Read first to compute analysis
+    result = src_plugin.read(args.source)
+    memories = result.memories
+    total = len(memories)
+    print(f"Read:     {total} memories from {args.from_fmt}")
 
+    # Analyze before writing
+    analysis = analyze_conversion(memories, src_plugin, dst_plugin)
+    _print_compatibility(analysis, total, args.verbose)
+
+    # Dry run
+    if args.dry_run:
+        print(f"\nDry run: would convert {total} memories")
+        return
+
+    # Write
     start = time.perf_counter()
-
-    result = convert(src_plugin, dst_plugin, args.source, args.target)
-
+    write_warnings = dst_plugin.write(memories, args.target)
     elapsed = time.perf_counter() - start
 
-    n = len(result["memories"])
-    warnings = result["warnings"]
-    loss = result["feature_loss"]
+    if write_warnings and args.verbose:
+        for w in write_warnings[:10]:
+            print(f"  [write] {w}")
 
-    print(f"Converted: {n} memories")
-    if warnings:
-        print(f"Warnings:  {len(warnings)}")
-        if args.verbose:
-            for w in warnings[:10]:
-                print(f"  - {w}")
-    if loss:
-        print("Feature Loss:")
-        for k, v in loss.items():
-            reason = _loss_reason(src_plugin, dst_plugin, k)
-            print(f"  {k}: {v} dropped  ({reason})")
+    all_warnings = result.warnings + write_warnings
+    print(f"Warnings: {len(all_warnings)}" if all_warnings else "Warnings: 0")
     print(f"Time:     {elapsed:.2f}s")
+
+
+def _print_compatibility(analysis, total: int, verbosity: int) -> None:
+    """Print structured Compatibility Report."""
+    if not analysis.impacts:
+        if verbosity >= 1:
+            print("Compatibility: fully supported")
+        return
+
+    ICONS = {"lost": "[!]", "degraded": "[~]", "preserved": "[ok]"}
+    TITLES = {"lost": "Not supported", "degraded": "Degraded", "preserved": "Preserved via metadata"}
+
+    # Group by severity
+    by_sev: dict[str, list] = {}
+    for imp in analysis.impacts:
+        by_sev.setdefault(imp.severity, []).append(imp)
+
+    print("\nCompatibility Report:")
+
+    for sev in ("lost", "preserved", "degraded"):
+        items = by_sev.get(sev, [])
+        if not items:
+            continue
+        title = TITLES.get(sev, sev)
+        print(f"  {ICONS.get(sev, '?')} {title}:")
+        for imp in items:
+            pct = f" ({imp.count * 100 // total}%)" if verbosity >= 1 else ""
+            print(f"    {imp.label}: {imp.count} field values{pct}")
+            if verbosity >= 2:
+                print(f"      → {imp.reason}")
+            if verbosity >= 2 and imp.recoverable:
+                print(f"      → Recoverable via roundtrip")
 
 
 def _cmd_validate(args) -> None:
@@ -245,6 +277,12 @@ def _cmd_inspect(args) -> None:
 
 
 # ── Helpers ────────────────────────────────────────────────────────
+
+def _loss_reason(src, dst, field: str) -> str:
+    """Legacy stub — kept for backward compat with tests. Use converter.analyze_conversion()."""
+    from .converter import _cap_meta
+    return _cap_meta(field).get("lost_reason", "Format limitation")
+
 
 def _is_read_only(plugin) -> bool:
     try:
