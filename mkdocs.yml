@@ -1,5 +1,5 @@
 site_name: memlink
-site_description: AI Memory Interchange Layer — language-neutral bridge for AI memory systems
+site_description: AI Memory Interchange Layer
 repo_url: https://github.com/velnori/memlink
 repo_name: velnori/memlink
 docs_dir: docs/site
@@ -9,14 +9,6 @@ theme:
 
 nav:
   - Home: index.md
-  - Canonical Schema: canonical-schema.md
-  - Source URI: source-uri.md
-  - Contributing: contributing.md
-
-markdown_extensions:
-  - admonition
-  - pymdownx.highlight
-  - pymdownx.superfences
 
 plugins:
   - search
