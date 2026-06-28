@@ -3,12 +3,51 @@
 See spec/canonical-v1.md for the full schema specification.
 """
 
+import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Literal, Union
 
 # JSON-compatible value type (recursive)
 JSONValue = Union[None, bool, int, float, str, list["JSONValue"], dict[str, "JSONValue"]]
+
+# Characters forbidden in filenames on Windows + Linux
+_FILENAME_RESERVED = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
+
+# Windows reserved device names
+_RESERVED_NAMES: frozenset[str] = frozenset({
+    "CON", "PRN", "AUX", "NUL",
+    *(f"COM{i}" for i in range(1, 10)),
+    *(f"LPT{i}" for i in range(1, 10)),
+})
+
+
+def sanitize_id(raw: str) -> str:
+    """Convert an arbitrary string into a safe filename.
+
+    Rules:
+      1. Reserved characters → percent-encode (reversible).
+      2. Unicode (中文/emoji) is preserved.
+      3. Length ≤ 255 bytes (UTF-8).
+      4. Windows device names get a leading underscore.
+      5. Empty string falls back to ``"unnamed"``.
+    """
+
+    def _encode(m: re.Match) -> str:
+        return f"%{ord(m.group(0)):02X}"
+
+    out = _FILENAME_RESERVED.sub(_encode, raw)
+    out = out.strip(". ")
+
+    if out.upper() in _RESERVED_NAMES:
+        out = f"_{out}"
+
+    # Truncate to 255 UTF-8 bytes without splitting a multi-byte character.
+    encoded = out.encode("utf-8")
+    if len(encoded) > 255:
+        out = encoded[:255].decode("utf-8", errors="ignore")
+
+    return out or "unnamed"
 
 
 @dataclass

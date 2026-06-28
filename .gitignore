@@ -39,3 +39,6 @@ Thumbs.db
 
 # Internal review docs (not for public repo)
 docs/建议*.md
+
+# MkDocs build output
+site/

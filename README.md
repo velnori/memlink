@@ -2,6 +2,13 @@
 
 > A language-neutral interchange layer for AI memory systems — similar in spirit to how Pandoc enables document interoperability.
 
+[![CI](https://github.com/velnori/memlink/actions/workflows/test.yml/badge.svg)](https://github.com/velnori/memlink/actions/workflows/test.yml)
+[![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue)](https://www.python.org/)
+[![PyPI](https://img.shields.io/badge/pypi-memlink-blue)](https://pypi.org/project/memlink/)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-261230)](https://github.com/astral-sh/ruff)
+[![codecov](https://codecov.io/gh/velnori/memlink/branch/main/graph/badge.svg)](https://codecov.io/gh/velnori/memlink)
+
 ## Why memlink?
 
 **Problem**: 10+ AI memory formats (Ombre, OpenClaw, Mem0, Zep, Letta...), each with its own schema. Converting between them naively requires O(n²) converters.
