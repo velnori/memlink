@@ -51,7 +51,7 @@ class ErrorCode(str, Enum):
     ROUNDTRIP_CONTENT_MISMATCH = "ML401"  # deprecated — use ROUNDTRIP_KIND
 
 
-# ── Schema validation ──────────────────────────────────────────────
+# ── Schema validation ─────────────────────────────────────────────
 
 
 def _load_canonical_schema() -> dict | None:
