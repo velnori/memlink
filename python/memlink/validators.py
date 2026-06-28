@@ -76,9 +76,32 @@ def _parse_frontmatter(text: str) -> tuple[dict, str]:
     return fm, parts[2]
 
 
+def _load_canonical_schema() -> dict | None:
+    """Load the Canonical Memory JSON Schema for validation."""
+    import json
+    schema_path = Path(__file__).parent.parent.parent / "spec" / "canonical-v1.schema.json"
+    if not schema_path.exists():
+        return None
+    try:
+        return json.loads(schema_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return None
+
+
+_SCHEMA_CACHE: dict | None = None
+
+
+def _get_schema() -> dict | None:
+    global _SCHEMA_CACHE
+    if _SCHEMA_CACHE is None:
+        _SCHEMA_CACHE = _load_canonical_schema()
+    return _SCHEMA_CACHE
+
+
 def validate_schema(path: Path) -> list[ValidationIssue]:
-    """Validate YAML syntax and required fields."""
+    """Validate YAML syntax, required fields, and JSON Schema compliance."""
     issues: list[ValidationIssue] = []
+    schema = _get_schema()
 
     for md_file in sorted(path.rglob("*.md")):
         try:
@@ -124,7 +147,58 @@ def validate_schema(path: Path) -> list[ValidationIssue]:
                 message=f"id must be a string, got {type(mem_id).__name__}",
             ))
 
+        # JSON Schema validation
+        if schema and fm:
+            try:
+                _validate_against_schema(fm, body, schema, md_file, issues)
+            except Exception:
+                pass
+
     return issues
+
+
+def _validate_against_schema(fm: dict, body: str, schema: dict, file: Path,
+                              issues: list[ValidationIssue]) -> None:
+    mem_dict = {
+        "schema_version": "1",
+        "id": str(fm.get("id") or fm.get("bucket_id") or ""),
+        "name": fm.get("name") or fm.get("title"),
+        "body": body.strip() or None,
+        "kind": fm.get("kind") or fm.get("type", "dynamic"),
+        "status": "active",
+        "tags": fm.get("tags") if isinstance(fm.get("tags"), list) else [],
+        "domains": [],
+        "pinned": bool(fm.get("pinned", False)),
+    }
+    for field, value in mem_dict.items():
+        if field not in schema.get("properties", {}):
+            continue
+        prop = schema["properties"][field]
+        expected = prop.get("type")
+        if expected is None:
+            continue
+        if isinstance(expected, list) and "null" in expected and value is None:
+            continue
+        types = expected if isinstance(expected, list) else [expected]
+        type_ok = _check_json_type(value, types)
+        if not type_ok:
+            issues.append(ValidationIssue(
+                code=ErrorCode.INVALID_SCHEMA, severity=Severity.WARNING,
+                path=str(file), field=field,
+                message=f"Type mismatch: expected {expected}, got {type(value).__name__}",
+            ))
+
+
+def _check_json_type(value, types: list[str]) -> bool:
+    for t in types:
+        if t == "string" and isinstance(value, str): return True
+        if t == "number" and isinstance(value, (int, float)): return True
+        if t == "integer" and isinstance(value, int) and not isinstance(value, bool): return True
+        if t == "boolean" and isinstance(value, bool): return True
+        if t == "array" and isinstance(value, list): return True
+        if t == "object" and isinstance(value, dict): return True
+        if t == "null" and value is None: return True
+    return False
 
 
 # ── Semantic validation ────────────────────────────────────────────

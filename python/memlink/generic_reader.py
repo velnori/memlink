@@ -1,7 +1,14 @@
 """Generic Markdown → Canonical Memory reader.
 
 Reads any directory of .md files with optional YAML frontmatter.
-Supports Obsidian, Logseq, Bear, iA Writer, and plain Markdown notes.
+
+Covered formats (one reader, many apps):
+  - Obsidian, Logseq, Bear, iA Writer — YAML frontmatter + body
+  - Plain Markdown notes — no frontmatter required
+  - Any app that exports .md files with optional frontmatter
+
+This single Reader proves the O(n) architecture: adding Obsidian + Logseq +
+Bear + iA Writer + plain notes = 0 core code changes.
 """
 
 from __future__ import annotations
