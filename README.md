@@ -1,8 +1,11 @@
 # memlink
 
-> Pandoc for AI memories. One canonical schema to bridge AI memory systems.
+**Pandoc for AI memories.**
 
-Stop writing n² converters between memory formats. Write one Reader + one Writer per format. Everything else is automatic.
+One canonical schema to bridge AI memory systems.
+
+Stop writing n² converters between memory formats.  
+Write one Reader + one Writer per format. Everything else is automatic.
 
 *Explicit compatibility reports. No silent data loss.*
 
