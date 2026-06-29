@@ -209,8 +209,9 @@ class TestOmbreWriter:
         assert lines[6].startswith("importance")
 
     def test_non_hex_id_gets_generated_hex(self, tmp_path):
-        from memlink.ombre_writer import OmbreWriter
         from memlink.models import Memory, Source
+        from memlink.ombre_writer import OmbreWriter
+
         mem = Memory(
             id="dream-sweep-初生六日",
             name="Dream Sweep: 初生六日",
@@ -226,6 +227,7 @@ class TestOmbreWriter:
         warnings = OmbreWriter().write([mem], tmp_path)
         assert any("dream-sweep-初生六日" in w and "generated" in w for w in warnings)
         import re as _re
+
         files = list((tmp_path / "feel").rglob("*.md"))
         assert len(files) == 1
         assert _re.match(r"^[0-9a-f]{12}$", files[0].stem)
@@ -233,8 +235,9 @@ class TestOmbreWriter:
         assert "original_id: dream-sweep-初生六日" in content
 
     def test_valid_hex_id_unchanged(self, tmp_path):
-        from memlink.ombre_writer import OmbreWriter
         from memlink.models import Memory, Source
+        from memlink.ombre_writer import OmbreWriter
+
         mem = Memory(
             id="d2d11c9ccd39",
             name="d2d11c9ccd39",
@@ -250,8 +253,9 @@ class TestOmbreWriter:
         assert files[0].stem == "d2d11c9ccd39"
 
     def test_ascii_non_hex_id_gets_generated_hex(self, tmp_path):
-        from memlink.ombre_writer import OmbreWriter
         from memlink.models import Memory, Source
+        from memlink.ombre_writer import OmbreWriter
+
         mem = Memory(
             id="dream-2026-06-30",
             name="dream-2026-06-30",
@@ -264,5 +268,6 @@ class TestOmbreWriter:
         warnings = OmbreWriter().write([mem], tmp_path)
         assert any("dream-2026-06-30" in w and "generated" in w for w in warnings)
         import re as _re
+
         files = list((tmp_path / "feel").rglob("*.md"))
         assert _re.match(r"^[0-9a-f]{12}$", files[0].stem)
