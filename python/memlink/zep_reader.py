@@ -157,7 +157,9 @@ class ZepReader(FormatPlugin):
         except (json.JSONDecodeError, OSError) as e:
             issues.append(
                 ValidationIssue(
-                    code="ML004", severity=Severity.ERROR, path=str(target),
+                    code="ML004",
+                    severity=Severity.ERROR,
+                    path=str(target),
                     message=f"Cannot parse JSON: {e}",
                 )
             )
@@ -171,14 +173,20 @@ class ZepReader(FormatPlugin):
             if not rec_id:
                 issues.append(
                     ValidationIssue(
-                        code="ML002", severity=Severity.ERROR, path=str(target), memory_id=str(i),
+                        code="ML002",
+                        severity=Severity.ERROR,
+                        path=str(target),
+                        memory_id=str(i),
                         message=f"Record {i}: missing uuid/id",
                     )
                 )
             if not (record.get("fact") or record.get("content")):
                 issues.append(
                     ValidationIssue(
-                        code="ML005", severity=Severity.ERROR, path=str(target), memory_id=str(rec_id or i),
+                        code="ML005",
+                        severity=Severity.ERROR,
+                        path=str(target),
+                        memory_id=str(rec_id or i),
                         message=f"Record {rec_id or i}: missing fact/content",
                     )
                 )

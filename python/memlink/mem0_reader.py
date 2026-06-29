@@ -149,7 +149,9 @@ class Mem0Reader(FormatPlugin):
         if target is None:
             issues.append(
                 ValidationIssue(
-                    code="ML200", severity=Severity.ERROR, path=str(path),
+                    code="ML200",
+                    severity=Severity.ERROR,
+                    path=str(path),
                     message="No JSON file found",
                 )
             )
@@ -160,7 +162,9 @@ class Mem0Reader(FormatPlugin):
         except (json.JSONDecodeError, OSError) as e:
             issues.append(
                 ValidationIssue(
-                    code="ML004", severity=Severity.ERROR, path=str(target),
+                    code="ML004",
+                    severity=Severity.ERROR,
+                    path=str(target),
                     message=f"Cannot parse JSON: {e}",
                 )
             )
@@ -173,16 +177,20 @@ class Mem0Reader(FormatPlugin):
             if not record.get("id"):
                 issues.append(
                     ValidationIssue(
-                        code="ML002", severity=Severity.ERROR,
-                        path=str(target), memory_id=str(i),
+                        code="ML002",
+                        severity=Severity.ERROR,
+                        path=str(target),
+                        memory_id=str(i),
                         message=f"Record {i}: missing id",
                     )
                 )
             if not record.get("memory"):
                 issues.append(
                     ValidationIssue(
-                        code="ML005", severity=Severity.ERROR,
-                        path=str(target), memory_id=str(record.get("id", i)),
+                        code="ML005",
+                        severity=Severity.ERROR,
+                        path=str(target),
+                        memory_id=str(record.get("id", i)),
                         message=f"Record {record.get('id', i)}: missing memory field",
                     )
                 )

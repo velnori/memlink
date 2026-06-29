@@ -8,8 +8,12 @@ from memlink.models import Memory
 class TestFailOnLoss:
     def test_fail_on_loss_exits_5_when_loss_detected(self):
         memory = Memory(
-            id="test-001", name="Test", body="Content.", kind="dynamic",
-            domains=["user"], extensions={"custom_field": "value"},
+            id="test-001",
+            name="Test",
+            body="Content.",
+            kind="dynamic",
+            domains=["user"],
+            extensions={"custom_field": "value"},
             created_at=datetime(2024, 1, 1, 10, 0, 0, tzinfo=timezone.utc),
         )
         from memlink.converter import analyze_conversion
@@ -25,7 +29,10 @@ class TestFailOnLoss:
 
     def test_fail_on_loss_succeeds_when_no_loss(self):
         memory = Memory(
-            id="test-002", name="Test", body="Content.", kind="dynamic",
+            id="test-002",
+            name="Test",
+            body="Content.",
+            kind="dynamic",
             domains=["user"],
             created_at=datetime(2024, 1, 1, 10, 0, 0, tzinfo=timezone.utc),
         )
@@ -42,7 +49,10 @@ class TestFailOnLoss:
 
     def test_no_fail_on_loss_by_default(self):
         memory = Memory(
-            id="test-003", name="Test", body="Content.", kind="dynamic",
+            id="test-003",
+            name="Test",
+            body="Content.",
+            kind="dynamic",
             extensions={"x": "y"},
         )
         from memlink.converter import analyze_conversion

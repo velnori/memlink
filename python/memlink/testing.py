@@ -121,14 +121,14 @@ def _create_minimal_format_dir(root: Path, fmt: str) -> None:
         (root / "MEMORY.md").write_text("- memory/test-001.md")
     elif fmt == "mem0":
         import json
+
         (root / "memories.json").write_text(
             json.dumps({"results": [{"id": "test-001", "memory": "Test", "user_id": "test"}]})
         )
     elif fmt == "zep":
         import json
-        (root / "facts.json").write_text(
-            json.dumps({"facts": [{"uuid": "test-001", "fact": "Test fact content"}]})
-        )
+
+        (root / "facts.json").write_text(json.dumps({"facts": [{"uuid": "test-001", "fact": "Test fact content"}]}))
 
 
 def _create_unknown_fields_dir(root: Path, fmt: str) -> None:
@@ -144,12 +144,25 @@ def _create_unknown_fields_dir(root: Path, fmt: str) -> None:
         (d / "test.md").write_text("---\nname: Test\nweird_field: [1,2,3]\n---\nBody.")
     elif fmt == "mem0":
         import json
+
         (root / "memories.json").write_text(
-            json.dumps({"results": [{"id": "contract-test", "memory": "Test", "user_id": "u",
-                                     "unknown": "value", "custom_field": 42}]})
+            json.dumps(
+                {
+                    "results": [
+                        {
+                            "id": "contract-test",
+                            "memory": "Test",
+                            "user_id": "u",
+                            "unknown": "value",
+                            "custom_field": 42,
+                        }
+                    ]
+                }
+            )
         )
     elif fmt == "zep":
         import json
+
         (root / "facts.json").write_text(
             json.dumps({"facts": [{"uuid": "contract-test", "fact": "Test", "unknown_field": 99}]})
         )
