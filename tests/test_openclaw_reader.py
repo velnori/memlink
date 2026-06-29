@@ -488,6 +488,10 @@ created_at: 2026-06-14
         assert mem.name == "声音与自我认知"
         assert "人际" in mem.domains
         assert "内心" in mem.domains
+        # Body should NOT contain the daily-notes ## heading prefix
+        assert mem.body is not None
+        assert not mem.body.startswith("## ")
+        assert "正文内容" in mem.body
 
     def test_daily_notes_roundtrip_domains_restored(self, tmp_path):
         memory_dir = tmp_path / "memory"
@@ -527,3 +531,91 @@ created_at: 2026-06-15
         result = OpenClawReader().read(tmp_path)
         mem = result.memories[0]
         assert set(mem.domains) == {"项目", "工具"}
+
+    def test_daily_notes_body_strips_heading(self, tmp_path):
+        memory_dir = tmp_path / "memory"
+        memory_dir.mkdir()
+        (memory_dir / "2026-06-14.md").write_text(
+            """---
+title: 2026-06-14
+created_at: 2026-06-14
+---
+
+## d2d11c9ccd39
+
+正文内容在这里。
+
+---
+
+<!-- memlink-roundtrip
+{
+  "id": "d2d11c9ccd39",
+  "kind": "dynamic",
+  "name": null,
+  "importance_score": 7.0,
+  "importance_label": null,
+  "valence": null,
+  "arousal": null,
+  "pinned": false,
+  "domains": ["人际"],
+  "tags": [],
+  "source_uri": "ombre://dynamic/人际/d2d11c9ccd39",
+  "checksum": null,
+  "memlink": {"source": {"format": "ombre"}, "schema_version": "1",
+    "original": {"id": "d2d11c9ccd39", "created": "2026-06-14T10:00:00"}}
+}
+-->
+""",
+            encoding="utf-8",
+        )
+        result = OpenClawReader().read(tmp_path)
+        assert result.stats["parsed"] == 1
+        mem = result.memories[0]
+        assert mem.body is not None
+        assert "## " not in mem.body
+        assert "memlink-roundtrip" not in mem.body
+        assert mem.body.strip() == "正文内容在这里。"
+
+    def test_daily_notes_body_strips_tags_line(self, tmp_path):
+        memory_dir = tmp_path / "memory"
+        memory_dir.mkdir()
+        (memory_dir / "2026-06-15.md").write_text(
+            """---
+title: 2026-06-15
+created_at: 2026-06-15
+---
+
+## abc000111222
+
+正文在这里。
+
+tags: foo, bar
+
+---
+
+<!-- memlink-roundtrip
+{
+  "id": "abc000111222",
+  "kind": "dynamic",
+  "name": null,
+  "importance_score": 5.0,
+  "importance_label": null,
+  "valence": null,
+  "arousal": null,
+  "pinned": false,
+  "domains": [],
+  "tags": ["foo", "bar"],
+  "source_uri": "ombre://dynamic/abc000111222",
+  "checksum": null,
+  "memlink": {"source": {"format": "ombre"}, "schema_version": "1",
+    "original": {"id": "abc000111222", "created": "2026-06-15T09:00:00"}}
+}
+-->
+""",
+            encoding="utf-8",
+        )
+        result = OpenClawReader().read(tmp_path)
+        mem = result.memories[0]
+        assert mem.body is not None
+        assert "tags:" not in mem.body
+        assert "正文在这里。" in mem.body

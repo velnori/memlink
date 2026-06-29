@@ -434,8 +434,19 @@ def _recover_roundtrip_comment(body: str | None, memory: Memory, warnings: list[
                 if data.get("arousal") and memory.arousal is None:
                     memory.arousal = data["arousal"]
                 # Restore name from roundtrip if current name looks like a date (daily-notes artifact)
-                if data.get("name") and memory.name and re.fullmatch(r"\d{4}-\d{2}-\d{2}", memory.name):
-                    memory.name = str(data["name"])
+                rt_name = data.get("name") or (data.get("memlink", {}).get("original", {}).get("name"))
+                if rt_name and memory.name and re.fullmatch(r"\d{4}-\d{2}-\d{2}", memory.name):
+                    memory.name = str(rt_name)
+
+                # Strip daily-notes body artifacts: ## heading, tags: line, roundtrip comment, --- separators
+                if memory.body and data.get("id"):
+                    cleaned = memory.body
+                    cleaned = re.sub(r"^\s*## [^\n]+\n*", "", cleaned)
+                    cleaned = re.sub(r"^tags:[^\n]*\n*", "", cleaned, flags=re.MULTILINE)
+                    cleaned = _ROUNDTRIP_RE.sub("", cleaned)
+                    cleaned = re.sub(r"\n---\s*\n", "\n", cleaned)
+                    cleaned = cleaned.strip()
+                    memory.body = cleaned if cleaned else None
 
                 # Restore domains if lost during daily-notes read
                 if data.get("domains") is not None and not memory.domains:
