@@ -42,7 +42,8 @@ class Mem0Writer(FormatPlugin):
 
             user_id = "default"
             if mem.metadata:
-                original = mem.metadata.get("memlink", {}).get("original", {})
+                memlink_data = mem.metadata.get("memlink", {})
+                original = memlink_data.get("original", {}) if isinstance(memlink_data, dict) else {}
                 if isinstance(original, dict):
                     uid = original.get("user_id")
                     if uid:
