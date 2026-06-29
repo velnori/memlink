@@ -4,7 +4,7 @@ v1.0: Canonical Memory Schema and Plugin API are stable.
 See spec/README.md for the language-neutral specification.
 """
 
-__version__ = "1.0.3"
+__version__ = "1.0.4"
 
 from .converter import ConversionAnalysis, FeatureImpact, analyze_conversion, compare_memories
 from .models import JSONValue, Memory, Relationship, Source
