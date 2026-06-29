@@ -1,8 +1,9 @@
 """Tests for memlink broadcast command."""
 
-import json
 import tempfile
 from pathlib import Path
+
+import pytest
 
 from memlink.models import Memory
 from memlink.registry import get_reader, get_writer
@@ -84,6 +85,3 @@ class TestBroadcast:
 
         with pytest.raises(PluginNotFoundError):
             get_writer("nonexistent")
-
-
-import pytest

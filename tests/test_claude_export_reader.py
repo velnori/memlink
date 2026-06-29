@@ -1,5 +1,6 @@
 """Tests for Claude export → Canonical reader."""
 
+import json
 import tempfile
 from datetime import datetime
 from pathlib import Path
@@ -27,10 +28,6 @@ class TestClaudeExportReader:
         assert result.memories[0].name == "Python async discussion"
 
     def test_name_truncation(self):
-        import tempfile
-        from pathlib import Path
-        import json
-
         reader = ClaudeExportReader()
         d = Path(tempfile.mkdtemp())
         long_name = "A" * 80
