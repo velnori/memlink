@@ -99,7 +99,14 @@ class ZepReader(FormatPlugin):
             extensions: dict[str, object] = {}
             raw_meta = record.get("metadata")
             if isinstance(raw_meta, dict) and raw_meta:
-                extensions["zep_metadata"] = raw_meta
+                # Recover name from _memlink_name (set by ZepWriter for roundtrip)
+                saved_name = raw_meta.get("_memlink_name")
+                if saved_name:
+                    name = str(saved_name)
+                # Copy remaining metadata (excluding internal _memlink_name)
+                clean = {k: v for k, v in raw_meta.items() if k != "_memlink_name"}
+                if clean:
+                    extensions["zep_metadata"] = clean
             session_id = record.get("session_id")
             if not session_id and isinstance(data, dict):
                 summary = data.get("summary")

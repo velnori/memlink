@@ -133,6 +133,19 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--verbose", "-v", action="count", default=0)
 
+    # broadcast
+    p = sub.add_parser("broadcast", help="Write memories from one source to multiple targets")
+    p.add_argument(
+        "--from", "-f", dest="from_spec", required=True, metavar="FORMAT:PATH",
+        help="Source as format:path, e.g. ombre:/data/ombre",
+    )
+    p.add_argument(
+        "--to", "-T", nargs="+", required=True, metavar="FORMAT:PATH",
+        help="Target(s) as format:path, e.g. mem0:/out openclaw:/out2",
+    )
+    p.add_argument("--dry-run", action="store_true")
+    p.add_argument("--verbose", "-v", action="count", default=0)
+
     return parser
 
 
@@ -144,6 +157,8 @@ def _dispatch(args) -> None:
         _cmd_formats()
     elif args.command == "merge":
         _cmd_merge(args)
+    elif args.command == "broadcast":
+        _cmd_broadcast(args)
     elif args.command == "convert":
         _cmd_convert(args)
     elif args.command == "validate":
@@ -550,6 +565,47 @@ def _cmd_merge(args) -> None:
         for w in warnings[:10]:
             print(f"  [write] {w}")
     print(f"Warnings: {len(warnings)}" if warnings else "Warnings: 0")
+    print(f"Time:     {elapsed:.2f}s")
+
+
+def _cmd_broadcast(args) -> None:
+    from .registry import get_reader, get_writer
+
+    src_fmt, src_path = _parse_source(args.from_spec)
+    reader = get_reader(src_fmt)
+    try:
+        result = reader.read(src_path)
+    except Exception as e:
+        print(f"Error reading {src_fmt}:{src_path}: {e}", file=sys.stderr)
+        sys.exit(ExitCode.IO_ERROR)
+
+    memories = result.memories
+    print(f"Read:     {len(memories)} memories from {src_fmt}")
+
+    if args.dry_run:
+        print(f"\nDry run: would broadcast to {len(args.to)} target(s)")
+        for spec in args.to:
+            fmt, path = _parse_source(spec)
+            print(f"  → {fmt}:{path}")
+        return
+
+    parsed_targets = [_parse_source(spec) for spec in args.to]
+    total_warnings = 0
+    start = time.perf_counter()
+    for fmt, path in parsed_targets:
+        writer = get_writer(fmt)
+        warnings = writer.write(memories, path)
+        total_warnings += len(warnings)
+        status = f"{len(memories)} written"
+        if warnings:
+            status += f", {len(warnings)} warnings"
+        print(f"  → {fmt}:{path}: {status}")
+        if args.verbose and warnings:
+            for w in warnings[:5]:
+                print(f"    [warn] {w}")
+    elapsed = time.perf_counter() - start
+    print(f"Targets:  {len(parsed_targets)}")
+    print(f"Warnings: {total_warnings}" if total_warnings else "Warnings: 0")
     print(f"Time:     {elapsed:.2f}s")
 
 

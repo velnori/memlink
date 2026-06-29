@@ -49,6 +49,7 @@ zep = "memlink.zep_reader:ZepReader"
 ombre = "memlink.ombre_writer:OmbreWriter"
 openclaw = "memlink.openclaw_writer:OpenClawWriter"
 mem0 = "memlink.mem0_writer:Mem0Writer"
+zep = "memlink.zep_writer:ZepWriter"
 
 [project.optional-dependencies]
 dev = [
