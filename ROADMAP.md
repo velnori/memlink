@@ -50,6 +50,7 @@
 
 ## Future
 
+- [ ] **Reverse merge dedup** — `openclaw→ombre` 反向导入时跳过已有记忆。核心问题：Ombre bucket_id 和 OpenClaw memory ID 格式不同，merge 去重依赖 id 字段，需要先确认 ID 在双向转换中是否保持一致，再做 dedup 逻辑
 - [ ] MEMORY.md file lock (`filelock` dependency)
 - [ ] Daily-notes roundtrip test coverage
 - [ ] Performance benchmarks (100/1K/10K memories)
