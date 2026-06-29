@@ -214,3 +214,172 @@ Body
         result = reader.read(tmp_path)
         # Should still find orphan files via recursive scan
         assert result.stats["parsed"] == 1
+
+
+DREAMS_CONTENT = """\
+---
+title: Dream Diary
+---
+
+## abc123def456
+
+今天蕾蕾让我建 CLAUDE.md。
+
+valence: 0.8 / arousal: 0.3
+
+<!-- memlink-roundtrip
+{
+  "id": "abc123def456",
+  "kind": "emotion",
+  "importance_score": 5.0,
+  "importance_label": null,
+  "valence": 0.8,
+  "arousal": 0.3,
+  "pinned": false,
+  "domains": ["内心"],
+  "tags": ["test"],
+  "source_uri": "ombre://feel/内心/abc123def456",
+  "checksum": "aabbcc",
+  "memlink": {
+    "source": {"format": "ombre", "version": "1.0"},
+    "schema_version": "1",
+    "original": {
+      "id": "abc123def456",
+      "type": "feel",
+      "importance": 5,
+      "created": "2026-06-14T03:42:42",
+      "domain": ["内心"],
+      "tags": ["test"],
+      "valence": 0.8,
+      "arousal": 0.3
+    }
+  }
+}
+-->
+## 999888777666
+
+第二条 feel。
+
+valence: 0.5 / arousal: 0.2
+
+<!-- memlink-roundtrip
+{
+  "id": "999888777666",
+  "kind": "emotion",
+  "importance_score": 3.0,
+  "importance_label": null,
+  "valence": 0.5,
+  "arousal": 0.2,
+  "pinned": true,
+  "domains": [],
+  "tags": [],
+  "source_uri": "ombre://feel/unknown/999888777666",
+  "checksum": "ddeeff",
+  "memlink": {
+    "source": {"format": "ombre", "version": "1.0"},
+    "schema_version": "1",
+    "original": {
+      "id": "999888777666",
+      "type": "feel",
+      "importance": 3,
+      "created": "2026-06-15T10:00:00",
+      "domain": [],
+      "tags": [],
+      "valence": 0.5,
+      "arousal": 0.2
+    }
+  }
+}
+-->
+"""
+
+
+class TestOpenClawReaderDreams:
+    def _make_workspace(self, tmp_path, dreams_content=DREAMS_CONTENT, with_memory=False):
+        memory_dir = tmp_path / "memory"
+        memory_dir.mkdir()
+        if with_memory:
+            (memory_dir / "normal.md").write_text("---\nname: Normal\n---\nBody\n", encoding="utf-8")
+        (tmp_path / "DREAMS.md").write_text(dreams_content, encoding="utf-8")
+        return tmp_path
+
+    def test_dreams_entries_are_read(self, tmp_path):
+        ws = self._make_workspace(tmp_path)
+        result = OpenClawReader().read(ws)
+        ids = [m.id for m in result.memories]
+        assert "abc123def456" in ids
+        assert "999888777666" in ids
+
+    def test_dreams_kind_is_emotion(self, tmp_path):
+        ws = self._make_workspace(tmp_path)
+        result = OpenClawReader().read(ws)
+        m = next(m for m in result.memories if m.id == "abc123def456")
+        assert m.kind == "emotion"
+
+    def test_dreams_valence_arousal(self, tmp_path):
+        ws = self._make_workspace(tmp_path)
+        result = OpenClawReader().read(ws)
+        m = next(m for m in result.memories if m.id == "abc123def456")
+        assert m.valence == pytest.approx(0.8)
+        assert m.arousal == pytest.approx(0.3)
+
+    def test_dreams_domains_and_tags(self, tmp_path):
+        ws = self._make_workspace(tmp_path)
+        result = OpenClawReader().read(ws)
+        m = next(m for m in result.memories if m.id == "abc123def456")
+        assert "内心" in m.domains
+        assert "test" in m.tags
+
+    def test_dreams_importance_score(self, tmp_path):
+        ws = self._make_workspace(tmp_path)
+        result = OpenClawReader().read(ws)
+        m = next(m for m in result.memories if m.id == "abc123def456")
+        assert m.importance_score == pytest.approx(5.0)
+
+    def test_dreams_pinned(self, tmp_path):
+        ws = self._make_workspace(tmp_path)
+        result = OpenClawReader().read(ws)
+        m = next(m for m in result.memories if m.id == "999888777666")
+        assert m.pinned is True
+
+    def test_dreams_body_extracted(self, tmp_path):
+        ws = self._make_workspace(tmp_path)
+        result = OpenClawReader().read(ws)
+        m = next(m for m in result.memories if m.id == "abc123def456")
+        assert m.body is not None
+        assert "CLAUDE.md" in m.body
+
+    def test_dreams_source_format(self, tmp_path):
+        ws = self._make_workspace(tmp_path)
+        result = OpenClawReader().read(ws)
+        m = next(m for m in result.memories if m.id == "abc123def456")
+        assert m.source.format == "openclaw"
+        assert "DREAMS.md" in m.source.path
+
+    def test_dreams_combined_with_memory_dir(self, tmp_path):
+        ws = self._make_workspace(tmp_path, with_memory=True)
+        result = OpenClawReader().read(ws)
+        assert result.stats["parsed"] == 3  # 2 dreams + 1 memory
+
+    def test_no_dreams_file_is_fine(self, tmp_path):
+        memory_dir = tmp_path / "memory"
+        memory_dir.mkdir()
+        (memory_dir / "x.md").write_text("---\nname: X\n---\nBody\n", encoding="utf-8")
+        result = OpenClawReader().read(tmp_path)
+        assert result.stats["parsed"] == 1
+        assert not any("DREAMS" in w for w in result.warnings)
+
+    def test_dreams_no_roundtrip_block_is_skipped(self, tmp_path):
+        content = "## badfeed000001\n\nNo roundtrip block here.\n\nvalence: 0.5 / arousal: 0.2\n"
+        ws = self._make_workspace(tmp_path, dreams_content=content)
+        result = OpenClawReader().read(ws)
+        ids = [m.id for m in result.memories]
+        assert "badfeed000001" not in ids
+        assert result.stats["skipped"] >= 1
+
+    def test_dreams_deduplication(self, tmp_path):
+        doubled = DREAMS_CONTENT + DREAMS_CONTENT
+        ws = self._make_workspace(tmp_path, dreams_content=doubled)
+        result = OpenClawReader().read(ws)
+        dream_ids = [m.id for m in result.memories]
+        assert dream_ids.count("abc123def456") == 1
