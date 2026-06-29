@@ -41,6 +41,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 4 fuzz test suites (2.99s)
 - Real Ombre data verified: 118 memories, 100% roundtrip
 
+## [0.2.0] — 2026-06-29
+
+### Added
+
+- **Mem0 Reader** — reads Mem0 `get_all()` JSON exports (both `{"results":[...]}` and `[...]` array formats). Fourth format, 0 core changes needed.
+- Plugin Contract Tests extended to cover Mem0Reader via `testing.py`
+- Test fixtures for Mem0 format (`tests/fixtures/mem0_samples/`)
+
+### Metrics
+
+- 132 tests (13 new for Mem0Reader)
+- 4 formats: Ombre Brain, OpenClaw, Generic Markdown, Mem0
+
+[0.2.0]: https://github.com/velnori/memlink/compare/v0.1.1...v0.2.0
+
 ## [0.1.1] — 2026-06-28
 
 ### Fixed

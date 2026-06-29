@@ -84,9 +84,10 @@ You should now see an OpenClaw-style memory file in `/tmp/memlink-output/`. The 
 
 | Format | Read | Write | Status |
 |--------|------|-------|--------|
-| Ombre Brain | ✅ | ✅ | Implemented in v0.1.1 |
-| OpenClaw | ✅ | ✅ | Implemented in v0.1.1 |
-| Generic Markdown | ✅ | — | Implemented in v0.1.1 |
+| Ombre Brain | ✅ | ✅ | v0.1.1 |
+| OpenClaw | ✅ | ✅ | v0.1.1 |
+| Generic Markdown | ✅ | — | v0.1.1 |
+| Mem0 | ✅ | — | v0.2.0 |
 
 **Generic Markdown** works with YAML-frontmatter Markdown used by tools like Obsidian, Logseq, Bear, and plain Markdown. Tool-specific extensions are preserved as metadata or reported as compatibility notes.
 
@@ -96,7 +97,6 @@ Planned formats are roadmap items, **not implemented in v0.1.1**:
 
 | Format | Target |
 |--------|--------|
-| Mem0 Reader | v0.2 |
 | Zep Reader | v0.3 |
 | Chat export readers (ChatGPT, Claude) | later |
 
@@ -135,8 +135,8 @@ $ memlink convert --from ombre --to openclaw -s ~/.claude/ombre-buckets -T ./mem
 
 ```
   Ombre ──┐
-Generic ──┼──→ Reader → Canonical Memory → Writer ──┬──→ OpenClaw
-OpenClaw ─┘                                          └──→ Ombre
+  Mem0  ──┼──→ Reader → Canonical Memory → Writer ──┬──→ OpenClaw
+Generic ──┘                                          └──→ Ombre
 ```
 
 Each format implements three methods:
@@ -166,7 +166,7 @@ Add a new format = write one plugin. Zero changes to core code.
 
 | Version | Focus |
 |---------|-------|
-| **v0.2** | Mem0 Reader, file lock, `--fail-on-loss`, daily-notes roundtrip |
+| **v0.2** | Mem0 Reader ✅, file lock, `--fail-on-loss`, daily-notes roundtrip |
 | **v0.3** | Zep Reader, `memlink merge`, `memlink broadcast` |
 | **v0.4** | Chat export readers (ChatGPT, Claude) |
 | **v1.0** | Stable Canonical Schema v1, stable Plugin API |
@@ -180,7 +180,7 @@ git clone https://github.com/velnori/memlink.git
 cd memlink
 pip install -e ".[dev]"
 
-pytest tests/ -v          # 115 tests
+pytest tests/ -v          # 132 tests
 ruff check python/memlink/       # Lint
 mypy python/memlink/             # Type check
 ```

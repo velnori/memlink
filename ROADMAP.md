@@ -13,7 +13,7 @@
 
 ## v0.2.0 — New Format + Stability
 
-- [ ] **Mem0 Reader** — prove O(n) with a mainstream format
+- [x] **Mem0 Reader** — prove O(n) with a mainstream format ✅
 - [ ] MEMORY.md file lock (`filelock` dependency)
 - [ ] `--fail-on-loss` for CI pipelines
 - [ ] Daily-notes roundtrip test coverage

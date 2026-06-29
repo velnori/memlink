@@ -1,14 +1,28 @@
 site_name: memlink
-site_description: AI Memory Interchange Layer
+site_description: AI Memory Interchange Layer — bridge AI memory formats
+site_url: https://velnori.github.io/memlink/
 repo_url: https://github.com/velnori/memlink
 repo_name: velnori/memlink
 docs_dir: docs
-
 theme:
   name: material
+  palette:
+    scheme: slate
+    primary: deep purple
+    accent: purple
+  features:
+    - navigation.instant
+    - content.code.copy
 
 nav:
   - Home: index.md
+  - Quick Start: guide/quickstart.md
+  - Formats:
+      - Ombre Brain: formats/ombre.md
+      - OpenClaw: formats/openclaw.md
+      - Mem0: formats/mem0.md
+      - Generic Markdown: formats/generic.md
+  - Plugin API: api/plugin.md
 
 plugins:
   - search

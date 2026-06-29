@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "memlink-bridge"
-version = "0.1.1"
+version = "0.2.0"
 description = "AI Memory Interchange Layer — language-neutral bridge for AI memory systems"
 readme = "README.md"
 license = {text = "MIT"}
@@ -42,6 +42,7 @@ memlink = "memlink.cli:main"
 ombre = "memlink.ombre_reader:OmbreReader"
 openclaw = "memlink.openclaw_reader:OpenClawReader"
 generic = "memlink.generic_reader:GenericReader"
+mem0 = "memlink.mem0_reader:Mem0Reader"
 
 [project.entry-points."memlink.writers"]
 ombre = "memlink.ombre_writer:OmbreWriter"
