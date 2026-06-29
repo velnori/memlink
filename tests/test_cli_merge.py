@@ -1,8 +1,7 @@
 """Tests for memlink merge command."""
 
-import json
 import tempfile
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 
 from memlink.cli import _parse_source, _resolve_conflict
@@ -143,7 +142,9 @@ class TestMergeFlow:
             assert merged["m1"].body == "New body."
 
     def test_merge_output_count(self):
-        with tempfile.TemporaryDirectory() as td1, tempfile.TemporaryDirectory() as td2, tempfile.TemporaryDirectory() as td_out:
+        with tempfile.TemporaryDirectory() as td1, \
+             tempfile.TemporaryDirectory() as td2, \
+             tempfile.TemporaryDirectory() as td_out:
             root1, root2, out = Path(td1), Path(td2), Path(td_out)
 
             w1 = get_writer("mem0")
