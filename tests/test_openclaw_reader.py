@@ -444,6 +444,52 @@ class TestOpenClawReaderNativeDreams:
         result = OpenClawReader().read(ws)
         assert "dream-2026-07-01-2" in [m.id for m in result.memories]
 
+    def test_dream_sweep_freetext_header_recognized(self, tmp_path):
+        content = """\
+## Dream Sweep: 初生六日
+
+梦的正文在这里。
+
+<!-- memlink-roundtrip
+{
+  "id": "dream-sweep-初生六日",
+  "kind": "emotion",
+  "importance_score": 9.0,
+  "importance_label": null,
+  "valence": 0.75,
+  "arousal": 0.3,
+  "pinned": false,
+  "domains": ["内心"],
+  "tags": ["dream-sweep", "消化"],
+  "source_uri": "ombre://feel/内心/dream-sweep-初生六日",
+  "checksum": null,
+  "memlink": {
+    "source": {"format": "ombre", "version": "1.0"},
+    "schema_version": "1",
+    "original": {
+      "id": "dream-sweep-初生六日",
+      "type": "feel",
+      "importance": 9,
+      "created": "2026-06-18T23:00:00",
+      "domain": ["内心"],
+      "name": "Dream Sweep: 初生六日",
+      "tags": ["dream-sweep", "消化"]
+    }
+  }
+}
+-->
+"""
+        (tmp_path / "DREAMS.md").write_text(content, encoding="utf-8")
+        (tmp_path / "memory").mkdir()
+        result = OpenClawReader().read(tmp_path)
+        ids = [m.id for m in result.memories]
+        assert "dream-sweep-初生六日" in ids
+        m = next(m for m in result.memories if m.id == "dream-sweep-初生六日")
+        assert m.kind == "emotion"
+        assert "内心" in m.domains
+        assert "dream-sweep" in m.tags
+        assert m.importance_score == pytest.approx(9.0)
+
 
 class TestDailyNotesRoundtrip:
     def test_daily_notes_roundtrip_name_restored(self, tmp_path):

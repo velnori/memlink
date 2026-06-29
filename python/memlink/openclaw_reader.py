@@ -289,10 +289,7 @@ def _to_float(val) -> float | None:
 _ROUNDTRIP_RE = re.compile(r"<!-- memlink-roundtrip\s*\n(.*?)\n\s*-->", re.DOTALL)
 
 
-_DREAMS_SECTION_RE = re.compile(
-    r"^## ([0-9a-fA-F]{12,}|dream-\d{4}-\d{2}-\d{2}(?:-\d+)?)\s*$",
-    re.MULTILINE,
-)
+_DREAMS_SECTION_RE = re.compile(r"^## (.+?)\s*$", re.MULTILINE)
 
 
 def _parse_dreams_file(
@@ -385,7 +382,7 @@ def _parse_dreams_file(
         body_clean = re.sub(r"\nvalence:.*$", "", body_raw.rstrip(), flags=re.MULTILINE).strip()
         body = body_clean if body_clean else None
 
-        original = data.get("memlink", {}).get("original", {})
+        original = (data.get("memlink") or {}).get("original", {})
         created_at = _parse_time(original.get("created") if original else None)
 
         memory = Memory(
