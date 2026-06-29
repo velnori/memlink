@@ -25,6 +25,22 @@
 - [x] Plugin Contract Tests published as public API
 - [x] Spec Compliance checklist per plugin
 
+## v0.4.0 — Writers ✅
+
+- [x] **Mem0 Writer** — full roundtrip: read + write
+- [x] `memlink merge` CLI command
+
+## v0.5.0 — Broadcast ✅
+
+- [x] **Zep Writer** — full roundtrip: read + write
+- [x] `memlink broadcast` CLI command
+
+## v0.6.0 — Chat Archives ✅
+
+- [x] **ChatGPT Export Reader** — each conversation → one Canonical Memory
+- [x] **Claude Export Reader** — each conversation → one Canonical Memory
+- [x] Verified on 122 real Ombre memories, 0 warnings
+
 ## v1.0.0 — Stable (next)
 
 - [ ] Canonical Schema v1 stable (no breaking changes)
