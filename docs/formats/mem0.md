@@ -7,7 +7,7 @@
 | Feature | Status |
 |---------|--------|
 | Read | ✅ |
-| Write | — (planned) |
+| Write | ✅ |
 | Emotion | — |
 | Importance | — |
 
