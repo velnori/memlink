@@ -1,0 +1,70 @@
+{
+  "results": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440001",
+      "memory": "User prefers dark mode and compact layouts",
+      "user_id": "alice",
+      "hash": "abc123hash",
+      "created_at": "2024-01-15T10:30:00Z",
+      "updated_at": "2024-01-20T08:00:00Z",
+      "metadata": {
+        "source": "chat"
+      },
+      "categories": [
+        "preferences",
+        "ui"
+      ]
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440002",
+      "memory": "Project Alpha uses TypeScript for frontend and Python for backend",
+      "user_id": "alice",
+      "hash": "def456hash",
+      "created_at": "2024-02-01T14:00:00Z",
+      "updated_at": "2024-02-10T09:00:00Z",
+      "metadata": {},
+      "categories": [
+        "project",
+        "tech-stack"
+      ]
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440003",
+      "memory": "这是一个很长的中文记忆文本，用于测试 name 字段的截断行为。我们需要确保在截断时不会把中文字符切碎，而是尽量在空白符处进行截断",
+      "user_id": "bob",
+      "hash": "ghi789hash",
+      "created_at": "2024-03-15T18:00:00Z",
+      "updated_at": "2024-03-16T12:00:00Z",
+      "metadata": null,
+      "categories": [
+        "测试",
+        "中文"
+      ]
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440004",
+      "memory": "API key rotation policy: rotate every 90 days",
+      "user_id": "alice",
+      "hash": "jkl012hash",
+      "created_at": "2024-04-01T09:00:00Z",
+      "updated_at": "2024-04-15T11:00:00Z",
+      "metadata": {
+        "source": "security-audit"
+      },
+      "categories": []
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440005",
+      "memory": "定期清理缓存",
+      "user_id": "bob",
+      "hash": "mno345hash",
+      "created_at": "2024-05-01T08:30:00Z",
+      "updated_at": "2024-05-01T08:30:00Z",
+      "metadata": {},
+      "categories": [
+        "maintenance",
+        "中文标签"
+      ]
+    }
+  ]
+}

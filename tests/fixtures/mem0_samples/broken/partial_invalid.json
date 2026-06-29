@@ -1,0 +1,26 @@
+{
+  "results": [
+    {
+      "memory": "I have no id field",
+      "categories": [
+        "test"
+      ]
+    },
+    {
+      "id": "valid-001",
+      "memory": "I am a valid record",
+      "user_id": "test",
+      "hash": "validhash",
+      "created_at": "2024-07-01T10:00:00Z",
+      "categories": [
+        "valid"
+      ]
+    },
+    {
+      "id": "no-memory-001",
+      "categories": [
+        "incomplete"
+      ]
+    }
+  ]
+}
