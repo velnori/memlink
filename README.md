@@ -166,9 +166,9 @@ Add a new format = write one plugin. Zero changes to core code.
 
 | Version | Focus |
 |---------|-------|
-| **v0.2** | Mem0 Reader, daily-notes roundtrip, `--fail-on-loss` |
-| **v0.3** | Zep Reader, chat export readers |
-| **v0.4** | `memlink merge`, `memlink broadcast` |
+| **v0.2** | Mem0 Reader, file lock, `--fail-on-loss`, daily-notes roundtrip |
+| **v0.3** | Zep Reader, `memlink merge`, `memlink broadcast` |
+| **v0.4** | Chat export readers (ChatGPT, Claude) |
 | **v1.0** | Stable Canonical Schema v1, stable Plugin API |
 
 ---

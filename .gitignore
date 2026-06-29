@@ -40,7 +40,11 @@ Thumbs.db
 # Internal review docs (not for public repo)
 docs/建议*.md
 docs/logo-ideas.md
+docs/logo-concepts/
+CLAUDE.md
 
 # MkDocs build output
 site/
 MEMORY.md
+
+notebooks/

@@ -11,17 +11,17 @@
 - [x] Structured Compatibility Report
 - [x] 111 tests, 3 OS × 3 Python CI
 
-## v0.2.0 — Stability
+## v0.2.0 — New Format + Stability
 
+- [ ] **Mem0 Reader** — prove O(n) with a mainstream format
 - [ ] MEMORY.md file lock (`filelock` dependency)
-- [ ] `--interactive` mode for convert
 - [ ] `--fail-on-loss` for CI pipelines
-- [ ] `--export-loss-report loss.json`
-- [ ] Fuzz testing with hypothesis in CI
+- [ ] Daily-notes roundtrip test coverage
 - [ ] Performance benchmarks (100/1K/10K memories)
 
 ## v0.3.0 — Ecosystem
 
+- [ ] **Zep Reader**
 - [ ] `memlink merge` — merge multiple sources into one target
 - [ ] `memlink broadcast` — write to multiple targets at once
 - [ ] Plugin Contract Tests published as public API
