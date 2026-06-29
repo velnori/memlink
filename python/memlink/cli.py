@@ -659,4 +659,8 @@ def _parse_source(s: str) -> tuple[str, Path]:
     return fmt, path
 
 
+if __name__ == "__main__":
+    main()
+
+
 # ── Helpers ────────────────────────────────────────────────────────
