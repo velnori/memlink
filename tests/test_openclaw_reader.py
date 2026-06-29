@@ -443,3 +443,87 @@ class TestOpenClawReaderNativeDreams:
         ws = self._make_workspace(tmp_path, dreams_content=content)
         result = OpenClawReader().read(ws)
         assert "dream-2026-07-01-2" in [m.id for m in result.memories]
+
+
+class TestDailyNotesRoundtrip:
+    def test_daily_notes_roundtrip_name_restored(self, tmp_path):
+        memory_dir = tmp_path / "memory"
+        memory_dir.mkdir()
+        (memory_dir / "2026-06-14.md").write_text(
+            """---
+title: 2026-06-14
+created_at: 2026-06-14
+---
+
+## 示例主题一
+
+正文内容。
+
+<!-- memlink-roundtrip
+{
+  "id": "a1b2c3d4e5f6",
+  "kind": "dynamic",
+  "name": "示例主题一",
+  "importance_score": 7.0,
+  "importance_label": null,
+  "valence": null,
+  "arousal": null,
+  "pinned": false,
+  "domains": ["社交", "日常"],
+  "tags": [],
+  "source_uri": "ombre://dynamic/社交/a1b2c3d4e5f6",
+  "checksum": null,
+  "memlink": {"source": {"format": "ombre", "version": "1.0"}, "schema_version": "1",
+    "original": {"id": "a1b2c3d4e5f6", "type": "dynamic", "importance": 7,
+      "domain": ["社交", "日常"], "created": "2026-06-14T10:00:00"}}
+}
+-->
+""",
+            encoding="utf-8",
+        )
+        result = OpenClawReader().read(tmp_path)
+        assert result.stats["parsed"] == 1
+        mem = result.memories[0]
+        # Name restored from roundtrip block (daily-notes sets it to date "2026-06-14")
+        assert mem.name == "示例主题一"
+        assert "社交" in mem.domains
+        assert "日常" in mem.domains
+
+    def test_daily_notes_roundtrip_domains_restored(self, tmp_path):
+        memory_dir = tmp_path / "memory"
+        memory_dir.mkdir()
+        (memory_dir / "2026-06-15.md").write_text(
+            """---
+title: 2026-06-15
+created_at: 2026-06-15
+---
+
+## Some Memory
+
+正文。
+
+<!-- memlink-roundtrip
+{
+  "id": "abc000111222",
+  "kind": "dynamic",
+  "name": "Some Memory",
+  "importance_score": 5.0,
+  "importance_label": null,
+  "valence": null,
+  "arousal": null,
+  "pinned": false,
+  "domains": ["项目", "工具"],
+  "tags": [],
+  "source_uri": "ombre://dynamic/项目/abc000111222",
+  "checksum": null,
+  "memlink": {"source": {"format": "ombre"}, "schema_version": "1",
+    "original": {"id": "abc000111222", "type": "dynamic", "importance": 5,
+      "domain": ["项目", "工具"], "created": "2026-06-15T09:00:00"}}
+}
+-->
+""",
+            encoding="utf-8",
+        )
+        result = OpenClawReader().read(tmp_path)
+        mem = result.memories[0]
+        assert set(mem.domains) == {"项目", "工具"}
