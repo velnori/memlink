@@ -7,6 +7,7 @@ Fixed frontmatter field order, comma-separated tags, no yaml.dump (Ombre style).
 from __future__ import annotations
 
 import math
+import re
 import secrets
 from collections.abc import Iterable
 from pathlib import Path
@@ -31,6 +32,8 @@ _LABEL_TO_SCORE: dict[str, int] = {
     "low": 3,
     "minimal": 1,
 }
+
+_HEX12_RE = re.compile(r"^[0-9a-f]{12}$")
 
 
 class OmbreWriter(FormatPlugin):
@@ -79,13 +82,14 @@ class OmbreWriter(FormatPlugin):
         # ID → bucket_id
         bucket_id = str(original.get("id") or original.get("bucket_id") or mem.id)
 
-        # If bucket_id contains non-ASCII chars (e.g. from OpenClaw Dream Sweep),
-        # generate a valid hex ID and preserve the original
+        # If bucket_id is not a valid 12-char hex AND the memory came from a
+        # known non-Ombre source (e.g. OpenClaw Dream Sweep), generate hex + preserve original
         original_id_label: str | None = None
-        if not bucket_id.isascii():
+        source_fmt = (mem.source.format if mem.source else "")
+        if source_fmt and source_fmt != "ombre" and not _HEX12_RE.match(bucket_id):
             original_id_label = bucket_id
             bucket_id = secrets.token_hex(6)
-            warnings.append(f"Non-ascii id '{original_id_label}' → generated '{bucket_id}'")
+            warnings.append(f"Non-hex id '{original_id_label}' → generated '{bucket_id}'")
 
         # Create directory
         type_dir = root / ombre_type / domain if domain else root / ombre_type
