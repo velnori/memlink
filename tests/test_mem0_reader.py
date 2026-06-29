@@ -119,16 +119,15 @@ class TestMem0Reader:
         assert len(result.warnings) == 0
 
     def test_plugin_contract(self):
+        from memlink.testing import (
+            test_reader_deterministic,
+            test_reader_invalid_input,
+            test_reader_minimal,
+            test_reader_unknown_fields,
+        )
 
         reader = Mem0Reader()
-        # Minimal test: create a single valid record
-        import tempfile
-
-        d = Path(tempfile.mkdtemp())
-        (d / "memories.json").write_text(
-            '{"results": [{"id": "test-001", "memory": "Test content", "user_id": "test"}]}',
-            encoding="utf-8",
-        )
-        result = reader.read(d)
-        assert len(result.memories) == 1
-        assert result.memories[0].id == "test-001"
+        test_reader_minimal(reader)
+        test_reader_unknown_fields(reader)
+        test_reader_invalid_input(reader)
+        test_reader_deterministic(reader)

@@ -119,6 +119,11 @@ def _create_minimal_format_dir(root: Path, fmt: str) -> None:
         d.mkdir(parents=True)
         (d / "test-001.md").write_text("---\nname: Test\nmetadata:\n  type: work\n---\nContent.")
         (root / "MEMORY.md").write_text("- memory/test-001.md")
+    elif fmt == "mem0":
+        import json
+        (root / "memories.json").write_text(
+            json.dumps({"results": [{"id": "test-001", "memory": "Test", "user_id": "test"}]})
+        )
 
 
 def _create_unknown_fields_dir(root: Path, fmt: str) -> None:
@@ -132,6 +137,12 @@ def _create_unknown_fields_dir(root: Path, fmt: str) -> None:
         d = root / "memory"
         d.mkdir(parents=True)
         (d / "test.md").write_text("---\nname: Test\nweird_field: [1,2,3]\n---\nBody.")
+    elif fmt == "mem0":
+        import json
+        (root / "memories.json").write_text(
+            json.dumps({"results": [{"id": "contract-test", "memory": "Test", "user_id": "u",
+                                     "unknown": "value", "custom_field": 42}]})
+        )
 
 
 def _create_broken_dir(root: Path, fmt: str) -> None:
@@ -143,3 +154,5 @@ def _create_broken_dir(root: Path, fmt: str) -> None:
         d = root / "memory"
         d.mkdir(parents=True)
         (d / "bad.md").write_text("not valid\n---\n")
+    elif fmt == "mem0":
+        (root / "memories.json").write_text("{not json")
