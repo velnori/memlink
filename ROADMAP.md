@@ -41,12 +41,12 @@
 - [x] **Claude Export Reader** — each conversation → one Canonical Memory
 - [x] Verified on 122 real Ombre memories, 0 warnings
 
-## v1.0.0 — Stable (next)
+## v1.0.0 — Stable ✅
 
-- [ ] Canonical Schema v1 stable (no breaking changes)
-- [ ] Plugin API stable
-- [ ] Community format plugins (Mem0, Zep, etc.)
-- [ ] `spec/` published as standalone language-neutral specification
+- [x] Canonical Schema v1 Frozen (no breaking changes in 1.x)
+- [x] Plugin API stable
+- [x] Community format plugins (Mem0, Zep, etc.)
+- [x] `spec/` published as standalone language-neutral specification
 
 ## Future
 

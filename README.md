@@ -180,7 +180,7 @@ Add a new format = write one plugin. Zero changes to core code.
 - ❌ **Memory database** — Works with files, not APIs
 - ❌ **Embedding store** — No vector search
 - ❌ **Knowledge graph** — No traversal or inference
-- ❌ **Production ready** — v0.6.0 is an alpha. Use in production at your own discretion.
+- ❌ **Production ready** — v1.0.0 is an alpha. Use in production at your own discretion.
 
 ---
 
@@ -193,7 +193,7 @@ Add a new format = write one plugin. Zero changes to core code.
 | **v0.4** | Mem0 Writer ✅, `memlink merge` ✅ |
 | **v0.5** | Zep Writer ✅, `memlink broadcast` ✅ |
 | **v0.6** | ChatGPT + Claude Export Readers ✅ (current) |
-| **v1.0** | Stable Canonical Schema v1, stable Plugin API |
+| **v1.0** | Schema Frozen, Plugin API Stable ✅ (current) |
 
 ---
 

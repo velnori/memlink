@@ -64,6 +64,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [0.6.0]: https://github.com/velnori/memlink/compare/v0.5.0...v0.6.0
 
+## [1.0.0] — 2026-06-29
+
+### Stable
+
+- **Canonical Schema v1 Frozen** — no breaking changes in any 1.x release
+- **Plugin API Stable** — FormatPlugin ABC, Capabilities, ReadResult signatures locked
+- **`spec/` published** — language-neutral specification with compliance checklist
+- `relationships` field: reserved in v1.0, Writers planned for v1.1
+
+### Metrics
+
+- 214 tests, 7 formats, 3 OS × 3 Python CI
+- Verified on 122 real Ombre memories, 0 warnings
+
+[1.0.0]: https://github.com/velnori/memlink/compare/v0.6.0...v1.0.0
+
 ## [0.1.0] — 2026-06-28
 
 ### Added
