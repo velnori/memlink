@@ -289,7 +289,7 @@ def _to_float(val) -> float | None:
 _ROUNDTRIP_RE = re.compile(r"<!-- memlink-roundtrip\s*\n(.*?)\n\s*-->", re.DOTALL)
 
 
-_DREAMS_SECTION_RE = re.compile(r"^## ([0-9a-f]{12,})\s*$", re.MULTILINE)
+_DREAMS_SECTION_RE = re.compile(r"^## ([0-9a-fA-F]{12,})\s*$", re.MULTILINE)
 
 
 def _parse_dreams_file(
@@ -306,8 +306,8 @@ def _parse_dreams_file(
     """
     try:
         text = dreams_path.read_text(encoding="utf-8")
-    except Exception:
-        warnings.append("Cannot read DREAMS.md")
+    except Exception as e:
+        warnings.append(f"Cannot read DREAMS.md: {e}")
         return []
 
     rel = str(dreams_path.relative_to(workspace_root)).replace("\\", "/")
@@ -320,10 +320,6 @@ def _parse_dreams_file(
         start = match.end()
         end = splits[i + 1].start() if i + 1 < len(splits) else len(text)
         section_text = text[start:end]
-
-        if entry_id in seen_ids:
-            continue
-        seen_ids.add(entry_id)
 
         rt_match = _ROUNDTRIP_RE.search(section_text)
         if not rt_match:
@@ -342,6 +338,12 @@ def _parse_dreams_file(
             stats["skipped"] += 1
             continue
 
+        # Dedup by canonical (JSON) id, not heading id
+        canonical_id = str(data.get("id", entry_id))
+        if canonical_id in seen_ids:
+            continue
+        seen_ids.add(canonical_id)
+
         body_raw = section_text[: rt_match.start()]
         body_clean = re.sub(r"\nvalence:.*$", "", body_raw.rstrip(), flags=re.MULTILINE).strip()
         body = body_clean if body_clean else None
@@ -350,19 +352,19 @@ def _parse_dreams_file(
         created_at = _parse_time(original.get("created") if original else None)
 
         memory = Memory(
-            id=str(data.get("id", entry_id)),
-            name=str(data.get("id", entry_id)),
+            id=canonical_id,
+            name=str(canonical_id),  # feel entries use id as name
             source=Source(
                 format="openclaw",
                 path=rel,
-                uri=f"openclaw://{rel}#{data.get('id', entry_id)}",
+                uri=f"openclaw://{rel}#{canonical_id}",
             ),
             summary=None,
             body=body,
             kind=data.get("kind", "emotion"),
             status="active",
-            tags=sorted(str(t) for t in data.get("tags", [])),
-            domains=list(data.get("domains", [])),
+            tags=_parse_tags(data),
+            domains=list(data.get("domains") or []),
             created_at=created_at,
             valence=_to_float(data.get("valence")),
             arousal=_to_float(data.get("arousal")),
