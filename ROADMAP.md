@@ -52,7 +52,7 @@
 
 - [x] **Reverse merge dedup** — verified: ID preserved in bidirectional roundtrip, `merge --on-conflict newest` sufficient
 - [ ] MEMORY.md file lock (`filelock` dependency)
-- [ ] Daily-notes roundtrip test coverage
+- [x] Daily-notes roundtrip — name/domains recovered from roundtrip block, verified with real data
 - [ ] Performance benchmarks (100/1K/10K memories)
 - [ ] `--output-mode` extensible per format
 - [ ] Converter pipeline hooks (before_read / after_write)
