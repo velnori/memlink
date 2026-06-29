@@ -125,6 +125,18 @@ def _create_minimal_format_dir(root: Path, fmt: str) -> None:
         (root / "memories.json").write_text(
             json.dumps({"results": [{"id": "test-001", "memory": "Test", "user_id": "test"}]})
         )
+    elif fmt == "chatgpt":
+        import json
+
+        (root / "conversations.json").write_text(
+            json.dumps([{"id": "test-001", "title": "Test", "mapping": {"n1": {"message": {"author": {"role": "user"}, "content": {"content_type": "text", "parts": ["Test content."]}, "create_time": 1.0}}}}])
+        )
+    elif fmt == "claude_export":
+        import json
+
+        (root / "conversations.json").write_text(
+            json.dumps([{"uuid": "test-001", "name": "Test", "chat_messages": [{"uuid": "m1", "text": "Test content.", "sender": "human"}]}])
+        )
     elif fmt == "zep":
         import json
 
@@ -166,6 +178,18 @@ def _create_unknown_fields_dir(root: Path, fmt: str) -> None:
         (root / "facts.json").write_text(
             json.dumps({"facts": [{"uuid": "contract-test", "fact": "Test", "unknown_field": 99}]})
         )
+    elif fmt == "chatgpt":
+        import json
+
+        (root / "conversations.json").write_text(
+            json.dumps([{"id": "contract-test", "title": "Test", "extra": "value", "mapping": {"n1": {"message": {"author": {"role": "user"}, "content": {"content_type": "text", "parts": ["Test"]}, "create_time": 1.0}}}}])
+        )
+    elif fmt == "claude_export":
+        import json
+
+        (root / "conversations.json").write_text(
+            json.dumps([{"uuid": "contract-test", "name": "Test", "unknown": 42, "chat_messages": [{"uuid": "m1", "text": "Test", "sender": "human"}]}])
+        )
 
 
 def _create_broken_dir(root: Path, fmt: str) -> None:
@@ -181,3 +205,7 @@ def _create_broken_dir(root: Path, fmt: str) -> None:
         (root / "memories.json").write_text("{not json")
     elif fmt == "zep":
         (root / "facts.json").write_text("{not json")
+    elif fmt == "chatgpt":
+        (root / "conversations.json").write_text("{not json")
+    elif fmt == "claude_export":
+        (root / "conversations.json").write_text("{not json")

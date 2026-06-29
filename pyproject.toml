@@ -42,6 +42,8 @@ memlink = "memlink.cli:main"
 ombre = "memlink.ombre_reader:OmbreReader"
 openclaw = "memlink.openclaw_reader:OpenClawReader"
 generic = "memlink.generic_reader:GenericReader"
+chatgpt = "memlink.chatgpt_reader:ChatGPTReader"
+claude_export = "memlink.claude_export_reader:ClaudeExportReader"
 mem0 = "memlink.mem0_reader:Mem0Reader"
 zep = "memlink.zep_reader:ZepReader"
 

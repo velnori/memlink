@@ -79,6 +79,8 @@ def _ensure_loaded() -> None:
 
 
 def _discover_builtins() -> None:
+    from .chatgpt_reader import ChatGPTReader
+    from .claude_export_reader import ClaudeExportReader
     from .generic_reader import GenericReader
     from .mem0_reader import Mem0Reader
     from .mem0_writer import Mem0Writer
@@ -94,6 +96,8 @@ def _discover_builtins() -> None:
     register_reader(OpenClawReader)
     register_writer(OpenClawWriter)
     register_reader(GenericReader)
+    register_reader(ChatGPTReader)
+    register_reader(ClaudeExportReader)
     register_reader(Mem0Reader)
     register_writer(Mem0Writer)
     register_reader(ZepReader)

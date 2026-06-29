@@ -1,0 +1,61 @@
+[
+  {
+    "uuid": "claude-conv-001",
+    "name": "Python async discussion",
+    "created_at": "2024-01-01T00:00:00.000000+00:00",
+    "updated_at": "2024-01-01T01:00:00.000000+00:00",
+    "chat_messages": [
+      {
+        "uuid": "msg-001",
+        "text": "How do I use asyncio in Python?",
+        "sender": "human",
+        "created_at": "2024-01-01T00:00:00.000000+00:00",
+        "updated_at": "2024-01-01T00:00:00.000000+00:00",
+        "attachments": [],
+        "files": []
+      },
+      {
+        "uuid": "msg-002",
+        "text": "asyncio is Python's async framework. You use async/await and create tasks with asyncio.create_task().",
+        "sender": "assistant",
+        "created_at": "2024-01-01T00:01:00.000000+00:00",
+        "updated_at": "2024-01-01T00:01:00.000000+00:00",
+        "attachments": [],
+        "files": []
+      }
+    ]
+  },
+  {
+    "uuid": "claude-conv-002",
+    "name": "Chinese conversation test",
+    "created_at": "2024-03-15T08:00:00.000000+00:00",
+    "updated_at": "2024-03-15T08:30:00.000000+00:00",
+    "chat_messages": [
+      {
+        "uuid": "msg-cn-1",
+        "text": "帮我写一个Python函数，输入是字符串，输出是反转后的字符串",
+        "sender": "human",
+        "created_at": "2024-03-15T08:00:00.000000+00:00",
+        "updated_at": "2024-03-15T08:00:00.000000+00:00",
+        "attachments": [],
+        "files": []
+      },
+      {
+        "uuid": "msg-cn-2",
+        "text": "好的，这是反转字符串的Python函数：\n\ndef reverse_string(s):\n    return s[::-1]",
+        "sender": "assistant",
+        "created_at": "2024-03-15T08:00:30.000000+00:00",
+        "updated_at": "2024-03-15T08:00:30.000000+00:00",
+        "attachments": [],
+        "files": []
+      }
+    ]
+  },
+  {
+    "uuid": "claude-conv-003",
+    "name": "Empty conversation",
+    "created_at": "2024-06-01T00:00:00.000000+00:00",
+    "updated_at": "2024-06-01T00:00:00.000000+00:00",
+    "chat_messages": []
+  }
+]

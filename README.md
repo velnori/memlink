@@ -89,6 +89,8 @@ You should now see an OpenClaw-style memory file in `/tmp/memlink-output/`. The 
 | Generic Markdown | ✅ | — | v0.1.1 |
 | Mem0 | ✅ | ✅ | v0.5.0 |
 | Zep | ✅ | ✅ | v0.5.0 |
+| ChatGPT Export | ✅ | — | v0.6.0 |
+| Claude Export | ✅ | — | v0.6.0 |
 
 **Generic Markdown** works with YAML-frontmatter Markdown used by tools like Obsidian, Logseq, Bear, and plain Markdown. Tool-specific extensions are preserved as metadata or reported as compatibility notes.
 
@@ -96,7 +98,7 @@ You should now see an OpenClaw-style memory file in `/tmp/memlink-output/`. The 
 
 | Format | Target |
 |--------|--------|
-| Chat export readers (ChatGPT, Claude) | later |
+| ChatGPT/Claude Writers | later |
 
 ---
 
