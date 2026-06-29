@@ -433,6 +433,14 @@ def _recover_roundtrip_comment(body: str | None, memory: Memory, warnings: list[
                     memory.valence = data["valence"]
                 if data.get("arousal") and memory.arousal is None:
                     memory.arousal = data["arousal"]
+                # Restore name from roundtrip if current name looks like a date (daily-notes artifact)
+                if data.get("name") and memory.name and re.fullmatch(r"\d{4}-\d{2}-\d{2}", memory.name):
+                    memory.name = str(data["name"])
+
+                # Restore domains if lost during daily-notes read
+                if data.get("domains") is not None and not memory.domains:
+                    memory.domains = list(data["domains"])
+
                 # Merge memlink data
                 rt_memlink = data.get("memlink")
                 if rt_memlink and not memory.metadata.get("memlink"):
