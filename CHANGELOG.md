@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] — 2026-06-29
+
+### Added
+
+- **Zep Reader** — reads Zep CE and Cloud JSON exports (facts format, session summary format, array format). Fifth format, 0 core changes needed.
+- **`--fail-on-loss` flag** — `memlink convert --fail-on-loss` exits with code 5 if any fields will be lost during conversion. CI pipeline integration.
+- Plugin Contract Tests extended to cover ZepReader via `testing.py`
+- Test fixtures for Zep format (`tests/fixtures/zep_samples/`)
+
+### Metrics
+
+- 148 tests (16 new: 13 Zep + 3 --fail-on-loss)
+- 5 formats: Ombre Brain, OpenClaw, Generic Markdown, Mem0, Zep
+
+[0.3.0]: https://github.com/velnori/memlink/compare/v0.2.0...v0.3.0
+
 ## [0.1.0] — 2026-06-28
 
 ### Added

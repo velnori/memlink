@@ -94,11 +94,8 @@ You should now see an OpenClaw-style memory file in `/tmp/memlink-output/`. The 
 
 ### Planned Formats
 
-Planned formats are roadmap items, **not implemented in v0.1.1**:
-
 | Format | Target |
 |--------|--------|
-| Zep Reader | v0.3 |
 | Chat export readers (ChatGPT, Claude) | later |
 
 ---
@@ -159,7 +156,7 @@ Add a new format = write one plugin. Zero changes to core code.
 - ❌ **Memory database** — Works with files, not APIs
 - ❌ **Embedding store** — No vector search
 - ❌ **Knowledge graph** — No traversal or inference
-- ❌ **Production ready** — v0.1.1 is an alpha. Use in production at your own discretion.
+- ❌ **Production ready** — v0.3.0 is an alpha. Use in production at your own discretion.
 
 ---
 
@@ -167,9 +164,9 @@ Add a new format = write one plugin. Zero changes to core code.
 
 | Version | Focus |
 |---------|-------|
-| **v0.2** | Mem0 Reader ✅, file lock, `--fail-on-loss`, daily-notes roundtrip |
-| **v0.3** | Zep Reader, `memlink merge`, `memlink broadcast` |
-| **v0.4** | Chat export readers (ChatGPT, Claude) |
+| **v0.2** | Mem0 Reader ✅, `--fail-on-loss` ✅ |
+| **v0.3** | Zep Reader ✅, MkDocs ✅ (current) |
+| **v0.4** | Chat export readers (ChatGPT, Claude), `memlink merge`, `memlink broadcast` |
 | **v1.0** | Stable Canonical Schema v1, stable Plugin API |
 
 ---
@@ -181,7 +178,7 @@ git clone https://github.com/velnori/memlink.git
 cd memlink
 pip install -e ".[dev]"
 
-pytest tests/ -v          # 132 tests
+pytest tests/ -v          # 148 tests
 ruff check python/memlink/       # Lint
 mypy python/memlink/             # Type check
 ```

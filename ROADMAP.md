@@ -14,19 +14,16 @@
 ## v0.2.0 — New Format + Stability
 
 - [x] **Mem0 Reader** — prove O(n) with a mainstream format ✅
-- [ ] MEMORY.md file lock (`filelock` dependency)
-- [ ] `--fail-on-loss` for CI pipelines
-- [ ] Daily-notes roundtrip test coverage
-- [ ] Performance benchmarks (100/1K/10K memories)
+- [x] `--fail-on-loss` for CI pipelines
 
-## v0.3.0 — Ecosystem
+## v0.3.0 — Ecosystem (current)
 
 - [x] **Zep Reader** ✅
+- [x] MkDocs documentation site
 - [ ] `memlink merge` — merge multiple sources into one target
 - [ ] `memlink broadcast` — write to multiple targets at once
 - [ ] Plugin Contract Tests published as public API
 - [ ] Spec Compliance checklist per plugin
-- [ ] MkDocs documentation site
 
 ## v1.0.0 — Stable
 
@@ -37,6 +34,9 @@
 
 ## Future
 
+- [ ] MEMORY.md file lock (`filelock` dependency)
+- [ ] Daily-notes roundtrip test coverage
+- [ ] Performance benchmarks (100/1K/10K memories)
 - [ ] `--output-mode` extensible per format
 - [ ] Converter pipeline hooks (before_read / after_write)
 - [ ] Bidirectional sync (watchdog + diff-based)
