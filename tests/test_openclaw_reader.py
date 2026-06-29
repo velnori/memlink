@@ -620,3 +620,45 @@ tags: foo, bar
         assert "tags:" not in mem.body
         assert "正文在这里。" in mem.body
         assert mem.tags == ["bar", "foo"]  # restored from roundtrip block
+
+    def test_daily_notes_roundtrip_tags_restored(self, tmp_path):
+        memory_dir = tmp_path / "memory"
+        memory_dir.mkdir()
+        (memory_dir / "2026-06-16.md").write_text(
+            """---
+title: 2026-06-16
+created_at: 2026-06-16
+---
+
+## tag-test-001
+
+正文。
+
+tags: foo, bar
+
+---
+
+<!-- memlink-roundtrip
+{
+  "id": "tag-test-001",
+  "kind": "dynamic",
+  "name": null,
+  "importance_score": 3.0,
+  "importance_label": null,
+  "valence": null,
+  "arousal": null,
+  "pinned": false,
+  "domains": [],
+  "tags": ["foo", "bar"],
+  "source_uri": "ombre://dynamic/tag-test-001",
+  "checksum": null,
+  "memlink": {"source": {"format": "ombre"}, "schema_version": "1",
+    "original": {"id": "tag-test-001", "created": "2026-06-16T08:00:00"}}
+}
+-->
+""",
+            encoding="utf-8",
+        )
+        result = OpenClawReader().read(tmp_path)
+        mem = result.memories[0]
+        assert mem.tags == ["bar", "foo"]
