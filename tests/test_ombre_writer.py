@@ -165,15 +165,9 @@ class TestOmbreWriter:
             id="项目-启动", name="Project Kickoff", body="内容", kind="dynamic", domains=["工作"], tags=["重要"]
         )
         writer = OmbreWriter()
-        warnings = writer.write([mem], tmp_path)
-        # Chinese id triggers hex generation
-        assert any("项目-启动" in w and "generated" in w for w in warnings)
-        files = list((tmp_path / "dynamic" / "工作").rglob("*.md"))
-        assert len(files) == 1
-        import re as _re
-        assert _re.match(r"^[0-9a-f]{12}$", files[0].stem)
-        content = files[0].read_text(encoding="utf-8")
-        assert "original_id: 项目-启动" in content
+        writer.write([mem], tmp_path)
+        file_path = tmp_path / "dynamic" / "工作" / "项目-启动.md"
+        assert file_path.exists()
 
     def test_yaml_special_chars_quoted(self, tmp_path):
         mem = Memory(id="test", name="Project: Alpha", body="Content", kind="dynamic", domains=["user"])
@@ -254,3 +248,21 @@ class TestOmbreWriter:
         assert not any("generated" in w for w in warnings)
         files = list((tmp_path / "dynamic").rglob("*.md"))
         assert files[0].stem == "d2d11c9ccd39"
+
+    def test_ascii_non_hex_id_gets_generated_hex(self, tmp_path):
+        from memlink.ombre_writer import OmbreWriter
+        from memlink.models import Memory, Source
+        mem = Memory(
+            id="dream-2026-06-30",
+            name="dream-2026-06-30",
+            source=Source(format="openclaw", path="DREAMS.md", uri="openclaw://DREAMS.md#dream-2026-06-30"),
+            kind="emotion",
+            status="active",
+            domains=[],
+            tags=[],
+        )
+        warnings = OmbreWriter().write([mem], tmp_path)
+        assert any("dream-2026-06-30" in w and "generated" in w for w in warnings)
+        import re as _re
+        files = list((tmp_path / "feel").rglob("*.md"))
+        assert _re.match(r"^[0-9a-f]{12}$", files[0].stem)

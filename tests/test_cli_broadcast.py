@@ -82,7 +82,8 @@ class TestBroadcast:
             assert len(r1.memories) == 1
             assert len(r2.memories) == 1
             assert r1.memories[0].id == "z"
-            assert r2.memories[0].id == "z"
+            # Ombre writer generates hex for non-hex ids from non-ombre sources
+            assert len(r2.memories[0].id) == 12
 
     def test_broadcast_invalid_writer(self):
         from memlink.registry import PluginNotFoundError
