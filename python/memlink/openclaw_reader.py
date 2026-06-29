@@ -289,7 +289,10 @@ def _to_float(val) -> float | None:
 _ROUNDTRIP_RE = re.compile(r"<!-- memlink-roundtrip\s*\n(.*?)\n\s*-->", re.DOTALL)
 
 
-_DREAMS_SECTION_RE = re.compile(r"^## ([0-9a-fA-F]{12,})\s*$", re.MULTILINE)
+_DREAMS_SECTION_RE = re.compile(
+    r"^## ([0-9a-fA-F]{12,}|dream-\d{4}-\d{2}-\d{2}(?:-\d+)?)\s*$",
+    re.MULTILINE,
+)
 
 
 def _parse_dreams_file(
@@ -323,8 +326,42 @@ def _parse_dreams_file(
 
         rt_match = _ROUNDTRIP_RE.search(section_text)
         if not rt_match:
-            stats["skipped"] += 1
-            warnings.append(f"DREAMS.md entry {entry_id}: no roundtrip block, skipped")
+            # No roundtrip block — try fallback: extract valence/arousal from text
+            valence_match = re.search(r"valence:\s*([\d.]+)", section_text)
+            if not valence_match:
+                stats["skipped"] += 1
+                warnings.append(f"DREAMS.md entry {entry_id}: no roundtrip block and no valence, skipped")
+                continue
+
+            arousal_match = re.search(r"arousal:\s*([\d.]+)", section_text)
+            date_match = re.match(r"dream-(\d{4}-\d{2}-\d{2})", entry_id)
+            created_at = _parse_time(date_match.group(1) + "T00:00:00") if date_match else None
+
+            body_raw = re.sub(r"\nvalence:.*$", "", section_text.rstrip(), flags=re.MULTILINE).strip()
+            body = body_raw if body_raw else None
+
+            memory = Memory(
+                id=entry_id,
+                name=entry_id,
+                source=Source(format="openclaw", path=rel, uri=f"openclaw://{rel}#{entry_id}"),
+                summary=None,
+                body=body,
+                kind="emotion",
+                status="active",
+                tags=[],
+                domains=[],
+                created_at=created_at,
+                valence=float(valence_match.group(1)),
+                arousal=float(arousal_match.group(1)) if arousal_match else None,
+                importance_score=5.0,
+                importance_label=None,
+                pinned=False,
+                checksum=None,
+                metadata={},
+                extensions={},
+            )
+            memories.append(memory)
+            stats["parsed"] += 1
             continue
 
         try:

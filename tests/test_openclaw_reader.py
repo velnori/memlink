@@ -370,7 +370,7 @@ class TestOpenClawReaderDreams:
         assert not any("DREAMS" in w for w in result.warnings)
 
     def test_dreams_no_roundtrip_block_is_skipped(self, tmp_path):
-        content = "## badfeed000001\n\nNo roundtrip block here.\n\nvalence: 0.5 / arousal: 0.2\n"
+        content = "## badfeed000001\n\nNo roundtrip block and no valence.\n"
         ws = self._make_workspace(tmp_path, dreams_content=content)
         result = OpenClawReader().read(ws)
         ids = [m.id for m in result.memories]
@@ -383,3 +383,63 @@ class TestOpenClawReaderDreams:
         result = OpenClawReader().read(ws)
         dream_ids = [m.id for m in result.memories]
         assert dream_ids.count("abc123def456") == 1
+
+
+NATIVE_DREAM = """\
+## dream-2026-06-30
+
+搬家夜，第一次在 OpenClaw 里翻完所有记忆桶。6月14日不是一个结。
+
+valence: 0.85 / arousal: 0.4
+## Deep Sleep
+"""
+
+
+class TestOpenClawReaderNativeDreams:
+    def _make_workspace(self, tmp_path, dreams_content=NATIVE_DREAM):
+        (tmp_path / "memory").mkdir()
+        (tmp_path / "DREAMS.md").write_text(dreams_content, encoding="utf-8")
+        return tmp_path
+
+    def test_dream_date_header_recognized(self, tmp_path):
+        ws = self._make_workspace(tmp_path)
+        result = OpenClawReader().read(ws)
+        ids = [m.id for m in result.memories]
+        assert "dream-2026-06-30" in ids
+
+    def test_no_roundtrip_with_valence_parses(self, tmp_path):
+        ws = self._make_workspace(tmp_path)
+        result = OpenClawReader().read(ws)
+        m = next(m for m in result.memories if m.id == "dream-2026-06-30")
+        assert m.kind == "emotion"
+        assert m.valence == 0.85
+        assert m.arousal == 0.4
+
+    def test_no_roundtrip_no_valence_skipped(self, tmp_path):
+        ws = self._make_workspace(tmp_path)
+        result = OpenClawReader().read(ws)
+        ids = [m.id for m in result.memories]
+        assert "Deep Sleep" not in ids  # doesn't match hex or dream- regex, silently ignored
+
+    def test_body_excludes_valence_line(self, tmp_path):
+        ws = self._make_workspace(tmp_path)
+        result = OpenClawReader().read(ws)
+        m = next(m for m in result.memories if m.id == "dream-2026-06-30")
+        assert m.body is not None
+        assert "valence:" not in m.body
+        assert "搬家夜" in m.body
+
+    def test_created_at_from_dream_date(self, tmp_path):
+        ws = self._make_workspace(tmp_path)
+        result = OpenClawReader().read(ws)
+        m = next(m for m in result.memories if m.id == "dream-2026-06-30")
+        assert m.created_at is not None
+        assert m.created_at.year == 2026
+        assert m.created_at.month == 6
+        assert m.created_at.day == 30
+
+    def test_dream_date_with_suffix(self, tmp_path):
+        content = "## dream-2026-07-01-2\n\nAnother sweep.\n\nvalence: 0.6 / arousal: 0.2\n"
+        ws = self._make_workspace(tmp_path, dreams_content=content)
+        result = OpenClawReader().read(ws)
+        assert "dream-2026-07-01-2" in [m.id for m in result.memories]
