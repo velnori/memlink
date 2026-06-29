@@ -50,6 +50,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [0.5.0]: https://github.com/velnori/memlink/compare/v0.4.0...v0.5.0
 
+## [0.6.0] — 2026-06-29
+
+### Added
+
+- **ChatGPT Export Reader** — reads official ChatGPT `conversations.json` exports. Each conversation → one Canonical Memory.
+- **Claude Export Reader** — reads Anthropic official Claude `conversations.json` exports. Each conversation → one Canonical Memory.
+
+### Metrics
+
+- 210 tests (+21)
+- 7 formats: ombre, openclaw, generic, mem0, zep, chatgpt, claude_export
+
+[0.6.0]: https://github.com/velnori/memlink/compare/v0.5.0...v0.6.0
+
 ## [0.1.0] — 2026-06-28
 
 ### Added

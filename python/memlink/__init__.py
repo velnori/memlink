@@ -1,6 +1,6 @@
 """memlink — AI Memory Interchange Layer."""
 
-__version__ = "0.5.0"
+__version__ = "0.6.0"
 
 from .converter import ConversionAnalysis, FeatureImpact, analyze_conversion, compare_memories
 from .models import JSONValue, Memory, Relationship, Source

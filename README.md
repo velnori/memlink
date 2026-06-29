@@ -191,7 +191,8 @@ Add a new format = write one plugin. Zero changes to core code.
 | **v0.2** | Mem0 Reader ✅, `--fail-on-loss` ✅ |
 | **v0.3** | Zep Reader ✅, MkDocs ✅, merge ✅ |
 | **v0.4** | Mem0 Writer ✅, `memlink merge` ✅ |
-| **v0.5** | Zep Writer ✅, `memlink broadcast` ✅ (current) |
+| **v0.5** | Zep Writer ✅, `memlink broadcast` ✅ |
+| **v0.6** | ChatGPT + Claude Export Readers ✅ (current) |
 | **v1.0** | Stable Canonical Schema v1, stable Plugin API |
 
 ---
