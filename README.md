@@ -112,19 +112,41 @@ MemLink is honest about what transfers and what doesn't.
 - Format-specific fields are preserved in metadata when possible.
 - Compatibility reports explain what changed.
 
-*Example compatibility report:*
+*Multi-format demo — convert, merge, broadcast:*
 
 ```
-$ memlink convert --from ombre --to openclaw -s ~/.claude/ombre-buckets -T ./memories/
+$ memlink convert --from ombre --to mem0 -s ./ombre-data -T ./mem0-out --verbose
 
-  Read:     117 memories from ombre
+Read:     4 memories from ombre
 
-  Compatibility Report:
-    [ok] Preserved via metadata:
-      Emotion fields (valence/arousal): 117 field values
+Compatibility Report:
+  [ok] Preserved via metadata:
+    Emotion fields (valence/arousal): 3 field values (75%)
+  [~] Degraded:
+    Unsupported memory kinds: 2 field values (50%)
+Warnings: 2
+Time:     0.00s
 
-  Warnings: 0
-  Time:     0.23s
+$ memlink merge --sources mem0:./mem0-out ombre:./ombre-data --to openclaw:./merged --verbose
+
+Source mem0: 4 memories from ./mem0-out
+Source ombre: 4 memories from ./ombre-data
+Sources:  2 (mem0(4), ombre(4))
+Total:    8 memories
+Unique:   4
+Resolved: 4 conflicts (strategy: newest)
+Warnings: 0
+Time:     0.00s
+
+$ memlink formats
+
+Format          Reader     Writer
+-----------------------------------
+generic         yes        no
+mem0            yes        yes
+ombre           yes        yes
+openclaw        yes        yes
+zep             yes        yes
 ```
 
 ---
@@ -156,7 +178,7 @@ Add a new format = write one plugin. Zero changes to core code.
 - ❌ **Memory database** — Works with files, not APIs
 - ❌ **Embedding store** — No vector search
 - ❌ **Knowledge graph** — No traversal or inference
-- ❌ **Production ready** — v0.3.0 is an alpha. Use in production at your own discretion.
+- ❌ **Production ready** — v0.5.0 is an alpha. Use in production at your own discretion.
 
 ---
 
