@@ -165,9 +165,15 @@ class TestOmbreWriter:
             id="项目-启动", name="Project Kickoff", body="内容", kind="dynamic", domains=["工作"], tags=["重要"]
         )
         writer = OmbreWriter()
-        writer.write([mem], tmp_path)
-        file_path = tmp_path / "dynamic" / "工作" / "项目-启动.md"
-        assert file_path.exists()
+        warnings = writer.write([mem], tmp_path)
+        # Chinese id triggers hex generation
+        assert any("项目-启动" in w and "generated" in w for w in warnings)
+        files = list((tmp_path / "dynamic" / "工作").rglob("*.md"))
+        assert len(files) == 1
+        import re as _re
+        assert _re.match(r"^[0-9a-f]{12}$", files[0].stem)
+        content = files[0].read_text(encoding="utf-8")
+        assert "original_id: 项目-启动" in content
 
     def test_yaml_special_chars_quoted(self, tmp_path):
         mem = Memory(id="test", name="Project: Alpha", body="Content", kind="dynamic", domains=["user"])
@@ -207,3 +213,44 @@ class TestOmbreWriter:
         assert lines[4].startswith("domain")
         assert lines[5].startswith("tags")
         assert lines[6].startswith("importance")
+
+    def test_non_hex_id_gets_generated_hex(self, tmp_path):
+        from memlink.ombre_writer import OmbreWriter
+        from memlink.models import Memory, Source
+        mem = Memory(
+            id="dream-sweep-示例集",
+            name="Dream Sweep: 示例合集",
+            source=Source(format="openclaw", path="DREAMS.md", uri="openclaw://DREAMS.md#dream-sweep-示例集"),
+            kind="emotion",
+            status="active",
+            domains=["日常"],
+            tags=["dream-sweep"],
+            importance_score=9.0,
+            valence=0.75,
+            arousal=0.3,
+        )
+        warnings = OmbreWriter().write([mem], tmp_path)
+        assert any("dream-sweep-示例集" in w and "generated" in w for w in warnings)
+        import re as _re
+        files = list((tmp_path / "feel").rglob("*.md"))
+        assert len(files) == 1
+        assert _re.match(r"^[0-9a-f]{12}$", files[0].stem)
+        content = files[0].read_text(encoding="utf-8")
+        assert "original_id: dream-sweep-示例集" in content
+
+    def test_valid_hex_id_unchanged(self, tmp_path):
+        from memlink.ombre_writer import OmbreWriter
+        from memlink.models import Memory, Source
+        mem = Memory(
+            id="a1b2c3d4e5f6",
+            name="a1b2c3d4e5f6",
+            source=Source(format="openclaw", path="memory/x.md", uri="openclaw://memory/x.md"),
+            kind="dynamic",
+            status="active",
+            domains=[],
+            tags=[],
+        )
+        warnings = OmbreWriter().write([mem], tmp_path)
+        assert not any("generated" in w for w in warnings)
+        files = list((tmp_path / "dynamic").rglob("*.md"))
+        assert files[0].stem == "a1b2c3d4e5f6"
