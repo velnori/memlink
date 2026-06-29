@@ -24,15 +24,15 @@
 ## Examples
 
 ```
-ombra:///dynamic/user/preferences       # Ombre local, dynamic type, user domain
-ombra:///permanent/docs/manual          # Ombre local, permanent type, docs domain
+ombre:///dynamic/user/preferences       # Ombre local, dynamic type, user domain
+ombre:///permanent/docs/manual          # Ombre local, permanent type, docs domain
 ombre:///feel/2024/sunset               # Ombre local, emotion type
 
 openclaw:///memory/project-alpha        # OpenClaw local, memory directory
 openclaw:///memory/feels/nostalgia      # OpenClaw local, feels directory
 
 # Future (v1)
-ombra://remote.host/dynamic/user/abc    # Remote Ombre instance
+ombre://remote.host/dynamic/user/abc    # Remote Ombre instance
 mem0://api.mem0.io/v1/users/abc         # Mem0 cloud API
 ```
 

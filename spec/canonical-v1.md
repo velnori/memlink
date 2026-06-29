@@ -98,6 +98,10 @@ source:
 
 ## Relationship
 
+**Status: reserved in v1.0, planned for v1.1.**
+
+The `relationships` field is present in the schema but no built-in Writer serializes it. Store relationships in `metadata.memlink.relationships` for now; v1.1 will define the wire format and Writer contract.
+
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `target_id` | `string` | Yes | ID of the related memory |
@@ -121,7 +125,6 @@ metadata:
       format: ombre
       version: "1.0"        # Source format version
     schema_version: "1"
-    converted_at: "2026-06-28T10:00:00Z"
     original:               # Full original field snapshot
       id: "bucket_id_here"
       kind: dynamic
