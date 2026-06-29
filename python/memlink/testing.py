@@ -76,7 +76,7 @@ def test_writer_produces_output(writer) -> None:
         root = Path(td)
         warnings = writer.write([MINIMAL_MEMORY], root)
         assert isinstance(warnings, list), "write() must return list of warnings"
-        files = list(root.rglob("*.md"))
+        files = [f for f in root.rglob("*") if f.is_file()]
         assert len(files) >= 1, f"Writer '{writer.name}' produced no output files"
 
 

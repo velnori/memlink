@@ -114,6 +114,25 @@ def _build_parser() -> argparse.ArgumentParser:
     # formats
     sub.add_parser("formats", help="List installed format plugins")
 
+    # merge
+    p = sub.add_parser("merge", help="Merge memories from multiple sources into one target")
+    p.add_argument(
+        "--sources", "-s", nargs="+", required=True,
+        metavar="FORMAT:PATH",
+        help="Source(s) as format:path, e.g. ombre:/data/ombre mem0:/data/mem0",
+    )
+    p.add_argument(
+        "--to", "-T", required=True, metavar="FORMAT:PATH",
+        help="Target as format:path, e.g. openclaw:/data/output",
+    )
+    p.add_argument(
+        "--on-conflict", choices=["newest", "oldest", "first", "last"],
+        default="newest",
+        help="Conflict resolution when same id exists in multiple sources (default: newest)",
+    )
+    p.add_argument("--dry-run", action="store_true")
+    p.add_argument("--verbose", "-v", action="count", default=0)
+
     return parser
 
 
@@ -123,6 +142,8 @@ def _build_parser() -> argparse.ArgumentParser:
 def _dispatch(args) -> None:
     if args.command == "formats":
         _cmd_formats()
+    elif args.command == "merge":
+        _cmd_merge(args)
     elif args.command == "convert":
         _cmd_convert(args)
     elif args.command == "validate":
@@ -461,6 +482,108 @@ def _cmd_inspect(args) -> None:
         print(f"\nWarnings: {len(result.warnings)}")
         for w in result.warnings[:5]:
             print(f"  - {w}")
+
+
+def _cmd_merge(args) -> None:
+    from .registry import get_reader, get_writer
+
+    # Parse sources
+    parsed_sources: list[tuple[str, Path]] = []
+    for spec in args.sources:
+        parsed_sources.append(_parse_source(spec))
+
+    # Parse target
+    target_fmt, target_path = _parse_source(args.to)
+
+    # Read all sources
+    all_memories: list = []
+    source_stats: list[tuple[str, int]] = []
+    for fmt, path in parsed_sources:
+        reader = get_reader(fmt)
+        try:
+            result = reader.read(path)
+            n = len(result.memories)
+            all_memories.append((fmt, path, result.memories))
+            source_stats.append((fmt, n))
+            if args.verbose:
+                print(f"Source {fmt}: {n} memories from {path}")
+        except Exception as e:
+            print(f"Error reading {fmt}:{path}: {e}", file=sys.stderr)
+            sys.exit(ExitCode.IO_ERROR)
+
+    # Merge with conflict resolution
+    merged: dict[str, tuple] = {}  # id -> (memory, source_fmt, source_path)
+    duplicates_resolved = 0
+
+    for src_idx, (fmt, path, memories) in enumerate(all_memories):
+        for mem in memories:
+            if mem.id in merged:
+                existing_mem, existing_fmt, existing_path, existing_idx = merged[mem.id]
+                keep_existing = _resolve_conflict(existing_mem, mem, args.on_conflict)
+                if not keep_existing:
+                    merged[mem.id] = (mem, fmt, path, src_idx)
+                duplicates_resolved += 1
+            else:
+                merged[mem.id] = (mem, fmt, path, src_idx)
+
+    unique_memories = [t[0] for t in merged.values()]
+    total = sum(n for _, n in source_stats)
+    unique = len(unique_memories)
+    dupes = total - unique
+
+    print(f"Sources:  {len(parsed_sources)} ({', '.join(f'{f}({n})' for f, n in source_stats)})")
+    print(f"Total:    {total} memories")
+    print(f"Unique:   {unique}")
+    if dupes:
+        print(f"Resolved: {dupes} conflicts (strategy: {args.on_conflict})")
+
+    if args.dry_run:
+        print(f"\nDry run: would write {unique} memories to {target_fmt}:{target_path}")
+        return
+
+    writer = get_writer(target_fmt)
+    start = time.perf_counter()
+    warnings = writer.write(unique_memories, target_path)
+    elapsed = time.perf_counter() - start
+
+    if warnings and args.verbose:
+        for w in warnings[:10]:
+            print(f"  [write] {w}")
+    print(f"Warnings: {len(warnings)}" if warnings else "Warnings: 0")
+    print(f"Time:     {elapsed:.2f}s")
+
+
+def _resolve_conflict(existing, incoming, strategy: str) -> bool:
+    """Return True if existing should be kept, False if incoming should replace."""
+    if strategy == "first":
+        return True
+    if strategy == "last":
+        return False
+
+    # Compare by datetime
+    def _dt_key(mem) -> int:
+        dt = mem.updated_at or mem.created_at
+        if dt is None:
+            return 0
+        return int(dt.timestamp())
+
+    e_key = _dt_key(existing)
+    i_key = _dt_key(incoming)
+
+    if strategy == "newest":
+        return not i_key > e_key
+    elif strategy == "oldest":
+        return not (i_key < e_key and i_key != 0)
+
+    return True  # fallback: keep existing
+
+
+def _parse_source(s: str) -> tuple[str, Path]:
+    """Parse 'format:path' - splits on first colon only (Windows-safe)."""
+    idx = s.index(":")
+    fmt = s[:idx]
+    path = Path(s[idx + 1:])
+    return fmt, path
 
 
 # ── Helpers ────────────────────────────────────────────────────────

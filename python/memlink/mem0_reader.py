@@ -83,18 +83,25 @@ class Mem0Reader(FormatPlugin):
             # Name: truncate at 60 chars, avoid breaking multi-byte chars
             name = _truncate_name(str(memory_text), _MAX_NAME_LEN)
 
+            # Extensions: metadata → mem0_metadata
+            raw_meta = record.get("metadata")
+            extensions: dict = {}
+            if isinstance(raw_meta, dict) and raw_meta:
+                # Recover name from _memlink_name (set by Mem0Writer for roundtrip)
+                saved_name = raw_meta.get("_memlink_name")
+                if saved_name:
+                    name = str(saved_name)
+                # Copy remaining metadata (excluding internal _memlink_name)
+                clean = {k: v for k, v in raw_meta.items() if k != "_memlink_name"}
+                if clean:
+                    extensions["mem0_metadata"] = clean
+
             # Datetime parsing
             created_at = _parse_dt(record.get("created_at"))
             if created_at is None and record.get("created_at"):
                 warnings.append(f"Invalid created_at for id={mem_id}: {record['created_at']}")
 
             updated_at = _parse_dt(record.get("updated_at"))
-
-            # Extensions: metadata → mem0_metadata
-            raw_meta = record.get("metadata")
-            extensions = {}
-            if isinstance(raw_meta, dict) and raw_meta:
-                extensions["mem0_metadata"] = raw_meta
 
             # memlink original snapshot
             memlink_original = {
