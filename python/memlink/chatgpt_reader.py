@@ -119,7 +119,10 @@ class ChatGPTReader(FormatPlugin):
             data = json.loads(target.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, OSError) as e:
             issues.append(
-                ValidationIssue(code="ML004", severity=Severity.ERROR, path=str(target), message=f"Cannot parse JSON: {e}")
+                ValidationIssue(
+                    code="ML004", severity=Severity.ERROR,
+                    path=str(target), message=f"Cannot parse JSON: {e}",
+                )
             )
             return issues
 
@@ -143,7 +146,7 @@ def _extract_chatgpt_messages(mapping: dict) -> list[tuple[str, str]]:
     """Extract user/assistant messages from ChatGPT mapping tree, sorted by time."""
     messages: list[tuple[float, str, str]] = []  # (timestamp, role, text)
 
-    for node_id, node in mapping.items():
+    for _node_id, node in mapping.items():
         if not isinstance(node, dict):
             continue
         msg = node.get("message")

@@ -132,7 +132,10 @@ class ClaudeExportReader(FormatPlugin):
             data = json.loads(target.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, OSError) as e:
             issues.append(
-                ValidationIssue(code="ML004", severity=Severity.ERROR, path=str(target), message=f"Cannot parse JSON: {e}")
+                ValidationIssue(
+                    code="ML004", severity=Severity.ERROR,
+                    path=str(target), message=f"Cannot parse JSON: {e}",
+                )
             )
             return issues
 
