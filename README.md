@@ -82,13 +82,13 @@ You should now see an OpenClaw-style memory file in `/tmp/memlink-output/`. The 
 
 ## Supported Formats
 
-| Format | Read | Write | Status |
-|--------|------|-------|--------|
-| Ombre Brain | ✅ | ✅ | v0.1.1 |
-| OpenClaw | ✅ | ✅ | v0.1.1 |
+| Format | Read | Write | Since |
+|--------|------|-------|-------|
+| Ombre Brain | ✅ | ✅ | v0.1.0 |
+| OpenClaw | ✅ | ✅ | v0.1.0 |
 | Generic Markdown | ✅ | — | v0.1.1 |
-| Mem0 | ✅ | ✅ | v0.5.0 |
-| Zep | ✅ | ✅ | v0.5.0 |
+| Mem0 | ✅ | ✅ | v0.2.0 |
+| Zep | ✅ | ✅ | v0.3.0 |
 | ChatGPT Export | ✅ | — | v0.6.0 |
 | Claude Export | ✅ | — | v0.6.0 |
 
@@ -144,6 +144,8 @@ $ memlink formats
 
 Format          Reader     Writer
 -----------------------------------
+chatgpt         yes        no
+claude_export   yes        no
 generic         yes        no
 mem0            yes        yes
 ombre           yes        yes
@@ -180,7 +182,7 @@ Add a new format = write one plugin. Zero changes to core code.
 - ❌ **Memory database** — Works with files, not APIs
 - ❌ **Embedding store** — No vector search
 - ❌ **Knowledge graph** — No traversal or inference
-- ❌ **Production ready** — v1.0.0 is an alpha. Use in production at your own discretion.
+- ⚠️ **Battle-tested** — v1.0 API is stable, but not yet tested at scale (10K+ memories) or with production workloads. Use with that in mind.
 
 ---
 
@@ -204,7 +206,7 @@ git clone https://github.com/velnori/memlink.git
 cd memlink
 pip install -e ".[dev]"
 
-pytest tests/ -v          # 189 tests
+pytest tests/ -v          # 214 tests
 ruff check python/memlink/       # Lint
 mypy python/memlink/             # Type check
 ```
