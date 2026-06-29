@@ -88,6 +88,7 @@ You should now see an OpenClaw-style memory file in `/tmp/memlink-output/`. The 
 | OpenClaw | ✅ | ✅ | v0.1.1 |
 | Generic Markdown | ✅ | — | v0.1.1 |
 | Mem0 | ✅ | — | v0.2.0 |
+| Zep | ✅ | — | v0.3.0 |
 
 **Generic Markdown** works with YAML-frontmatter Markdown used by tools like Obsidian, Logseq, Bear, and plain Markdown. Tool-specific extensions are preserved as metadata or reported as compatibility notes.
 

@@ -1,0 +1,12 @@
+[
+  {
+    "uuid": "zep-arr-001",
+    "fact": "Array format fact one",
+    "created_at": "2024-03-01T09:00:00Z"
+  },
+  {
+    "uuid": "zep-arr-002",
+    "fact": "Array format fact two",
+    "created_at": "2024-03-02T09:00:00Z"
+  }
+]

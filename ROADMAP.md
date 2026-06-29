@@ -21,7 +21,7 @@
 
 ## v0.3.0 — Ecosystem
 
-- [ ] **Zep Reader**
+- [x] **Zep Reader** ✅
 - [ ] `memlink merge` — merge multiple sources into one target
 - [ ] `memlink broadcast` — write to multiple targets at once
 - [ ] Plugin Contract Tests published as public API

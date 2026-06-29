@@ -1,0 +1,15 @@
+{
+  "facts": [
+    {
+      "fact": "No uuid here"
+    },
+    {
+      "uuid": "partial-valid-001",
+      "fact": "This one is fine",
+      "created_at": "2024-03-01T09:00:00Z"
+    },
+    {
+      "uuid": "partial-invalid-002"
+    }
+  ]
+}

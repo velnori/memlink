@@ -124,6 +124,11 @@ def _create_minimal_format_dir(root: Path, fmt: str) -> None:
         (root / "memories.json").write_text(
             json.dumps({"results": [{"id": "test-001", "memory": "Test", "user_id": "test"}]})
         )
+    elif fmt == "zep":
+        import json
+        (root / "facts.json").write_text(
+            json.dumps({"facts": [{"uuid": "test-001", "fact": "Test fact content"}]})
+        )
 
 
 def _create_unknown_fields_dir(root: Path, fmt: str) -> None:
@@ -143,6 +148,11 @@ def _create_unknown_fields_dir(root: Path, fmt: str) -> None:
             json.dumps({"results": [{"id": "contract-test", "memory": "Test", "user_id": "u",
                                      "unknown": "value", "custom_field": 42}]})
         )
+    elif fmt == "zep":
+        import json
+        (root / "facts.json").write_text(
+            json.dumps({"facts": [{"uuid": "contract-test", "fact": "Test", "unknown_field": 99}]})
+        )
 
 
 def _create_broken_dir(root: Path, fmt: str) -> None:
@@ -156,3 +166,5 @@ def _create_broken_dir(root: Path, fmt: str) -> None:
         (d / "bad.md").write_text("not valid\n---\n")
     elif fmt == "mem0":
         (root / "memories.json").write_text("{not json")
+    elif fmt == "zep":
+        (root / "facts.json").write_text("{not json")

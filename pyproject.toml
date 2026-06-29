@@ -43,6 +43,7 @@ ombre = "memlink.ombre_reader:OmbreReader"
 openclaw = "memlink.openclaw_reader:OpenClawReader"
 generic = "memlink.generic_reader:GenericReader"
 mem0 = "memlink.mem0_reader:Mem0Reader"
+zep = "memlink.zep_reader:ZepReader"
 
 [project.entry-points."memlink.writers"]
 ombre = "memlink.ombre_writer:OmbreWriter"
