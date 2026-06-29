@@ -619,3 +619,4 @@ tags: foo, bar
         assert mem.body is not None
         assert "tags:" not in mem.body
         assert "正文在这里。" in mem.body
+        assert mem.tags == ["bar", "foo"]  # restored from roundtrip block

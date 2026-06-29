@@ -448,6 +448,10 @@ def _recover_roundtrip_comment(body: str | None, memory: Memory, warnings: list[
                     cleaned = cleaned.strip()
                     memory.body = cleaned if cleaned else None
 
+                # Restore tags from roundtrip if lost during daily-notes read
+                if data.get("tags") is not None and not memory.tags:
+                    memory.tags = sorted(str(t) for t in data["tags"])
+
                 # Restore domains if lost during daily-notes read
                 if data.get("domains") is not None and not memory.domains:
                     memory.domains = list(data["domains"])
