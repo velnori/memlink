@@ -7,6 +7,7 @@ Fixed frontmatter field order, comma-separated tags, no yaml.dump (Ombre style).
 from __future__ import annotations
 
 import math
+import secrets
 from collections.abc import Iterable
 from pathlib import Path
 
@@ -78,6 +79,14 @@ class OmbreWriter(FormatPlugin):
         # ID → bucket_id
         bucket_id = str(original.get("id") or original.get("bucket_id") or mem.id)
 
+        # If bucket_id contains non-ASCII chars (e.g. from OpenClaw Dream Sweep),
+        # generate a valid hex ID and preserve the original
+        original_id_label: str | None = None
+        if not bucket_id.isascii():
+            original_id_label = bucket_id
+            bucket_id = secrets.token_hex(6)
+            warnings.append(f"Non-ascii id '{original_id_label}' → generated '{bucket_id}'")
+
         # Create directory
         type_dir = root / ombre_type / domain if domain else root / ombre_type
         type_dir.mkdir(parents=True, exist_ok=True)
@@ -85,6 +94,8 @@ class OmbreWriter(FormatPlugin):
         # Build frontmatter (fixed order, Ombre style)
         fm_lines = ["---"]
         _add_field(fm_lines, "bucket_id", bucket_id)
+        if original_id_label:
+            _add_field(fm_lines, "original_id", original_id_label, quote_if_special=True)
         _add_field(fm_lines, "name", mem.name or "", quote_if_special=True)
         _add_field(fm_lines, "type", ombre_type, quote_if_special=True)
         if mem.domains:
