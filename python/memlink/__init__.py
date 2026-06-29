@@ -1,4 +1,8 @@
-"""memlink — AI Memory Interchange Layer."""
+"""memlink — AI Memory Interchange Layer.
+
+v1.0: Canonical Memory Schema and Plugin API are stable.
+See spec/README.md for the language-neutral specification.
+"""
 
 __version__ = "0.6.0"
 

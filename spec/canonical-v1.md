@@ -1,8 +1,12 @@
 # Canonical Memory Schema v1
 
 **Version**: 1.0
-**Status**: Stable
+**Status**: Frozen
 **Compatibility**: 1.x backward-compatible, 2.0 may break
+
+> **This schema is frozen.** No fields will be removed or have their types changed in any 1.x release.
+> New optional fields may be added. Breaking changes require a 2.0 version bump.
+> Implementations can safely assume `schema_version: "1"` is stable.
 
 ## Overview
 

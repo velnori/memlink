@@ -4,6 +4,13 @@ Each AI memory format implements one plugin with three methods:
   read()     → Format → Canonical
   write()    → Canonical → Format
   validate() → Format-specific integrity checks
+
+**API Stability (v1.0):** The following are stable and will not have breaking changes in 1.x:
+  - FormatPlugin ABC (read/write/validate signatures)
+  - ReadResult, Capabilities, ValidationIssue, Severity dataclasses
+  - All field names and types on the above classes
+
+Breaking changes require a 2.0 version bump.
 """
 
 from abc import ABC, abstractmethod
