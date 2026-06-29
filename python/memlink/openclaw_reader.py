@@ -160,6 +160,16 @@ class OpenClawReader(FormatPlugin):
                 memories.append(memory)
                 stats["parsed"] += 1
 
+        # Parse DREAMS.md (feel entries not stored in memory/)
+        dreams_path = path / "DREAMS.md"
+        if dreams_path.exists():
+            existing_ids = {m.id for m in memories}
+            dreams_memories = _parse_dreams_file(dreams_path, path, warnings, stats)
+            for dm in dreams_memories:
+                if dm.id not in existing_ids:
+                    memories.append(dm)
+                    existing_ids.add(dm.id)
+
         # Warn about unindexed files
         if indexed_files:
             actual = {str(f.relative_to(path)).replace("\\", "/") for f in all_files}
@@ -277,6 +287,96 @@ def _to_float(val) -> float | None:
 # ── Daily-notes roundtrip recovery ─────────────────────────────────
 
 _ROUNDTRIP_RE = re.compile(r"<!-- memlink-roundtrip\s*\n(.*?)\n\s*-->", re.DOTALL)
+
+
+_DREAMS_SECTION_RE = re.compile(r"^## ([0-9a-f]{12,})\s*$", re.MULTILINE)
+
+
+def _parse_dreams_file(
+    dreams_path: Path,
+    workspace_root: Path,
+    warnings: list[str],
+    stats: dict[str, int],
+) -> list[Memory]:
+    """Parse DREAMS.md multi-entry file into Memory objects.
+
+    Each entry starts with ## <hex-id>. Metadata comes exclusively from
+    the memlink-roundtrip JSON block embedded as an HTML comment.
+    Entries without a roundtrip block are skipped with a warning.
+    """
+    try:
+        text = dreams_path.read_text(encoding="utf-8")
+    except Exception:
+        warnings.append("Cannot read DREAMS.md")
+        return []
+
+    rel = str(dreams_path.relative_to(workspace_root)).replace("\\", "/")
+    memories: list[Memory] = []
+    seen_ids: set[str] = set()
+
+    splits = list(_DREAMS_SECTION_RE.finditer(text))
+    for i, match in enumerate(splits):
+        entry_id = match.group(1)
+        start = match.end()
+        end = splits[i + 1].start() if i + 1 < len(splits) else len(text)
+        section_text = text[start:end]
+
+        if entry_id in seen_ids:
+            continue
+        seen_ids.add(entry_id)
+
+        rt_match = _ROUNDTRIP_RE.search(section_text)
+        if not rt_match:
+            stats["skipped"] += 1
+            warnings.append(f"DREAMS.md entry {entry_id}: no roundtrip block, skipped")
+            continue
+
+        try:
+            data = json.loads(rt_match.group(1))
+        except json.JSONDecodeError:
+            stats["skipped"] += 1
+            warnings.append(f"DREAMS.md entry {entry_id}: invalid JSON in roundtrip block, skipped")
+            continue
+
+        if not isinstance(data, dict):
+            stats["skipped"] += 1
+            continue
+
+        body_raw = section_text[: rt_match.start()]
+        body_clean = re.sub(r"\nvalence:.*$", "", body_raw.rstrip(), flags=re.MULTILINE).strip()
+        body = body_clean if body_clean else None
+
+        original = data.get("memlink", {}).get("original", {})
+        created_at = _parse_time(original.get("created") if original else None)
+
+        memory = Memory(
+            id=str(data.get("id", entry_id)),
+            name=str(data.get("id", entry_id)),
+            source=Source(
+                format="openclaw",
+                path=rel,
+                uri=f"openclaw://{rel}#{data.get('id', entry_id)}",
+            ),
+            summary=None,
+            body=body,
+            kind=data.get("kind", "emotion"),
+            status="active",
+            tags=sorted(str(t) for t in data.get("tags", [])),
+            domains=list(data.get("domains", [])),
+            created_at=created_at,
+            valence=_to_float(data.get("valence")),
+            arousal=_to_float(data.get("arousal")),
+            importance_score=_to_float(data.get("importance_score")),
+            importance_label=data.get("importance_label"),
+            pinned=bool(data.get("pinned", False)),
+            checksum=data.get("checksum"),
+            metadata={"memlink": data["memlink"]} if data.get("memlink") else {},
+            extensions={},
+        )
+        memories.append(memory)
+        stats["parsed"] += 1
+
+    return memories
 
 
 def _recover_roundtrip_comment(body: str | None, memory: Memory, warnings: list[str]) -> None:
