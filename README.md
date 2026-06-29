@@ -176,7 +176,7 @@ Add a new format = write one plugin. Zero changes to core code.
 
 ## What memlink is NOT
 
-- ❌ **Sync engine** — v0 is export/import only
+- ❌ **Sync engine** — v1.0 is export/import only
 - ❌ **Memory database** — Works with files, not APIs
 - ❌ **Embedding store** — No vector search
 - ❌ **Knowledge graph** — No traversal or inference
@@ -192,7 +192,7 @@ Add a new format = write one plugin. Zero changes to core code.
 | **v0.3** | Zep Reader ✅, MkDocs ✅, merge ✅ |
 | **v0.4** | Mem0 Writer ✅, `memlink merge` ✅ |
 | **v0.5** | Zep Writer ✅, `memlink broadcast` ✅ |
-| **v0.6** | ChatGPT + Claude Export Readers ✅ (current) |
+| **v0.6** | ChatGPT + Claude Export Readers ✅ |
 | **v1.0** | Schema Frozen, Plugin API Stable ✅ (current) |
 
 ---
