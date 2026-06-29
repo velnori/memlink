@@ -87,8 +87,8 @@ You should now see an OpenClaw-style memory file in `/tmp/memlink-output/`. The 
 | Ombre Brain | ✅ | ✅ | v0.1.1 |
 | OpenClaw | ✅ | ✅ | v0.1.1 |
 | Generic Markdown | ✅ | — | v0.1.1 |
-| Mem0 | ✅ | — | v0.2.0 |
-| Zep | ✅ | — | v0.3.0 |
+| Mem0 | ✅ | ✅ | v0.5.0 |
+| Zep | ✅ | ✅ | v0.5.0 |
 
 **Generic Markdown** works with YAML-frontmatter Markdown used by tools like Obsidian, Logseq, Bear, and plain Markdown. Tool-specific extensions are preserved as metadata or reported as compatibility notes.
 
@@ -165,8 +165,9 @@ Add a new format = write one plugin. Zero changes to core code.
 | Version | Focus |
 |---------|-------|
 | **v0.2** | Mem0 Reader ✅, `--fail-on-loss` ✅ |
-| **v0.3** | Zep Reader ✅, MkDocs ✅ (current) |
-| **v0.4** | Chat export readers (ChatGPT, Claude), `memlink merge`, `memlink broadcast` |
+| **v0.3** | Zep Reader ✅, MkDocs ✅, merge ✅ |
+| **v0.4** | Mem0 Writer ✅, `memlink merge` ✅ |
+| **v0.5** | Zep Writer ✅, `memlink broadcast` ✅ (current) |
 | **v1.0** | Stable Canonical Schema v1, stable Plugin API |
 
 ---
@@ -178,7 +179,7 @@ git clone https://github.com/velnori/memlink.git
 cd memlink
 pip install -e ".[dev]"
 
-pytest tests/ -v          # 148 tests
+pytest tests/ -v          # 189 tests
 ruff check python/memlink/       # Lint
 mypy python/memlink/             # Type check
 ```

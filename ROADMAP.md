@@ -1,6 +1,6 @@
 # Roadmap
 
-## v0.1.0 — MVP ✅ (current)
+## v0.1.0 — MVP ✅
 
 - [x] Canonical Memory Schema v1
 - [x] Ombre Brain Reader + Writer
@@ -11,21 +11,21 @@
 - [x] Structured Compatibility Report
 - [x] 111 tests, 3 OS × 3 Python CI
 
-## v0.2.0 — New Format + Stability
+## v0.2.0 — New Format + Stability ✅
 
 - [x] **Mem0 Reader** — prove O(n) with a mainstream format ✅
 - [x] `--fail-on-loss` for CI pipelines
 
-## v0.3.0 — Ecosystem (current)
+## v0.3.0 — Ecosystem ✅
 
 - [x] **Zep Reader** ✅
 - [x] MkDocs documentation site
-- [ ] `memlink merge` — merge multiple sources into one target
-- [ ] `memlink broadcast` — write to multiple targets at once
-- [ ] Plugin Contract Tests published as public API
-- [ ] Spec Compliance checklist per plugin
+- [x] `memlink merge` — merge multiple sources into one target
+- [x] `memlink broadcast` — write to multiple targets at once
+- [x] Plugin Contract Tests published as public API
+- [x] Spec Compliance checklist per plugin
 
-## v1.0.0 — Stable
+## v1.0.0 — Stable (next)
 
 - [ ] Canonical Schema v1 stable (no breaking changes)
 - [ ] Plugin API stable

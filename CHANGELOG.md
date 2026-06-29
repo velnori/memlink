@@ -21,6 +21,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [0.3.0]: https://github.com/velnori/memlink/compare/v0.2.0...v0.3.0
 
+## [0.4.0] — 2026-06-29
+
+### Added
+
+- **Mem0 Writer** — writes Canonical → Mem0 `get_all()` JSON format. Full roundtrip: read + write.
+- **`memlink merge`** — merge memories from multiple sources into one target with conflict resolution (newest/oldest/first/last strategies).
+
+### Metrics
+
+- 172 tests (+24)
+- mem0: reader ✅ writer ✅
+
+[0.4.0]: https://github.com/velnori/memlink/compare/v0.3.0...v0.4.0
+
+## [0.5.0] — 2026-06-29
+
+### Added
+
+- **Zep Writer** — writes Canonical → Zep facts JSON format. Full roundtrip: read + write.
+- **`memlink broadcast`** — write memories from one source to multiple targets simultaneously.
+
+### Metrics
+
+- 189 tests (+17)
+- zep: reader ✅ writer ✅
+- 4 fully bidirectional formats: ombre, openclaw, mem0, zep
+
+[0.5.0]: https://github.com/velnori/memlink/compare/v0.4.0...v0.5.0
+
 ## [0.1.0] — 2026-06-28
 
 ### Added
