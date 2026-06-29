@@ -82,10 +82,10 @@ def _discover_builtins() -> None:
     from .generic_reader import GenericReader
     from .mem0_reader import Mem0Reader
     from .ombre_reader import OmbreReader
-    from .zep_reader import ZepReader
     from .ombre_writer import OmbreWriter
     from .openclaw_reader import OpenClawReader
     from .openclaw_writer import OpenClawWriter
+    from .zep_reader import ZepReader
 
     register_reader(OmbreReader)
     register_writer(OmbreWriter)

@@ -71,6 +71,11 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument("--kind", "-k", nargs="+", help="Only convert specific kind(s)")
     p.add_argument("--dry-run", action="store_true", help="Parse only, don't write")
     p.add_argument("--include-archived", action="store_true")
+    p.add_argument(
+        "--fail-on-loss",
+        action="store_true",
+        help="Exit with code 5 if any fields will be lost during conversion",
+    )
     p.add_argument("--verbose", "-v", action="count", default=0)
 
     # shortcuts
@@ -173,6 +178,16 @@ def _cmd_convert(args) -> None:
     # Analyze before writing
     analysis = analyze_conversion(memories, src_plugin, dst_plugin)
     _print_compatibility(analysis, total, args.verbose)
+
+    if getattr(args, "fail_on_loss", False):
+        lost = [i for i in analysis.impacts if i.severity == "lost"]
+        if lost:
+            labels = ", ".join(i.label for i in lost)
+            print(
+                f"--fail-on-loss: {len(lost)} field type(s) will be lost: {labels}",
+                file=sys.stderr,
+            )
+            sys.exit(ExitCode.FORMAT_INCOMPATIBLE)
 
     # Dry run
     if args.dry_run:
