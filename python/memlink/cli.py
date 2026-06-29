@@ -627,8 +627,10 @@ def _resolve_conflict(existing, incoming, strategy: str) -> bool:
     i_key = _dt_key(incoming)
 
     if strategy == "newest":
+        # key=0 means no date → dated incoming replaces undated existing
         return not i_key > e_key
     elif strategy == "oldest":
+        # i_key != 0: undated incoming never displaces an existing record
         return not (i_key < e_key and i_key != 0)
 
     return True  # fallback: keep existing

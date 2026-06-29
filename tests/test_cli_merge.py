@@ -61,6 +61,28 @@ class TestResolveConflict:
         incoming = self._mem("a", updated_at=None, created_at=dt2)
         assert _resolve_conflict(existing, incoming, "newest") is False
 
+    def test_oldest_keeps_earlier(self):
+        dt1 = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        dt2 = datetime(2024, 6, 1, tzinfo=timezone.utc)
+        # existing newer, incoming older → oldest keeps incoming
+        assert _resolve_conflict(self._mem("a", updated_at=dt2), self._mem("a", updated_at=dt1), "oldest") is False
+
+    def test_oldest_keeps_existing_when_earlier(self):
+        dt1 = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        dt2 = datetime(2024, 6, 1, tzinfo=timezone.utc)
+        # existing older, incoming newer → oldest keeps existing
+        assert _resolve_conflict(self._mem("a", updated_at=dt1), self._mem("a", updated_at=dt2), "oldest") is True
+
+    def test_oldest_undated_incoming_never_replaces(self):
+        dt1 = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        # existing has a date, incoming has no date → undated incoming never wins
+        assert _resolve_conflict(self._mem("a", updated_at=dt1), self._mem("a"), "oldest") is True
+
+    def test_newest_undated_existing_replaced_by_dated(self):
+        dt2 = datetime(2024, 6, 1, tzinfo=timezone.utc)
+        # existing has no date, incoming has a date → newest replaces undated existing
+        assert _resolve_conflict(self._mem("a"), self._mem("a", updated_at=dt2), "newest") is False
+
 
 class TestMergeFlow:
     def test_merge_two_sources(self):
