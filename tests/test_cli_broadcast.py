@@ -11,9 +11,11 @@ from memlink.registry import get_reader, get_writer
 
 class TestBroadcast:
     def test_broadcast_to_two_targets(self):
-        with tempfile.TemporaryDirectory() as td_src, \
-             tempfile.TemporaryDirectory() as td1, \
-             tempfile.TemporaryDirectory() as td2:
+        with (
+            tempfile.TemporaryDirectory() as td_src,
+            tempfile.TemporaryDirectory() as td1,
+            tempfile.TemporaryDirectory() as td2,
+        ):
             src, out1, out2 = Path(td_src), Path(td1), Path(td2)
 
             get_writer("mem0").write([Memory(id="a", name="A", body="A.")], src)
@@ -26,14 +28,14 @@ class TestBroadcast:
             assert (out2 / "dynamic").exists()
 
     def test_broadcast_memory_count(self):
-        with tempfile.TemporaryDirectory() as td_src, \
-             tempfile.TemporaryDirectory() as td1, \
-             tempfile.TemporaryDirectory() as td2:
+        with (
+            tempfile.TemporaryDirectory() as td_src,
+            tempfile.TemporaryDirectory() as td1,
+            tempfile.TemporaryDirectory() as td2,
+        ):
             src, out1, out2 = Path(td_src), Path(td1), Path(td2)
 
-            get_writer("mem0").write(
-                [Memory(id="a", name="A", body="A."), Memory(id="b", name="B", body="B.")], src
-            )
+            get_writer("mem0").write([Memory(id="a", name="A", body="A."), Memory(id="b", name="B", body="B.")], src)
             memories = get_reader("mem0").read(src).memories
 
             get_writer("mem0").write(memories, out1)
@@ -61,9 +63,11 @@ class TestBroadcast:
             assert len(get_reader("mem0").read(out).memories) == 1
 
     def test_broadcast_all_formats(self):
-        with tempfile.TemporaryDirectory() as td_src, \
-             tempfile.TemporaryDirectory() as td1, \
-             tempfile.TemporaryDirectory() as td2:
+        with (
+            tempfile.TemporaryDirectory() as td_src,
+            tempfile.TemporaryDirectory() as td1,
+            tempfile.TemporaryDirectory() as td2,
+        ):
             src, out1, out2 = Path(td_src), Path(td1), Path(td2)
 
             get_writer("mem0").write([Memory(id="z", name="Z", body="Z.")], src)

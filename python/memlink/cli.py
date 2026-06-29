@@ -117,16 +117,23 @@ def _build_parser() -> argparse.ArgumentParser:
     # merge
     p = sub.add_parser("merge", help="Merge memories from multiple sources into one target")
     p.add_argument(
-        "--sources", "-s", nargs="+", required=True,
+        "--sources",
+        "-s",
+        nargs="+",
+        required=True,
         metavar="FORMAT:PATH",
         help="Source(s) as format:path, e.g. ombre:/data/ombre mem0:/data/mem0",
     )
     p.add_argument(
-        "--to", "-T", required=True, metavar="FORMAT:PATH",
+        "--to",
+        "-T",
+        required=True,
+        metavar="FORMAT:PATH",
         help="Target as format:path, e.g. openclaw:/data/output",
     )
     p.add_argument(
-        "--on-conflict", choices=["newest", "oldest", "first", "last"],
+        "--on-conflict",
+        choices=["newest", "oldest", "first", "last"],
         default="newest",
         help="Conflict resolution when same id exists in multiple sources (default: newest)",
     )
@@ -136,11 +143,19 @@ def _build_parser() -> argparse.ArgumentParser:
     # broadcast
     p = sub.add_parser("broadcast", help="Write memories from one source to multiple targets")
     p.add_argument(
-        "--from", "-f", dest="from_spec", required=True, metavar="FORMAT:PATH",
+        "--from",
+        "-f",
+        dest="from_spec",
+        required=True,
+        metavar="FORMAT:PATH",
         help="Source as format:path, e.g. ombre:/data/ombre",
     )
     p.add_argument(
-        "--to", "-T", nargs="+", required=True, metavar="FORMAT:PATH",
+        "--to",
+        "-T",
+        nargs="+",
+        required=True,
+        metavar="FORMAT:PATH",
         help="Target(s) as format:path, e.g. mem0:/out openclaw:/out2",
     )
     p.add_argument("--dry-run", action="store_true")
@@ -640,7 +655,7 @@ def _parse_source(s: str) -> tuple[str, Path]:
     """Parse 'format:path' - splits on first colon only (Windows-safe)."""
     idx = s.index(":")
     fmt = s[:idx]
-    path = Path(s[idx + 1:])
+    path = Path(s[idx + 1 :])
     return fmt, path
 
 

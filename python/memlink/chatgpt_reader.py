@@ -120,8 +120,10 @@ class ChatGPTReader(FormatPlugin):
         except (json.JSONDecodeError, OSError) as e:
             issues.append(
                 ValidationIssue(
-                    code="ML004", severity=Severity.ERROR,
-                    path=str(target), message=f"Cannot parse JSON: {e}",
+                    code="ML004",
+                    severity=Severity.ERROR,
+                    path=str(target),
+                    message=f"Cannot parse JSON: {e}",
                 )
             )
             return issues
@@ -135,8 +137,11 @@ class ChatGPTReader(FormatPlugin):
             if not conv.get("id"):
                 issues.append(
                     ValidationIssue(
-                        code="ML002", severity=Severity.ERROR, path=str(target),
-                        memory_id=str(i), message=f"Conversation {i}: missing id",
+                        code="ML002",
+                        severity=Severity.ERROR,
+                        path=str(target),
+                        memory_id=str(i),
+                        message=f"Conversation {i}: missing id",
                     )
                 )
         return issues

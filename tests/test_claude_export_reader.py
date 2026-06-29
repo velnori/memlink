@@ -32,9 +32,15 @@ class TestClaudeExportReader:
         d = Path(tempfile.mkdtemp())
         long_name = "A" * 80
         (d / "conversations.json").write_text(
-            json.dumps([{"uuid": "t1", "name": long_name, "chat_messages": [
-                {"uuid": "m1", "text": "Hello", "sender": "human"}
-            ]}]),
+            json.dumps(
+                [
+                    {
+                        "uuid": "t1",
+                        "name": long_name,
+                        "chat_messages": [{"uuid": "m1", "text": "Hello", "sender": "human"}],
+                    }
+                ]
+            ),
             encoding="utf-8",
         )
         result = reader.read(d)

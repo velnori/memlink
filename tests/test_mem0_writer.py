@@ -50,7 +50,9 @@ class TestMem0Writer:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             mem = Memory(
-                id="t1", name="Test", body="X.",
+                id="t1",
+                name="Test",
+                body="X.",
                 metadata={"memlink": {"original": {"user_id": "alice"}}},
             )
             writer.write([mem], root)
@@ -127,4 +129,5 @@ class TestMem0Writer:
 
     def test_plugin_contract(self):
         from memlink.testing import test_plugin_contract
+
         test_plugin_contract(Mem0Reader(), Mem0Writer())

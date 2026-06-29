@@ -140,8 +140,15 @@ def _create_minimal_format_dir(root: Path, fmt: str) -> None:
         import json
 
         (root / "conversations.json").write_text(
-            json.dumps([{"uuid": "test-001", "name": "Test",
-                         "chat_messages": [{"uuid": "m1", "text": "Test content.", "sender": "human"}]}])
+            json.dumps(
+                [
+                    {
+                        "uuid": "test-001",
+                        "name": "Test",
+                        "chat_messages": [{"uuid": "m1", "text": "Test content.", "sender": "human"}],
+                    }
+                ]
+            )
         )
     elif fmt == "zep":
         import json
@@ -189,15 +196,24 @@ def _create_unknown_fields_dir(root: Path, fmt: str) -> None:
 
         msg = {"author": {"role": "user"}, "content": {"content_type": "text", "parts": ["Test"]}, "create_time": 1.0}
         (root / "conversations.json").write_text(
-            json.dumps([{"id": "contract-test", "title": "Test", "extra": "value",
-                         "mapping": {"n1": {"message": msg}}}])
+            json.dumps(
+                [{"id": "contract-test", "title": "Test", "extra": "value", "mapping": {"n1": {"message": msg}}}]
+            )
         )
     elif fmt == "claude_export":
         import json
 
         (root / "conversations.json").write_text(
-            json.dumps([{"uuid": "contract-test", "name": "Test", "unknown": 42,
-                         "chat_messages": [{"uuid": "m1", "text": "Test", "sender": "human"}]}])
+            json.dumps(
+                [
+                    {
+                        "uuid": "contract-test",
+                        "name": "Test",
+                        "unknown": 42,
+                        "chat_messages": [{"uuid": "m1", "text": "Test", "sender": "human"}],
+                    }
+                ]
+            )
         )
 
 

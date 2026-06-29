@@ -28,8 +28,7 @@ class TestParseSource:
 
 class TestResolveConflict:
     def _mem(self, id_str, updated_at=None, created_at=None):
-        return Memory(id=id_str, name="Test", body="X.",
-                      updated_at=updated_at, created_at=created_at)
+        return Memory(id=id_str, name="Test", body="X.", updated_at=updated_at, created_at=created_at)
 
     def test_newest_keeps_later(self):
         dt1 = datetime(2024, 1, 1, tzinfo=timezone.utc)
@@ -90,10 +89,13 @@ class TestMergeFlow:
 
             # Source 1: Ombre with 2 memories
             writer1 = get_writer("ombre")
-            writer1.write([
-                Memory(id="m1", name="First", body="A.", kind="dynamic"),
-                Memory(id="m2", name="Second", body="B.", kind="dynamic"),
-            ], root1)
+            writer1.write(
+                [
+                    Memory(id="m1", name="First", body="A.", kind="dynamic"),
+                    Memory(id="m2", name="Second", body="B.", kind="dynamic"),
+                ],
+                root1,
+            )
 
             # Source 2: Mem0 with 1 memory (non-overlapping)
             writer2 = get_writer("mem0")
@@ -142,9 +144,11 @@ class TestMergeFlow:
             assert merged["m1"].body == "New body."
 
     def test_merge_output_count(self):
-        with tempfile.TemporaryDirectory() as td1, \
-             tempfile.TemporaryDirectory() as td2, \
-             tempfile.TemporaryDirectory() as td_out:
+        with (
+            tempfile.TemporaryDirectory() as td1,
+            tempfile.TemporaryDirectory() as td2,
+            tempfile.TemporaryDirectory() as td_out,
+        ):
             root1, root2, out = Path(td1), Path(td2), Path(td_out)
 
             w1 = get_writer("mem0")

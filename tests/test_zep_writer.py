@@ -64,7 +64,9 @@ class TestZepWriter:
             root = Path(td)
             original_meta = {"source": "zep_cloud", "version": 2}
             mem = Memory(
-                id="meta-1", name="Test", body="With metadata.",
+                id="meta-1",
+                name="Test",
+                body="With metadata.",
                 extensions={"zep_metadata": original_meta},
             )
             writer.write([mem], root)
@@ -78,7 +80,9 @@ class TestZepWriter:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             mem = Memory(
-                id="sid-1", name="Test", body="Session test.",
+                id="sid-1",
+                name="Test",
+                body="Session test.",
                 extensions={"zep_session_id": "sess-abc"},
             )
             writer.write([mem], root)
@@ -115,4 +119,5 @@ class TestZepWriter:
 
     def test_plugin_contract(self):
         from memlink.testing import test_plugin_contract
+
         test_plugin_contract(ZepReader(), ZepWriter())
