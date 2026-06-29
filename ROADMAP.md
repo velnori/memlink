@@ -51,8 +51,11 @@
 ## Future
 
 - [x] **Reverse merge dedup** — verified: ID preserved in bidirectional roundtrip, `merge --on-conflict newest` sufficient
+- [x] **Daily-notes roundtrip** — name/domains/tags/body all recovered from roundtrip block; verified on real workspace with 140 memories
+- [x] **DREAMS.md reverse import** — OpenClaw Reader reads feel entries (hex IDs + native freetext headings); roundtrip-less entries parsed via valence fallback
+- [x] **Non-hex bucket id guard** — OmbreWriter auto-generates valid hex id for non-standard IDs from external formats; `original_id` preserved in frontmatter
+- [ ] **Source file roundtrip update** — when OmbreWriter remaps a non-hex id, update `"id"` in the source DREAMS.md roundtrip block for full reverse-flow consistency (CLI-layer work)
 - [ ] MEMORY.md file lock (`filelock` dependency)
-- [x] Daily-notes roundtrip — name/domains recovered from roundtrip block, verified with real data
 - [ ] Performance benchmarks (100/1K/10K memories)
 - [ ] `--output-mode` extensible per format
 - [ ] Converter pipeline hooks (before_read / after_write)

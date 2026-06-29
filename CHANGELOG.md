@@ -5,6 +5,55 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.8] — 2026-06-30
+
+### Fixed
+
+- **OmbreWriter: non-hex bucket id guard** — only non-Ombre sources (openclaw, mem0, etc.) with non-12-hex IDs trigger auto hex generation. Ombre-sourced memories are never remapped. `original_id` preserved in frontmatter for traceability.
+
+[1.0.8]: https://github.com/velnori/memlink/compare/v1.0.7...v1.0.8
+
+## [1.0.7] — 2026-06-30
+
+### Fixed
+
+- **DREAMS.md freetext headings** — section regex relaxed from strict hex/date patterns to `## (.+?)`, supporting `## Dream Sweep: 初生六日` style entries written natively by OpenClaw
+- **Null memlink field** — DREAMS parser no longer crashes when `data["memlink"]` is null in roundtrip block
+
+[1.0.7]: https://github.com/velnori/memlink/compare/v1.0.6...v1.0.7
+
+## [1.0.6] — 2026-06-30
+
+### Fixed
+
+- **Tags restore from roundtrip** — `_recover_roundtrip_comment` now recovers `tags` from the roundtrip block when lost during daily-notes read (same pattern as domains/name recovery)
+
+[1.0.6]: https://github.com/velnori/memlink/compare/v1.0.5...v1.0.6
+
+## [1.0.5] — 2026-06-30
+
+### Fixed
+
+- **Daily-notes body cleanup** — `## heading`, `tags:` line, `<!-- memlink-roundtrip -->` block, and `---` separators are now stripped from body during reverse read. Verified on 140 real workspace memories.
+
+[1.0.5]: https://github.com/velnori/memlink/compare/v1.0.4...v1.0.5
+
+## [1.0.4] — 2026-06-30
+
+### Fixed
+
+- **Daily-notes roundtrip: name + domains** — `_recover_roundtrip_comment` now restores `name` (when it looks like a date artifact) and `domains` from the roundtrip block. Verified against real OpenClaw workspace with `id=d2d11c9ccd39`.
+
+[1.0.4]: https://github.com/velnori/memlink/compare/v1.0.3...v1.0.4
+
+## [1.0.3] — 2026-06-30
+
+### Fixed
+
+- **DREAMS.md native entries** — OpenClaw Reader now parses entries without `<!-- memlink-roundtrip -->` blocks (e.g. `## dream-2026-06-30` written natively by OpenClaw). Falls back to extracting `valence`/`arousal` from text; entries with no valence line are silently skipped.
+
+[1.0.3]: https://github.com/velnori/memlink/compare/v1.0.2...v1.0.3
+
 ## [1.0.2] — 2026-06-30
 
 ### Fixed

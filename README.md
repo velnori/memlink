@@ -206,7 +206,7 @@ git clone https://github.com/velnori/memlink.git
 cd memlink
 pip install -e ".[dev]"
 
-pytest tests/ -v          # 214 tests
+pytest tests/ -v          # 241 tests
 ruff check python/memlink/       # Lint
 mypy python/memlink/             # Type check
 ```
