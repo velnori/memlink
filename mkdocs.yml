@@ -2,7 +2,7 @@ site_name: memlink
 site_description: AI Memory Interchange Layer
 repo_url: https://github.com/velnori/memlink
 repo_name: velnori/memlink
-docs_dir: docs/site
+docs_dir: docs
 
 theme:
   name: material
