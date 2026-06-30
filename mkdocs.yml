@@ -21,7 +21,10 @@ nav:
       - Ombre Brain: formats/ombre.md
       - OpenClaw: formats/openclaw.md
       - Mem0: formats/mem0.md
+      - Zep: formats/zep.md
       - Generic Markdown: formats/generic.md
+      - ChatGPT Export: formats/chatgpt.md
+      - Claude Export: formats/claude_export.md
   - Plugin API: api/plugin.md
 
 plugins:
