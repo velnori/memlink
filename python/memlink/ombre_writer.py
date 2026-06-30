@@ -85,7 +85,7 @@ class OmbreWriter(FormatPlugin):
         # If bucket_id is not a valid 12-char hex AND the memory came from a
         # known non-Ombre source (e.g. OpenClaw Dream Sweep), generate hex + preserve original
         original_id_label: str | None = None
-        source_fmt = (mem.source.format if mem.source else "")
+        source_fmt = mem.source.format if mem.source else ""
         if source_fmt and source_fmt != "ombre" and not _HEX12_RE.match(bucket_id):
             original_id_label = bucket_id
             bucket_id = secrets.token_hex(6)
