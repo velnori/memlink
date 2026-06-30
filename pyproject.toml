@@ -46,6 +46,7 @@ chatgpt = "memlink.chatgpt_reader:ChatGPTReader"
 claude_export = "memlink.claude_export_reader:ClaudeExportReader"
 mem0 = "memlink.mem0_reader:Mem0Reader"
 zep = "memlink.zep_reader:ZepReader"
+stream-summary = "memlink.stream_summary_reader:StreamSummaryReader"
 
 [project.entry-points."memlink.writers"]
 ombre = "memlink.ombre_writer:OmbreWriter"
