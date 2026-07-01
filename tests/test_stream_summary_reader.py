@@ -10,7 +10,8 @@ from memlink.stream_summary_reader import StreamSummaryReader
 def test_reads_memlink_stream_summary(tmp_path: Path) -> None:
     reader = StreamSummaryReader()
     md = tmp_path / "2026-06-29-1d.md"
-    md.write_text("""---
+    md.write_text(
+        """---
 title: \"每日摘要 2026-06-29\"
 date: \"2026-06-29\"
 timezone: \"UTC\"
@@ -33,7 +34,9 @@ collection_git: 'ok'
 ## 活动特征
 
 - high-commit-velocity (9 次 commit)
-""", encoding="utf-8")
+""",
+        encoding="utf-8",
+    )
 
     result = reader.read(tmp_path)
     assert result.stats["parsed"] == 1
@@ -55,12 +58,15 @@ def test_skips_non_stream_summary(tmp_path: Path) -> None:
     reader = StreamSummaryReader()
     # A regular md without the stream schema
     md = tmp_path / "note.md"
-    md.write_text("""---
+    md.write_text(
+        """---
 title: just a note
 ---
 
 hello
-""", encoding="utf-8")
+""",
+        encoding="utf-8",
+    )
     result = reader.read(tmp_path)
     assert result.stats["parsed"] == 0
     assert result.stats["skipped"] == 1

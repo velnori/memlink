@@ -79,17 +79,19 @@ class StreamSummaryReader(FormatPlugin):
 
             # Build memory
             mem_id = hashlib.sha256(f"stream-summary:{title}:{date_str}".encode()).hexdigest()[:12]
-            memories.append(Memory(
-                id=mem_id,
-                name=title,
-                summary=summary,
-                body=body.strip() or None,
-                kind="dynamic",
-                status="active",
-                tags=tags,
-                domains=domains,
-                source=Source(format="stream-summary", path=str(md_file.relative_to(path))),
-            ))
+            memories.append(
+                Memory(
+                    id=mem_id,
+                    name=title,
+                    summary=summary,
+                    body=body.strip() or None,
+                    kind="dynamic",
+                    status="active",
+                    tags=tags,
+                    domains=domains,
+                    source=Source(format="stream-summary", path=str(md_file.relative_to(path))),
+                )
+            )
             stats["parsed"] += 1
 
         return ReadResult(memories=memories, warnings=warnings, stats=stats)
