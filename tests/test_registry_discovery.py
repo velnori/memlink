@@ -10,6 +10,10 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import pytest
+
+from memlink.registry import list_formats
+
 if sys.version_info >= (3, 11):
     import tomllib
 else:
@@ -17,9 +21,6 @@ else:
         import tomli as tomllib
     except ImportError:
         tomllib = None  # type: ignore[assignment]
-
-import pytest
-from memlink.registry import list_formats
 
 
 def _declared_formats() -> dict[str, set[str]]:
@@ -50,9 +51,8 @@ def test_all_declared_readers_discoverable() -> None:
 
     missing = []
     for fmt, roles in declared.items():
-        if "reader" in roles:
-            if fmt not in actual or not actual[fmt]["reader"]:
-                missing.append(f"{fmt} (reader)")
+        if "reader" in roles and (fmt not in actual or not actual[fmt]["reader"]):
+            missing.append(f"{fmt} (reader)")
 
     assert not missing, (
         f"Readers declared in pyproject.toml but not discoverable: {missing}. "
@@ -67,9 +67,8 @@ def test_all_declared_writers_discoverable() -> None:
 
     missing = []
     for fmt, roles in declared.items():
-        if "writer" in roles:
-            if fmt not in actual or not actual[fmt]["writer"]:
-                missing.append(f"{fmt} (writer)")
+        if "writer" in roles and (fmt not in actual or not actual[fmt]["writer"]):
+            missing.append(f"{fmt} (writer)")
 
     assert not missing, (
         f"Writers declared in pyproject.toml but not discoverable: {missing}. "
