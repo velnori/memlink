@@ -21,7 +21,7 @@ class StreamSummaryReader(FormatPlugin):
     capabilities = Capabilities(
         summary=True,
         preserve_unknown_fields=True,
-        supported_kinds=["dynamic"],
+        supported_kinds={"dynamic"},
     )
 
     def read(self, path: Path) -> ReadResult:
