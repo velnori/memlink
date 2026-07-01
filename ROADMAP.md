@@ -48,6 +48,18 @@
 - [x] Community format plugins (Mem0, Zep, etc.)
 - [x] `spec/` published as standalone language-neutral specification
 
+## v1.0.9 — Generic Write ✅
+
+- [x] **GenericWriter** — Canonical → `notes/*.md` with YAML frontmatter; Generic format fully bidirectional (Obsidian, Logseq, Bear, iA Writer, plain Markdown)
+- [x] **StreamSummaryReader registered** — `stream-summary` reader now in entry-points; discoverable via `memlink formats`
+- [x] 257 tests
+
+## v1.0.10 — Registry Safety ✅
+
+- [x] **Registry discovery tests** — `pyproject.toml` entry-points cross-checked against `list_formats()` in CI; leaks fail immediately
+- [x] `tomli>=2` dev dependency for Python 3.10 compatibility
+- [x] 260 tests
+
 ## Future
 
 - [x] **Reverse merge dedup** — verified: ID preserved in bidirectional roundtrip, `merge --on-conflict newest` sufficient

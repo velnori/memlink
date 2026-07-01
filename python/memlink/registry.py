@@ -82,12 +82,14 @@ def _discover_builtins() -> None:
     from .chatgpt_reader import ChatGPTReader
     from .claude_export_reader import ClaudeExportReader
     from .generic_reader import GenericReader
+    from .generic_writer import GenericWriter
     from .mem0_reader import Mem0Reader
     from .mem0_writer import Mem0Writer
     from .ombre_reader import OmbreReader
     from .ombre_writer import OmbreWriter
     from .openclaw_reader import OpenClawReader
     from .openclaw_writer import OpenClawWriter
+    from .stream_summary_reader import StreamSummaryReader
     from .zep_reader import ZepReader
     from .zep_writer import ZepWriter
 
@@ -96,12 +98,14 @@ def _discover_builtins() -> None:
     register_reader(OpenClawReader)
     register_writer(OpenClawWriter)
     register_reader(GenericReader)
+    register_writer(GenericWriter)
     register_reader(ChatGPTReader)
     register_reader(ClaudeExportReader)
     register_reader(Mem0Reader)
     register_writer(Mem0Writer)
     register_reader(ZepReader)
     register_writer(ZepWriter)
+    register_reader(StreamSummaryReader)
 
 
 def _discover_entry_points() -> None:

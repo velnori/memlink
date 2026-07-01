@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "memlink-bridge"
-version = "1.0.8"
+version = "1.0.10"
 description = "AI Memory Interchange Layer — language-neutral bridge for AI memory systems"
 readme = "README.md"
 license = {text = "MIT"}
@@ -51,6 +51,7 @@ stream-summary = "memlink.stream_summary_reader:StreamSummaryReader"
 [project.entry-points."memlink.writers"]
 ombre = "memlink.ombre_writer:OmbreWriter"
 openclaw = "memlink.openclaw_writer:OpenClawWriter"
+generic = "memlink.generic_writer:GenericWriter"
 mem0 = "memlink.mem0_writer:Mem0Writer"
 zep = "memlink.zep_writer:ZepWriter"
 
@@ -60,6 +61,7 @@ dev = [
     "pytest-cov>=7.1.0",
     "mypy>=1",
     "ruff>=0.6",
+    "tomli>=2; python_version < '3.11'",
 ]
 docs = [
     "mkdocs-material>=9.7.6",

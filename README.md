@@ -86,7 +86,7 @@ You should now see an OpenClaw-style memory file in `/tmp/memlink-output/`. The 
 |--------|------|-------|-------|
 | Ombre Brain | ✅ | ✅ | v0.1.0 |
 | OpenClaw | ✅ | ✅ | v0.1.0 |
-| Generic Markdown | ✅ | — | v0.1.1 |
+| Generic Markdown | ✅ | ✅ | v0.1.1 |
 | Mem0 | ✅ | ✅ | v0.2.0 |
 | Zep | ✅ | ✅ | v0.3.0 |
 | ChatGPT Export | ✅ | — | v0.6.0 |
@@ -146,7 +146,7 @@ Format          Reader     Writer
 -----------------------------------
 chatgpt         yes        no
 claude_export   yes        no
-generic         yes        no
+generic         yes        yes
 mem0            yes        yes
 ombre           yes        yes
 openclaw        yes        yes
@@ -206,7 +206,7 @@ git clone https://github.com/velnori/memlink.git
 cd memlink
 pip install -e ".[dev]"
 
-pytest tests/ -v          # 241 tests
+pytest tests/ -v          # 257 tests
 ruff check python/memlink/       # Lint
 mypy python/memlink/             # Type check
 ```

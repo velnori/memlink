@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.10] — 2026-07-02
+
+### Added
+
+- **Registry discovery tests** — `test_registry_discovery.py` cross-checks every `pyproject.toml` entry-point against `list_formats()`. Leaks like the StreamSummaryReader miss now fail CI immediately. `tomllib`/`tomli` compatible (Python 3.10+).
+- `tomli>=2; python_version < '3.11'` added to `[dev]` dependencies.
+
+### Metrics
+
+- 260 tests (+3)
+
+[1.0.10]: https://github.com/velnori/memlink/compare/v1.0.9...v1.0.10
+
+## [1.0.9] — 2026-07-02
+
+### Added
+
+- **GenericWriter** — writes Canonical Memory → `notes/*.md` with YAML frontmatter. Compatible with Obsidian, Logseq, Bear, iA Writer, and plain Markdown. Generic format now fully bidirectional.
+- **StreamSummaryReader registered** — `stream-summary` reader was implemented but missing from `pyproject.toml` entry-points; now discoverable via `memlink formats`.
+
+### Metrics
+
+- 257 tests (+13)
+- generic: reader ✅ writer ✅
+
+[1.0.9]: https://github.com/velnori/memlink/compare/v1.0.8...v1.0.9
+
 ## [1.0.8] — 2026-06-30
 
 ### Fixed

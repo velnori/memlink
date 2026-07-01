@@ -150,6 +150,10 @@ def _create_minimal_format_dir(root: Path, fmt: str) -> None:
                 ]
             )
         )
+    elif fmt == "generic":
+        d = root / "notes"
+        d.mkdir(parents=True)
+        (d / "test-001.md").write_text("---\nid: test-001\ntitle: Test\n---\nContent.")
     elif fmt == "zep":
         import json
 
@@ -185,6 +189,10 @@ def _create_unknown_fields_dir(root: Path, fmt: str) -> None:
                 }
             )
         )
+    elif fmt == "generic":
+        d = root / "notes"
+        d.mkdir(parents=True)
+        (d / "test.md").write_text("---\nid: test\ntitle: Test\nweird_field: [1,2,3]\n---\nBody.")
     elif fmt == "zep":
         import json
 
@@ -228,6 +236,10 @@ def _create_broken_dir(root: Path, fmt: str) -> None:
         (d / "bad.md").write_text("not valid\n---\n")
     elif fmt == "mem0":
         (root / "memories.json").write_text("{not json")
+    elif fmt == "generic":
+        d = root / "notes"
+        d.mkdir(parents=True)
+        (d / "bad.md").write_text("not valid yaml\n---\n---\nbody")
     elif fmt == "zep":
         (root / "facts.json").write_text("{not json")
     elif fmt in ("chatgpt", "claude_export"):
