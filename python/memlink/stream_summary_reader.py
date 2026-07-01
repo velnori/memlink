@@ -7,7 +7,6 @@ Reads memlink-stream's Markdown output with frontmatter schema
 from __future__ import annotations
 
 import hashlib
-from datetime import datetime
 from pathlib import Path
 
 import yaml
@@ -71,7 +70,6 @@ class StreamSummaryReader(FormatPlugin):
             # Stats as summary
             total_events = fm.get("total_events")
             peak_hour = fm.get("peak_hour")
-            status_str = fm.get("status", "active")
             summary_parts = []
             if total_events is not None:
                 summary_parts.append(f"{total_events} events")
