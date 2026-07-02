@@ -118,10 +118,14 @@ class TestMultiSourceArg:
 
         importlib.reload(cli)
         sys.argv = [
-            "memlink", "merge",
-            "-s", "ombre:./a",
-            "-s", "mem0:./b",
-            "-T", "openclaw:./out",
+            "memlink",
+            "merge",
+            "-s",
+            "ombre:./a",
+            "-s",
+            "mem0:./b",
+            "-T",
+            "openclaw:./out",
         ]
         parser = cli._build_parser()
         args = parser.parse_args(sys.argv[1:])
@@ -134,11 +138,16 @@ class TestMultiSourceArg:
 
         importlib.reload(cli)
         sys.argv = [
-            "memlink", "merge",
-            "-s", "ombre:./a",
-            "-s", "mem0:./b",
-            "-s", "zep:./c",
-            "-T", "openclaw:./out",
+            "memlink",
+            "merge",
+            "-s",
+            "ombre:./a",
+            "-s",
+            "mem0:./b",
+            "-s",
+            "zep:./c",
+            "-T",
+            "openclaw:./out",
         ]
         parser = cli._build_parser()
         args = parser.parse_args(sys.argv[1:])

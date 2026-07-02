@@ -688,9 +688,7 @@ def _parse_source(s: str) -> tuple[str, Path]:
     try:
         idx = s.index(":")
     except ValueError:
-        raise ValueError(
-            f"Invalid source spec: '{s}'. Expected FORMAT:PATH, e.g. ombre:/data/ombre"
-        ) from None
+        raise ValueError(f"Invalid source spec: '{s}'. Expected FORMAT:PATH, e.g. ombre:/data/ombre") from None
     fmt = s[:idx]
     path = Path(s[idx + 1 :])
     return fmt, path

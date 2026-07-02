@@ -20,10 +20,14 @@ class TestBroadcastMultiTarget:
 
         importlib.reload(cli)
         sys.argv = [
-            "memlink", "broadcast",
-            "-f", "mem0:./a",
-            "-T", "openclaw:./b",
-            "-T", "zep:./c",
+            "memlink",
+            "broadcast",
+            "-f",
+            "mem0:./a",
+            "-T",
+            "openclaw:./b",
+            "-T",
+            "zep:./c",
         ]
         parser = cli._build_parser()
         args = parser.parse_args(sys.argv[1:])
@@ -36,11 +40,16 @@ class TestBroadcastMultiTarget:
 
         importlib.reload(cli)
         sys.argv = [
-            "memlink", "broadcast",
-            "-f", "mem0:./a",
-            "-T", "openclaw:./b",
-            "-T", "zep:./c",
-            "-T", "mem0:./d",
+            "memlink",
+            "broadcast",
+            "-f",
+            "mem0:./a",
+            "-T",
+            "openclaw:./b",
+            "-T",
+            "zep:./c",
+            "-T",
+            "mem0:./d",
         ]
         parser = cli._build_parser()
         args = parser.parse_args(sys.argv[1:])
