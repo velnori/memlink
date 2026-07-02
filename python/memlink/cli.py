@@ -83,11 +83,13 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument("--source", "-s", type=Path, required=True)
     p.add_argument("--target", "-T", type=Path, required=True)
     p.add_argument("--output-mode", choices=["daily-notes", "structured"], default="daily-notes")
+    p.add_argument("--dry-run", action="store_true")
     p.add_argument("--verbose", "-v", action="count", default=0)
 
     p = sub.add_parser("claw2ombre", help="OpenClaw → Ombre (shortcut)")
     p.add_argument("--source", "-s", type=Path, required=True)
     p.add_argument("--target", "-T", type=Path, required=True)
+    p.add_argument("--dry-run", action="store_true")
     p.add_argument("--verbose", "-v", action="count", default=0)
 
     # validate
@@ -137,6 +139,9 @@ def _build_parser() -> argparse.ArgumentParser:
         default="newest",
         help="Conflict resolution when same id exists in multiple sources (default: newest)",
     )
+    p.add_argument(
+        "--output-mode", choices=["daily-notes", "structured"], default="daily-notes", help="OpenClaw output mode"
+    )
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--verbose", "-v", action="count", default=0)
 
@@ -157,6 +162,9 @@ def _build_parser() -> argparse.ArgumentParser:
         required=True,
         metavar="FORMAT:PATH",
         help="Target as format:path (repeat for multiple), e.g. -T mem0:/out -T openclaw:/out2",
+    )
+    p.add_argument(
+        "--output-mode", choices=["daily-notes", "structured"], default="daily-notes", help="OpenClaw output mode"
     )
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--verbose", "-v", action="count", default=0)
@@ -185,10 +193,10 @@ def _dispatch(args) -> None:
     elif args.command == "stats":
         _cmd_stats(args)
     elif args.command == "ombre2claw":
-        args.from_fmt, args.to_fmt, args.dry_run = "ombre", "openclaw", False
+        args.from_fmt, args.to_fmt = "ombre", "openclaw"
         _cmd_convert(args)
     elif args.command == "claw2ombre":
-        args.from_fmt, args.to_fmt, args.dry_run = "openclaw", "ombre", False
+        args.from_fmt, args.to_fmt = "openclaw", "ombre"
         _cmd_convert(args)
     else:
         sys.exit(0)
@@ -428,9 +436,10 @@ def _cmd_stats(args) -> None:
 
     n = len(mems)
     print(f"Total:     {n} memories ({fmt})")
-    for k, v in sorted(kinds.items()):
-        bar = "█" * (v * 20 // n) if n else ""
-        print(f"  {k:<12} {v:>4} ({v * 100 // n:>2}%) {bar}")
+    if n:
+        for k, v in sorted(kinds.items()):
+            bar = "█" * (v * 20 // n)
+            print(f"  {k:<12} {v:>4} ({v * 100 // n:>2}%) {bar}")
     print(f"Domains:   {len(domains)} unique")
     if domains:
         top = sorted(domains.items(), key=lambda x: x[1], reverse=True)[:5]
@@ -458,7 +467,11 @@ def _detect_format(path: Path) -> str:
 def _cmd_inspect(args) -> None:
     from .registry import get_reader, list_formats
 
-    args.file.read_text(encoding="utf-8")
+    try:
+        args.file.read_text(encoding="utf-8")
+    except IsADirectoryError:
+        print(f"Error: '{args.file}' is a directory. Inspect requires a file path.", file=sys.stderr)
+        sys.exit(ExitCode.IO_ERROR)
     fmt = args.format
 
     # Auto-detect format
@@ -487,7 +500,8 @@ def _cmd_inspect(args) -> None:
     stem = args.file.stem
     mem = next((m for m in result.memories if stem == m.id or stem in str(m.id)), None)
     if not mem and result.memories:
-        mem = result.memories[0]  # fallback: first memory
+        mem = result.memories[0]
+        print(f"  (showing first memory — id mismatch: filename stem '{stem}' matches no id)", file=sys.stderr)
     if not mem:
         print("No memory parsed from file.")
         sys.exit(ExitCode.SUCCESS)
@@ -542,7 +556,7 @@ def _cmd_merge(args) -> None:
             sys.exit(ExitCode.IO_ERROR)
 
     # Merge with conflict resolution
-    merged: dict[str, tuple] = {}  # id -> (memory, source_fmt, source_path)
+    merged: dict[str, tuple] = {}  # id -> (memory, source_fmt, source_path, source_idx)
     duplicates_resolved = 0
 
     for src_idx, (fmt, path, memories) in enumerate(all_memories):
@@ -571,9 +585,16 @@ def _cmd_merge(args) -> None:
         print(f"\nDry run: would write {unique} memories to {target_fmt}:{target_path}")
         return
 
-    writer = get_writer(target_fmt)
+    writer_kwargs: dict = {}
+    if target_fmt == "openclaw":
+        writer_kwargs["output_mode"] = args.output_mode
+    writer = get_writer(target_fmt, **writer_kwargs)
     start = time.perf_counter()
-    warnings = writer.write(unique_memories, target_path)
+    try:
+        warnings = writer.write(unique_memories, target_path)
+    except Exception as e:
+        print(f"Error writing to {target_fmt}:{target_path}: {e}", file=sys.stderr)
+        sys.exit(ExitCode.IO_ERROR)
     elapsed = time.perf_counter() - start
 
     if warnings and args.verbose:
@@ -606,20 +627,28 @@ def _cmd_broadcast(args) -> None:
 
     parsed_targets = [_parse_source(spec) for spec in args.to]
     total_warnings = 0
+    succeeded = 0
     start = time.perf_counter()
     for fmt, path in parsed_targets:
-        writer = get_writer(fmt)
-        warnings = writer.write(memories, path)
-        total_warnings += len(warnings)
-        status = f"{len(memories)} written"
-        if warnings:
-            status += f", {len(warnings)} warnings"
-        print(f"  → {fmt}:{path}: {status}")
-        if args.verbose and warnings:
-            for w in warnings[:5]:
-                print(f"    [warn] {w}")
+        writer_kwargs: dict = {}
+        if fmt == "openclaw":
+            writer_kwargs["output_mode"] = args.output_mode
+        try:
+            writer = get_writer(fmt, **writer_kwargs)
+            warnings = writer.write(memories, path)
+            total_warnings += len(warnings)
+            succeeded += 1
+            status = f"{len(memories)} written"
+            if warnings:
+                status += f", {len(warnings)} warnings"
+            print(f"  → {fmt}:{path}: {status}")
+            if args.verbose and warnings:
+                for w in warnings[:5]:
+                    print(f"    [warn] {w}")
+        except Exception as e:
+            print(f"  ✗ {fmt}:{path}: {e}", file=sys.stderr)
     elapsed = time.perf_counter() - start
-    print(f"Targets:  {len(parsed_targets)}")
+    print(f"Targets:  {succeeded}/{len(parsed_targets)}")
     print(f"Warnings: {total_warnings}" if total_warnings else "Warnings: 0")
     print(f"Time:     {elapsed:.2f}s")
 
@@ -631,29 +660,37 @@ def _resolve_conflict(existing, incoming, strategy: str) -> bool:
     if strategy == "last":
         return False
 
-    # Compare by datetime
-    def _dt_key(mem) -> int:
-        dt = mem.updated_at or mem.created_at
-        if dt is None:
-            return 0
-        return int(dt.timestamp())
+    # Compare by datetime — use actual datetimes, not timestamp ints,
+    # to avoid epoch (1970-01-01) colliding with the None sentinel.
 
-    e_key = _dt_key(existing)
-    i_key = _dt_key(incoming)
+    e_dt = existing.updated_at or existing.created_at
+    i_dt = incoming.updated_at or incoming.created_at
 
+    # Undated records never displace dated ones
     if strategy == "newest":
-        # key=0 means no date → dated incoming replaces undated existing
-        return not i_key > e_key
+        if i_dt is None:
+            return True  # undated incoming never wins
+        if e_dt is None:
+            return False  # undated existing loses to dated incoming
+        return i_dt <= e_dt
     elif strategy == "oldest":
-        # i_key != 0: undated incoming never displaces an existing record
-        return not (i_key < e_key and i_key != 0)
+        if i_dt is None:
+            return True  # undated incoming never wins
+        if e_dt is None:
+            return False  # undated existing loses to dated incoming
+        return i_dt >= e_dt
 
     return True  # fallback: keep existing
 
 
 def _parse_source(s: str) -> tuple[str, Path]:
     """Parse 'format:path' - splits on first colon only (Windows-safe)."""
-    idx = s.index(":")
+    try:
+        idx = s.index(":")
+    except ValueError:
+        raise ValueError(
+            f"Invalid source spec: '{s}'. Expected FORMAT:PATH, e.g. ombre:/data/ombre"
+        ) from None
     fmt = s[:idx]
     path = Path(s[idx + 1 :])
     return fmt, path
