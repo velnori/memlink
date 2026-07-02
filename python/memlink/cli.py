@@ -119,10 +119,10 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--sources",
         "-s",
-        nargs="+",
+        action="append",
         required=True,
         metavar="FORMAT:PATH",
-        help="Source(s) as format:path, e.g. ombre:/data/ombre mem0:/data/mem0",
+        help="Source as format:path (repeat for multiple), e.g. -s ombre:/data -s mem0:/data",
     )
     p.add_argument(
         "--to",
@@ -153,10 +153,10 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--to",
         "-T",
-        nargs="+",
+        action="append",
         required=True,
         metavar="FORMAT:PATH",
-        help="Target(s) as format:path, e.g. mem0:/out openclaw:/out2",
+        help="Target as format:path (repeat for multiple), e.g. -T mem0:/out -T openclaw:/out2",
     )
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--verbose", "-v", action="count", default=0)

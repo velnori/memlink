@@ -1,5 +1,7 @@
 """Tests for memlink merge command."""
 
+import importlib
+import sys
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
@@ -80,6 +82,43 @@ class TestResolveConflict:
         dt2 = datetime(2024, 6, 1, tzinfo=timezone.utc)
         # existing has no date, incoming has a date → newest replaces undated existing
         assert _resolve_conflict(self._mem("a"), self._mem("a", updated_at=dt2), "newest") is False
+
+
+class TestMultiSourceArg:
+    """Verify multiple -s flags are accumulated, not overridden (regression: nargs='+' bug)."""
+
+    def test_multi_source_parsed_correctly(self):
+        """-s A -s B must produce two entries, not just the last one."""
+        from memlink import cli
+
+        importlib.reload(cli)
+        sys.argv = [
+            "memlink", "merge",
+            "-s", "ombre:./a",
+            "-s", "mem0:./b",
+            "-T", "openclaw:./out",
+        ]
+        parser = cli._build_parser()
+        args = parser.parse_args(sys.argv[1:])
+        assert len(args.sources) == 2, f"Expected 2 sources, got {len(args.sources)}: {args.sources}"
+        assert args.sources == ["ombre:./a", "mem0:./b"]
+
+    def test_three_sources(self):
+        """Three -s flags all preserved."""
+        from memlink import cli
+
+        importlib.reload(cli)
+        sys.argv = [
+            "memlink", "merge",
+            "-s", "ombre:./a",
+            "-s", "mem0:./b",
+            "-s", "zep:./c",
+            "-T", "openclaw:./out",
+        ]
+        parser = cli._build_parser()
+        args = parser.parse_args(sys.argv[1:])
+        assert len(args.sources) == 3, f"Expected 3 sources, got {len(args.sources)}"
+        assert "zep:./c" in args.sources
 
 
 class TestMergeFlow:
