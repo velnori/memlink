@@ -1,5 +1,7 @@
 """Tests for memlink broadcast command."""
 
+import importlib
+import sys
 import tempfile
 from pathlib import Path
 
@@ -7,6 +9,43 @@ import pytest
 
 from memlink.models import Memory
 from memlink.registry import get_reader, get_writer
+
+
+class TestBroadcastMultiTarget:
+    """Verify multiple -T flags are accumulated, not overridden."""
+
+    def test_multi_target_parsed_correctly(self):
+        """-T A -T B must produce two entries, not just the last one."""
+        from memlink import cli
+
+        importlib.reload(cli)
+        sys.argv = [
+            "memlink", "broadcast",
+            "-f", "mem0:./a",
+            "-T", "openclaw:./b",
+            "-T", "zep:./c",
+        ]
+        parser = cli._build_parser()
+        args = parser.parse_args(sys.argv[1:])
+        assert len(args.to) == 2, f"Expected 2 targets, got {len(args.to)}: {args.to}"
+        assert "zep:./c" in args.to
+
+    def test_three_targets(self):
+        """Three -T flags all preserved."""
+        from memlink import cli
+
+        importlib.reload(cli)
+        sys.argv = [
+            "memlink", "broadcast",
+            "-f", "mem0:./a",
+            "-T", "openclaw:./b",
+            "-T", "zep:./c",
+            "-T", "mem0:./d",
+        ]
+        parser = cli._build_parser()
+        args = parser.parse_args(sys.argv[1:])
+        assert len(args.to) == 3, f"Expected 3 targets, got {len(args.to)}"
+        assert "mem0:./d" in args.to
 
 
 class TestBroadcast:

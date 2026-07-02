@@ -83,6 +83,31 @@ class TestResolveConflict:
         # existing has no date, incoming has a date → newest replaces undated existing
         assert _resolve_conflict(self._mem("a"), self._mem("a", updated_at=dt2), "newest") is False
 
+    def test_oldest_dated_incoming_beats_undated_existing(self):
+        """Regression: oldest must prefer a dated incoming over an undated existing."""
+        dt1 = datetime(2020, 1, 1, tzinfo=timezone.utc)
+        # existing undated, incoming 2020-dated → oldest should keep incoming (it has a date)
+        assert _resolve_conflict(self._mem("a"), self._mem("a", updated_at=dt1), "oldest") is False
+
+    def test_newest_dated_incoming_beats_undated_existing(self):
+        """Symmetry: newest must prefer a dated incoming over an undated existing."""
+        dt1 = datetime(2020, 1, 1, tzinfo=timezone.utc)
+        assert _resolve_conflict(self._mem("a"), self._mem("a", updated_at=dt1), "newest") is False
+
+    def test_epoch_timestamp_not_treated_as_undated_newest(self):
+        """epoch (1970-01-01) must not collide with None sentinel."""
+        epoch = datetime(1970, 1, 1, tzinfo=timezone.utc)
+        dt_new = datetime(2024, 6, 1, tzinfo=timezone.utc)
+        # existing epoch, incoming 2024 → newest should keep incoming (epoch is older)
+        assert _resolve_conflict(self._mem("a", updated_at=epoch), self._mem("a", updated_at=dt_new), "newest") is False
+
+    def test_epoch_timestamp_not_treated_as_undated_oldest(self):
+        """epoch (1970-01-01) incoming vs dated existing under oldest."""
+        epoch = datetime(1970, 1, 1, tzinfo=timezone.utc)
+        dt_new = datetime(2024, 6, 1, tzinfo=timezone.utc)
+        # existing 2024, incoming epoch → oldest should keep incoming (epoch is genuinely earlier)
+        assert _resolve_conflict(self._mem("a", updated_at=dt_new), self._mem("a", updated_at=epoch), "oldest") is False
+
 
 class TestMultiSourceArg:
     """Verify multiple -s flags are accumulated, not overridden (regression: nargs='+' bug)."""
