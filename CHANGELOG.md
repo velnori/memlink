@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.11] — 2026-07-02
+
+### Fixed
+
+- **merge `--sources` argparse** — switch `nargs="+"` to `action="append"` so multiple `-s` flags accumulate instead of the last one overriding. Same fix for broadcast `--to`.
+- **`_resolve_conflict` oldest strategy** — dated incoming now correctly beats undated existing (was inverted). Switch from `int(timestamp())` sentinel to direct datetime comparison to fix epoch timestamp collision.
+- **`_parse_source` error message** — missing colon now raises clear `ValueError` instead of `substring not found`.
+- **merge/broadcast writer error handling** — writer calls now wrapped in try/except with target context. Broadcast continues on per-target failure and shows succeeded/total.
+- **merge/broadcast `--output-mode`** — both commands now support openclaw `daily-notes`/`structured` mode selection.
+- **shortcut `--dry-run`** — ombre2claw and claw2ombre no longer hardwire `dry_run=False`.
+- **stats div-zero guard** — percentage format now unified under `if n:` guard.
+- **inspect usability** — friendly error for directory path, warning on id-mismatch fallback.
+
+### Metrics
+
+- 268 tests (+6)
+
+[1.0.11]: https://github.com/velnori/memlink/compare/v1.0.10...v1.0.11
+
 ## [1.0.10] — 2026-07-02
 
 ### Added
