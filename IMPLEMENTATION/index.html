@@ -1,0 +1,3134 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="AI Memory Interchange Layer — bridge AI memory formats">
+      
+      
+      
+        <link rel="canonical" href="https://velnori.github.io/memlink/IMPLEMENTATION/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>memlink 执行计划 v2 - memlink</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#memlink-v2" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="memlink" class="md-header__button md-logo" aria-label="memlink" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            memlink
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              memlink 执行计划 v2
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/velnori/memlink" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    velnori/memlink
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="memlink" class="md-nav__button md-logo" aria-label="memlink" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    memlink
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/velnori/memlink" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    velnori/memlink
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Formats
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Formats
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../formats/ombre/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ombre Brain
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../formats/openclaw/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenClaw
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../formats/mem0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mem0
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../formats/zep/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Zep
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../formats/generic/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Generic Markdown
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../formats/chatgpt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ChatGPT Export
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../formats/claude_export/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Claude Export
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/plugin/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plugin API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        总体策略
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        关键决策（评审后确定）
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="关键决策（评审后确定）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#yaml-pyyaml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        YAML 解析：用 PyYAML，不自己写
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mtimesize-sha256" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        并发检测：mtime+size，不用 SHA256
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reader" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reader 职责收窄
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-05" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 0.5 — 核心数据层 + 验证器 + 测试底板
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 0.5 — 核心数据层 + 验证器 + 测试底板">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#050-day-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.5.0 真实格式验证（Day 1 先做）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#051-validatorspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.5.1 validators.py + 错误码表
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#052-id-percent-encoding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.5.2 ID 合法化（percent-encoding 方案）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#053-golden-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.5.3 Golden Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#054" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.5.4 测试清单
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-05_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 0.5 完成标准
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-1-ombre-openclaw" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 1 — 单向转换 Ombre → OpenClaw
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 1 — 单向转换 Ombre → OpenClaw">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-ombre_readerpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 ombre_reader.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-openclaw_writerpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2 openclaw_writer.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.3 测试
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-2-roundtrip" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 2 — 反向转换 + Roundtrip
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 2 — 反向转换 + Roundtrip">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#20" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.0 需要讨论确认的关键问题
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#21-openclaw_readerpy80" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 openclaw_reader.py（~80行）
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.1 openclaw_reader.py（~80行）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#211" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1.1 文件发现（容错优先）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#212-never-raise" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1.2 字段映射（Never Raise）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#213-original-recovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1.3 Original Recovery（白名单）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#214-20-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1.4 测试（~20 tests）
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-ombre_writerpy80" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 ombre_writer.py（~80行）
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.2 ombre_writer.py（~80行）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#221" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2.1 目录策略
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#222-yaml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2.2 字段映射（固定顺序、YAML 直接拼接）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#223-20-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2.3 测试（~20 tests）
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-roundtrip" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 Roundtrip 验证
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.3 Roundtrip 验证">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#231-canonical-comparator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3.1 Canonical Comparator
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#232-roundtrip" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3.2 两个方向的 Roundtrip
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#233-15-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3.3 测试（~15 tests）
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-domain-8-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 Domain 推断测试（~8 tests）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25-phase-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.5 Phase 2 完成标准
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-3-cli" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 3 — CLI 全实现 + 模糊测试 + 边缘用例
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 3 — CLI 全实现 + 模糊测试 + 边缘用例">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#30" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.0 需要讨论确认的设计决策
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#31-cli" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 CLI 架构
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-cli" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 CLI 子命令实现详情
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3.2 CLI 子命令实现详情">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#memlink-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        memlink formats
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memlink-convert" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        memlink convert
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memlink-ombre2claw-memlink-claw2ombre" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        memlink ombre2claw / memlink claw2ombre
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memlink-import" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        memlink import
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memlink-inspect" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        memlink inspect
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memlink-validate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        memlink validate
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memlink-stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        memlink stats
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memlink-diff" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        memlink diff
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-convert" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 Convert 命令详细流程
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-inspect" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.4 inspect 命令详细输出
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#35-diff-ignore" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.5 diff 命令增加 --ignore
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#36-stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.6 stats 命令扩展
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#37-ctrlc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.7 Ctrl+C 清理
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#38-exit-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.8 统一 Exit Code（所有命令）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#39-plugin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.9 Plugin 发现缓存
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-fuzz-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.4 Fuzz Testing
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-25" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 2.5 — 集成测试 + 兼容性报告
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 2.5 — 集成测试 + 兼容性报告">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#251" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.5.1 集成测试
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#252-compatibility-report" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.5.2 Compatibility Report 格式
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#253-plugin-contract-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.5.3 Plugin Contract Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#310" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.10 测试
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#311-phase-3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.11 Phase 3 完成标准
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 4 — 发布
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        文件清单 + 预估行数
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        关键约束汇总
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        本轮评审采纳（Phase 2/3 细节补充）
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="本轮评审采纳（Phase 2/3 细节补充）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 2 采纳
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 3 采纳
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-25_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        新增 Phase 2.5 — 集成测试 + 兼容性报告
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-23_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        终轮评审采纳（Phase 2/3 最终版）
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="终轮评审采纳（Phase 2/3 最终版）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        设计变更
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        数据安全
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cli" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLI 增强
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        测试 + 质量
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        重要度排序（终版）
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="memlink-v2">memlink 执行计划 v2</h1>
+<h2 id="_1">总体策略</h2>
+<ul>
+<li><strong>测试先行</strong>：每个模块先写 fixtures 和测试，再写实现</li>
+<li><strong>单一运行时依赖</strong>：PyYAML（处理 frontmatter），其余全部标准库</li>
+<li><strong>Never Raise</strong>：Reader 解析失败 → warning → skip → 继续，不崩溃</li>
+<li><strong>增量交付</strong>：每个 Phase 产出一个可验证的结果</li>
+</ul>
+<hr />
+<h2 id="_2">关键决策（评审后确定）</h2>
+<h3 id="yaml-pyyaml">YAML 解析：用 PyYAML，不自己写</h3>
+<p>两个评审都反对自研 YAML parser。实际 frontmatter 会遇到的边缘情况（<code>|</code>/<code>&gt;</code> 多行字符串、引号内冒号、<code>#</code> 注释、<code>~</code> null、缩进列表变体、嵌套对象）远超 40 行能覆盖的范围。</p>
+<p><strong>采纳方案</strong>：<code>pyyaml&gt;=6.0</code> 作为唯一运行时依赖。<code>pip install memlink</code> 自动安装。PyYAML 是 Python 生态最普遍的依赖之一（pytest、docker-compose、AWS CLI 都依赖它），不会有额外负担。</p>
+<h3 id="mtimesize-sha256">并发检测：mtime+size，不用 SHA256</h3>
+<p>SHA256 对 MEMORY.md 来说过重。<code>os.stat()</code> 的 <code>st_mtime</code> + <code>st_size</code> 组合足够检测并发修改，且 O(1) 不随文件大小增长。</p>
+<h3 id="reader">Reader 职责收窄</h3>
+<p>Reader 只负责读原始字符串、存入 Canonical。<strong>不解析 datetime、不做归一化、不猜字段</strong>。Converter 统一做类型转换。这样不同 Reader 的行为一致，Canonical 不会因为 Reader 实现差异而不一致。</p>
+<hr />
+<h2 id="phase-05">Phase 0.5 — 核心数据层 + 验证器 + 测试底板</h2>
+<p><strong>目标</strong>：数据模型、接口、验证器就绪。20+ 边界测试通过。</p>
+<p><strong>当前状态</strong>：
+- [x] <code>models.py</code> — Memory, Source, Relationship, JSONValue
+- [x] <code>plugin.py</code> — FormatPlugin, Capabilities, ReadResult, ValidationIssue
+- [x] <code>serialization.py</code> — sanitize()
+- [x] <code>converter.py</code> — check_compatibility(), convert()</p>
+<h3 id="050-day-1">0.5.0 真实格式验证（Day 1 先做）</h3>
+<p><strong>不要基于假设开发</strong>。先拿真实 Ombre 和 OpenClaw 文件确认：</p>
+<pre><code>需要确认的 Ombre 格式问题：
+  - content 在 frontmatter 里（多行字符串）还是在 frontmatter 外面的 body？
+  - domain 是逗号分隔字符串 &quot;user, preferences&quot; 还是 YAML list [user, preferences]？
+  - tags 同理
+  - type 的实际值：dynamic / permanent / feel？有没有别的？
+  - created 的时间格式：ISO 8601？带时区？
+
+需要确认的 OpenClaw 格式问题：
+  - MEMORY.md 索引行格式：纯列表 / 带描述 / 分组？
+  - metadata 字段的实际命名：metadata.type / metadata.domain / metadata.tags？
+  - description 是否总是存在？
+  - feels/ 目录是否单独索引？
+</code></pre>
+<p>验证完成后更新 DESIGN.md 的字段映射表（如有差异）。</p>
+<h3 id="051-validatorspy">0.5.1 validators.py + 错误码表</h3>
+<pre><code>错误码分层：
+  Schema 错误 (ML001-ML099)
+    ML001 InvalidDatetime
+    ML002 MissingID
+    ML003 DuplicateID
+    ML004 InvalidSchema
+    ML005 MissingRequiredField
+    ML010 InvalidSourceURI
+
+  Semantic 错误 (ML100-ML199)
+    ML100 BodyEmpty          (warning，不强制)
+    ML101 ValueOutOfRange    (valence/arousal)
+    ML102 UnsupportedKind
+    ML103 UnknownDomain
+
+  I/O 错误 (ML200-ML299)
+    ML200 FileNotFound
+    ML201 PermissionDenied
+    ML202 CorruptFile
+
+  转换错误 (ML300-ML399)
+    ML300 ConcurrentModification
+    ML301 FormatIncompatible
+    ML302 IDConflict
+
+  Roundtrip 错误 (ML400-ML499)
+    ML400 RoundtripIDMismatch
+    ML401 RoundtripContentMismatch
+</code></pre>
+<pre><code class="language-python"># validators.py
+class ErrorCode(str, Enum):
+    INVALID_DATETIME = &quot;ML001&quot;
+    MISSING_ID = &quot;ML002&quot;
+    DUPLICATE_ID = &quot;ML003&quot;
+    # ... 完整定义
+
+@dataclass
+class ValidationIssue:
+    code: ErrorCode
+    severity: Severity          # error / warning / info
+    path: str | None            # 文件路径
+    memory_id: str | None       # 记忆 ID
+    field: str | None           # 问题字段
+    message: str
+    suggestion: str | None = None
+</code></pre>
+<h3 id="052-id-percent-encoding">0.5.2 ID 合法化（percent-encoding 方案）</h3>
+<p>不用 <code>-</code> 替换非法字符——<code>a/b</code> 和 <code>a-b</code> 会撞。用 percent-encoding，可逆：</p>
+<pre><code class="language-python"># models.py
+
+import re
+from pathlib import Path
+
+FILENAME_RESERVED_CHARS = r'[&lt;&gt;:&quot;/\\|?*\x00-\x1f]'
+
+def sanitize_id(raw: str) -&gt; str:
+    &quot;&quot;&quot;将任意字符串转为合法文件名。
+
+    规则：
+    1. 非法字符 → percent-encode（%2F、%3A 等），可逆恢复
+    2. Unicode（中文/emoji）保留
+    3. 长度 ≤ 255 字节（UTF-8）
+    4. Windows 保留名（CON/PRN/AUX...）前加 _
+    5. 空值回退为 &quot;unnamed&quot;
+    &quot;&quot;&quot;
+    def replace_char(m: re.Match) -&gt; str:
+        return f&quot;%{ord(m.group(0)):02X}&quot;
+
+    sanitized = re.sub(FILENAME_RESERVED_CHARS, replace_char, raw)
+    sanitized = sanitized.strip('. ')
+
+    reserved = {'CON', 'PRN', 'AUX', 'NUL',
+                *(f'COM{i}' for i in range(1, 10)),
+                *(f'LPT{i}' for i in range(1, 10))}
+    if sanitized.upper() in reserved:
+        sanitized = f'_{sanitized}'
+
+    while len(sanitized.encode('utf-8')) &gt; 255:
+        sanitized = sanitized[:-1]
+
+    return sanitized or &quot;unnamed&quot;
+</code></pre>
+<h3 id="053-golden-tests">0.5.3 Golden Tests</h3>
+<p>每个 fixture 配套一个 <code>expected.json</code>，存 Canonical 的标准输出：</p>
+<pre><code>tests/fixtures/ombre_samples/
+  dynamic/user/sample.md
+  dynamic/user/sample.expected.json   ← Golden: Reader 输出必须匹配
+
+tests/fixtures/openclaw_samples/
+  memory/test-memory.md
+  memory/test-memory.expected.json
+</code></pre>
+<p>测试：</p>
+<pre><code class="language-python">def test_golden_ombre():
+    reader = OmbreReader()
+    result = reader.read(FIXTURES / &quot;ombre_samples&quot;)
+    actual = [asdict(m) for m in result.memories]
+    expected = json.loads(FIXTURES / &quot;ombre_samples/dynamic/user/sample.expected.json&quot;)
+    assert actual == expected
+</code></pre>
+<p>以后任何修改 → Golden Test 告警，Roundtrip 非常稳定。</p>
+<h3 id="054">0.5.4 测试清单</h3>
+<pre><code>test_models.py           # 构造 Memory、序列化、ID sanitize、casefold 碰撞检测
+test_serialization.py    # sanitize: 循环引用、深度、datetime→ISO、set→sorted
+test_validators.py       # 用 fixtures 测三级校验 + 错误码
+test_plugin.py           # Capabilities 默认值、ReadResult stats
+</code></pre>
+<h3 id="phase-05_1">Phase 0.5 完成标准</h3>
+<pre><code>$ pytest tests/ -v
+  test_models.py ............ ~30 passed
+  test_serialization.py ..... ~15 passed
+  test_validators.py ........ ~10 passed
+  test_plugin.py ............  ~5 passed
+</code></pre>
+<hr />
+<h2 id="phase-1-ombre-openclaw">Phase 1 — 单向转换 Ombre → OpenClaw</h2>
+<h3 id="11-ombre_readerpy">1.1 ombre_reader.py</h3>
+<p>核心原则：<strong>Never Raise</strong>。解析失败 → warning → skip → 继续。</p>
+<pre><code>OmbreReader.read(path: Path) → ReadResult
+
+流程：
+  1. path.rglob(&quot;*.md&quot;)
+  2. 每个文件 → yaml.safe_load(frontmatter_text)
+  3. 字段映射（保留原始字符串，不做类型转换）：
+
+     frontmatter[&quot;bucket_id&quot;]  → id（str() 强制）
+     frontmatter[&quot;name&quot;]       → name
+     frontmatter 外的 body     → body
+     frontmatter[&quot;content&quot;]    → body（若 body 在 frontmatter 内）
+     frontmatter[&quot;type&quot;]       → kind 映射
+     frontmatter[&quot;domain&quot;]     → domains（字符串拆 list 或直接取 list）
+     frontmatter[&quot;tags&quot;]       → tags
+     frontmatter[&quot;importance&quot;] → importance_score（原始 int）
+     frontmatter[&quot;valence&quot;]    → valence
+     frontmatter[&quot;arousal&quot;]    → arousal
+     frontmatter[&quot;created&quot;]    → 原始字符串 → metadata.memlink.original.created_raw
+     frontmatter[&quot;pinned&quot;]     → pinned
+
+  4. Converter 统一将 created_raw → created_at（datetime）
+  5. 构造 Source、checksum
+  6. 保存 metadata.memlink.original 完整快照
+
+  7. stats = {&quot;parsed&quot;: N, &quot;skipped&quot;: N, &quot;invalid&quot;: N}
+     解析失败的 → stats[&quot;skipped&quot;]++、warnings++，不中断
+</code></pre>
+<h3 id="12-openclaw_writerpy">1.2 openclaw_writer.py</h3>
+<p>关键改动：MEMORY.md 并发检测用 mtime+size，SHA256 替换。</p>
+<pre><code>OpenClawWriter.write(memories, path: Path) → list[str]
+
+路由（同前）：
+  kind=emotion → memory/feels/&lt;id&gt;.md
+  status=archived → 跳过
+  其他 → memory/&lt;id&gt;.md
+
+MEMORY.md 索引更新：
+  1. 读取 MEMORY.md → stat(): st_mtime + st_size
+  2. 解析现有条目
+  3. 合并新条目（按 id 去重）
+  4. 重新 stat() → 比较 st_mtime+st_size
+  5. 不一致 → ML300 ConcurrentModification
+  6. 所有条目按 id 排序 → 写入
+</code></pre>
+<h3 id="13">1.3 测试</h3>
+<pre><code>test_ombre_reader.py    # Golden Tests + 正常/边界用例
+test_openclaw_writer.py # 路由 + MEMORY.md 增量 + 并发检测
+test_converter.py       # 端到端 + Feature Loss Report（含 Reason 字段）
+</code></pre>
+<hr />
+<h2 id="phase-2-roundtrip">Phase 2 — 反向转换 + Roundtrip</h2>
+<p><strong>目标</strong>：OpenClaw → Ombre 完整可用。Roundtrip 测试通过。</p>
+<h3 id="20">2.0 需要讨论确认的关键问题</h3>
+<p><strong>问题 A：OpenClaw 的 description → Ombre 存哪里？</strong></p>
+<p>OpenClaw 有 <code>description</code>（摘要），Ombre 没有对应字段。三个方案：</p>
+<table>
+<thead>
+<tr>
+<th>方案</th>
+<th>做法</th>
+<th>影响</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A</td>
+<td>丢弃</td>
+<td>反向转换丢失 description</td>
+</tr>
+<tr>
+<td>B</td>
+<td>存到 metadata.memlink.original</td>
+<td>roundtrip 可恢复，但 Ombre 里看不到</td>
+</tr>
+<tr>
+<td>C</td>
+<td>拼入 body 前面</td>
+<td>Ombre 能看到，但会改变原文内容</td>
+</tr>
+</tbody>
+</table>
+<p><strong>建议</strong>：方案 B——存 metadata.memlink.original，不污染 body。roundtrip 回来会恢复。</p>
+<hr />
+<p><strong>问题 B：Ombre 的 bucket_id 用什么？</strong></p>
+<p>Phase 1 已将 <code>bucket_id</code> → Canonical <code>id</code> → OpenClaw 文件名。反向时：</p>
+<table>
+<thead>
+<tr>
+<th>情况</th>
+<th>bucket_id 来源</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>metadata.memlink.original 存在</td>
+<td>恢复 original.bucket_id</td>
+</tr>
+<tr>
+<td>无 memlink（纯 OpenClaw 数据）</td>
+<td>用文件名（去掉 .md）当 bucket_id</td>
+</tr>
+</tbody>
+</table>
+<p>文件名用 percent-encoding 存了 <code>/</code> 等特殊字符，反向需 decode 恢复。</p>
+<hr />
+<p><strong>问题 C：domain 推断，Ombre 需要主 domain</strong></p>
+<p>Ombre 的 <code>domain</code> 是一个字符串（如 <code>"user, preferences"</code>）。Canonical 的 <code>domains</code> 是 list。</p>
+<p>反向映射规则：
+1. metadata.memlink.original.domains 存在 → 恢复原始分隔字符串
+2. Canonical.domains 有值 → 取 <code>domains[0]</code> 作 Ombre domain
+3. 都无 → <code>--unknown-domain-action</code> 控制行为</p>
+<hr />
+<p><strong>问题 D：type 映射回来怎么处理</strong></p>
+<p>Ombre <code>type</code> 值域是 <code>dynamic/permanent/feel</code>。Canonical <code>kind</code> 是开放 string。</p>
+<p>反向映射：
+| Canonical kind | Ombre type |
+|---------------|-----------|
+| dynamic | dynamic |
+| permanent | permanent |
+| emotion | feel |
+| 其他值 | 回退 dynamic + warning |</p>
+<hr />
+<p><strong>问题 E：importance 反向怎么存</strong></p>
+<p>Phase 1 将 Ombre <code>importance: 8</code>（int）存到 Canonical <code>importance_score: 8.0</code>（float）。反向写回 Ombre 时：</p>
+<ul>
+<li>importance_label 为 "high"/"critical" 等 → 写 importance_label</li>
+<li>importance_score 为 float → <code>int(score)</code> 写回</li>
+<li>都无 → 默认 5</li>
+</ul>
+<hr />
+<h3 id="21-openclaw_readerpy80">2.1 openclaw_reader.py（~80行）</h3>
+<p>Reader 不写成一个 <code>read()</code> 大函数，拆成 6 步 Pipeline：</p>
+<pre><code>discover_files() → parse_frontmatter() → map_to_canonical() → recover_original() → validate() → collect_warnings() → ReadResult
+</code></pre>
+<h4 id="211">2.1.1 文件发现（容错优先）</h4>
+<pre><code>策略：
+  1. MEMORY.md 存在且解析成功 → 按索引行读取
+  2. MEMORY.md 损坏或不存在 → warning + fallback 递归扫描 memory/**/*.md
+  3. 两种情况都要覆盖 memory/feels/ 目录
+
+MEMORY.md 支持多种格式变体：
+  # 变体 A：纯列表
+  - memory/test.md
+
+  # 变体 B：带描述
+  - memory/test.md - Project kickoff meeting
+
+  # 变体 C：分组
+  ## Work
+  - memory/project-alpha.md
+  ## Personal
+  - memory/birthday.md
+
+解析规则：
+  - 以 &quot;- memory/&quot; 开头的行 → 条目
+  - &quot; - &quot; 分隔路径和描述
+  - 跳过 # 标题行、空行、非列表行
+  - 分组信息保留但 v0 不导出
+</code></pre>
+<h4 id="212-never-raise">2.1.2 字段映射（Never Raise）</h4>
+<pre><code>每个 .md 文件：
+
+解析 YAML frontmatter（PyYAML）
+
+字段映射：
+  name                                    → name（必需——缺失→skip+warn）
+  description                             → summary
+  body（frontmatter 外的文本）             → body
+  metadata.type                           → domains[0]
+  metadata.domain                         → domains[0]（type 优先）
+  metadata.tags                           → tags
+  metadata.importance                     → 数值→importance_score，非数值→importance_label
+  metadata.valence                        → valence
+  metadata.arousal                        → arousal
+  metadata.created_at                     → created_at（ISO 字符串→UTC datetime，非法→None+warn）
+  metadata.pinned                         → pinned
+  metadata.checksum                       → checksum
+  metadata.source_uri                     → source.uri
+
+文件名（去 .md、decode percent-encoding）  → id（优先 metadata.memlink.original.id）
+&quot;feels&quot; 在路径中                           → kind=&quot;emotion&quot;（其次 metadata.memlink.original.kind）
+metadata.priority == &quot;high&quot;               → kind=&quot;permanent&quot;
+都无                                      → kind=&quot;dynamic&quot;
+</code></pre>
+<h4 id="213-original-recovery">2.1.3 Original Recovery（白名单）</h4>
+<pre><code>若 metadata.memlink.original 存在，恢复以下字段：
+  ✅ 恢复：id, kind, domains, importance, created_tz
+  ❌ 不恢复：body, summary（用户可能在 OpenClaw 中手动编辑了这些）
+
+原因：避免把用户后来修改的内容覆盖掉。
+</code></pre>
+<h4 id="214-20-tests">2.1.4 测试（~20 tests）</h4>
+<pre><code>test_openclaw_reader.py
+
+  test_read_basic                     # 正常 dynamic 文件
+  test_read_with_description          # description → summary
+  test_read_emotion_kind              # feels/ 目录 → kind=emotion
+  test_read_importance_label          # &quot;high&quot; → importance_label
+  test_domain_from_metadata_type      # metadata.type → domains[0]
+  test_missing_name_field             # 缺 name → skip+warn
+  test_unindexed_files_warning        # 不在 MEMORY.md 中 → warning
+  test_restore_from_memlink_metadata  # original 字段恢复
+  test_unknown_domain_fallback        # 无 domain → [&quot;_unknown&quot;]
+  test_validate_missing_memory_dir    # 缺 memory/ 目录 → error
+  test_validate_missing_memory_md     # 缺 MEMORY.md → warning
+  test_chinese_and_emoji              # 中文+emoji 正确处理
+  test_empty_body                     # 空 body → None
+  test_malformed_yaml                 # 损坏 YAML → skip+invalid
+  test_memory_index_grouped_format    # 分组 MEMORY.md 正确解析
+  test_priority_high_to_permanent     # priority:high → kind=permanent
+  test_extensions_preserved           # extensions 原样保留
+</code></pre>
+<h3 id="22-ombre_writerpy80">2.2 ombre_writer.py（~80行）</h3>
+<h4 id="221">2.2.1 目录策略</h4>
+<pre><code>一步确定目标路径：
+  kind=dynamic    → path/dynamic/
+  kind=permanent  → path/permanent/
+  kind=emotion    → path/feel/
+  未知 kind       → warning + path/dynamic/
+
+Domain 规则：
+  domains=[] 或 domains=[&quot;_unknown&quot;] → &quot;general&quot; + warning
+  domains 多值                        → 取 domains[0] 作目录名 + warning（其余 domain 保留在字段值中）
+  正常单值                            → domains[0] 作目录名
+</code></pre>
+<h4 id="222-yaml">2.2.2 字段映射（固定顺序、YAML 直接拼接）</h4>
+<p>不使用 <code>yaml.dump()</code>，手动拼接 YAML 行以保证字段顺序和 Ombre 风格（逗号分隔 tags、无引号纯字符串等）。</p>
+<pre><code>固定字段顺序：
+  bucket_id → name → type → domain → tags → importance → valence → arousal → created → pinned
+
+映射规则：
+  id（优先 metadata.memlink.original.id）  → bucket_id
+  name                                     → name
+  body                                     → body（Ombre body 在 frontmatter 外）
+  kind                                     → type：emotion→feel，未知→dynamic+warn
+  tags                                     → tags（逗号分隔字符串，Ombre 风格）
+  domains[0]                               → domain（字符串）
+  importance                               → 优先级：
+                                              1. original.importance 有 → 恢复原始值
+                                              2. importance_score 有 → int(score)，钳位 1-10
+                                              3. importance_label 有 → 查表：critical=10, high=8, medium=5, low=3, minimal=1
+                                              4. 都无 → 默认 5
+  valence                                  → valence（有则写）
+  arousal                                  → arousal（有则写）
+  created_at                               → 若有 original.created_tz → 恢复原始时区字符串
+                                             若无 → created_at.isoformat()
+  pinned                                   → pinned（仅 True 时写入）
+
+特值处理：
+  name 含 &quot;:&quot; / &quot;#&quot; → 加双引号
+  空 body → 写空行（frontmatter 后 &quot;\n\n&quot;）
+  archived status → warning（Ombre 无此概念）
+</code></pre>
+<h4 id="223-20-tests">2.2.3 测试（~20 tests）</h4>
+<pre><code>test_ombre_writer.py
+
+  test_write_basic                    # 基本写入，检查字段存在
+  test_write_emotion_to_feel          # emotion → feel/ 目录 + type=feel
+  test_write_permanent_kind           # permanent → permanent/ 目录
+  test_restore_original_id            # metadata.memlink.original.id → bucket_id
+  test_restore_original_importance    # 恢复原始 importance 值（不是归一化的）
+  test_importance_label_to_score      # &quot;high&quot; → 8
+  test_unknown_domain_fallback        # _unknown → &quot;general&quot; + warning
+  test_unknown_kind_fallback          # 未知 kind → dynamic + warning
+  test_archived_status_warning        # archived → warning
+  test_restore_original_timezone      # 原始时区恢复
+  test_multi_domain_list              # 多 domain：第一个作目录，全部写字段值
+  test_tags_comma_separated           # tags → 逗号分隔
+  test_pinned_field                   # pinned=true
+  test_sanitize_illegal_id            # ID 非法字符 → sanitize_id
+  test_chinese_domain_and_id          # 中文 domain+ID
+  test_empty_body                     # 空 body
+  test_yaml_special_chars_quoted      # 含冒号的 name → 加引号
+  test_batch_write                    # 批量 10 个
+  test_frontmatter_field_order        # 字段顺序固定
+</code></pre>
+<h3 id="23-roundtrip">2.3 Roundtrip 验证</h3>
+<h4 id="231-canonical-comparator">2.3.1 Canonical Comparator</h4>
+<p>不用 <code>assert a == b</code>。写一个专门的比较函数，返回结构化 Difference：</p>
+<pre><code class="language-python">def compare_memory(a: Memory, b: Memory) -&gt; list[Difference]:
+    &quot;&quot;&quot;
+    比较两个 Memory，返回字段级差异列表。
+    - tags/domains 排序后比较
+    - None == None
+    - 时间转 ISO 字符串比较
+    - v0 豁免：relationships
+    &quot;&quot;&quot;
+    ...
+
+@dataclass
+class Difference:
+    field: str          # 差异字段
+    expected: Any       # 期望值
+    actual: Any         # 实际值
+    severity: str       # &quot;error&quot; | &quot;warning&quot; | &quot;info&quot;
+</code></pre>
+<p>以后 Diff、Validate、Roundtrip 全部复用这个 Comparator。</p>
+<h4 id="232-roundtrip">2.3.2 两个方向的 Roundtrip</h4>
+<pre><code>方向 A：Ombre → OpenClaw → Ombre
+  检查：
+    ✓ id/bucket_id 恢复一致
+    ✓ name 恢复一致
+    ✓ kind/type 映射往返：dynamic↔dynamic, permanent↔permanent, emotion↔feel↔emotion
+    ✓ importance 原值恢复：8 → 8（不是 0.8）
+    ✓ domain 恢复（字符串 → list → 字符串）
+    ✓ tags 恢复（排序后比较）
+    ✓ created_at 时区保留（&quot;2024-01-01T18:00:00+08:00&quot; → UTC → 恢复 &quot;+08:00&quot;）
+    ✓ body 内容一致
+    ✓ pinned 恢复
+    ✓ v0 豁免：relationships、description
+
+方向 B：OpenClaw → Ombre → OpenClaw
+  同上 + description 从 metadata.memlink.original 恢复一致
+
+退出标准（工程化指标，不是 test count）：
+  Fixture roundtrip success rate:      100%
+  Real Ombre dataset roundtrip rate:   &gt;95%
+  Real OpenClaw dataset roundtrip rate: &gt;95%
+</code></pre>
+<h4 id="233-15-tests">2.3.3 测试（~15 tests）</h4>
+<pre><code>test_roundtrip.py
+
+  test_ombre_to_openclaw_to_ombre              # A 方向完整流程
+  test_openclaw_to_ombre_to_openclaw           # B 方向完整流程
+  test_roundtrip_preserves_id                  # ID 精确恢复
+  test_roundtrip_preserves_importance_score    # importance 8 → 8，不是 0.8
+  test_roundtrip_preserves_timezone            # 时区 &quot;+08:00&quot; 恢复
+  test_roundtrip_preserves_multi_domains       # 多 domain 完整保留
+  test_roundtrip_chinese_and_emoji             # 中文 + 🚀😊
+  test_roundtrip_empty_body                    # 空 body
+  test_roundtrip_all_emotion_fields            # emotion feel/ 目录完整恢复
+  test_roundtrip_pinned_field                  # pinned 保留
+  test_roundtrip_batch                         # 批量 3+ 条
+</code></pre>
+<h3 id="24-domain-8-tests">2.4 Domain 推断测试（~8 tests）</h3>
+<pre><code>test_domain_inference.py
+
+  test_infer_from_metadata_domain      # metadata.domain 存在 → 直接取
+  test_infer_from_metadata_type         # metadata.type → 取 type
+  test_infer_fallback_unknown           # 都无 → [&quot;_unknown&quot;]
+  test_restore_from_memlink_original    # 有 original → 完整恢复
+  test_cli_unknown_domain_action_skip   # CLI --unknown-domain-action skip
+  test_cli_unknown_domain_action_default # CLI --unknown-domain-action default:general
+</code></pre>
+<h3 id="25-phase-2">2.5 Phase 2 完成标准</h3>
+<pre><code class="language-bash">$ pytest tests/test_openclaw_reader.py -v    # 20 passed
+$ pytest tests/test_ombre_writer.py -v       # 20 passed
+$ pytest tests/test_roundtrip.py -v          # 15 passed
+$ pytest tests/test_domain_inference.py -v   # 8 passed
+
+# Roundtrip 量化验证
+$ python -m memlink.integration_test
+  Roundtrip: 117/117 (100%)
+  Loss: summary=2, relationships=8
+  Time: 0.33s
+</code></pre>
+<hr />
+<hr />
+<h2 id="phase-3-cli">Phase 3 — CLI 全实现 + 模糊测试 + 边缘用例</h2>
+<p><strong>目标</strong>：<code>memlink</code> 命令完整可用，help 文档清晰，exit code 正确，JSON 输出模式。</p>
+<h3 id="30">3.0 需要讨论确认的设计决策</h3>
+<p><strong>问题 F：convert vs ombre2claw 到底要不要快捷命令？</strong></p>
+<p>Phase 1 的 CLI 设计有两个版本：</p>
+<pre><code class="language-bash"># 通用版：格式名通过 --from/--to 指定
+memlink convert --from ombre --to openclaw -s ... -t ...
+
+# 快捷版：固定命令名
+memlink ombre2claw -s ... -t ...
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>方案</th>
+<th>优点</th>
+<th>缺点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>两种都要</td>
+<td>通用版可扩展，快捷版好记</td>
+<td>CLI 更复杂</td>
+</tr>
+<tr>
+<td>只要 convert</td>
+<td>简单统一</td>
+<td>命令长</td>
+</tr>
+<tr>
+<td>convert + 自动检测格式</td>
+<td>最友好</td>
+<td>检测可能出错</td>
+</tr>
+</tbody>
+</table>
+<p><strong>建议</strong>：v0 两种都要。<code>convert</code> 是通用接口（文档推荐），<code>ombre2claw</code>/<code>claw2ombre</code> 是快捷别名（内部调 convert）。以后第三方格式只有 <code>convert</code>。</p>
+<hr />
+<p><strong>问题 G：--format json 输出哪些命令需要？</strong></p>
+<table>
+<thead>
+<tr>
+<th>命令</th>
+<th>pretty</th>
+<th>json</th>
+<th>理由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>validate</td>
+<td>✅</td>
+<td>✅</td>
+<td>CI 消费用 json</td>
+</tr>
+<tr>
+<td>diff</td>
+<td>✅</td>
+<td>✅</td>
+<td>CI gate 用 json</td>
+</tr>
+<tr>
+<td>stats</td>
+<td>✅</td>
+<td>✅</td>
+<td>自动化统计</td>
+</tr>
+<tr>
+<td>inspect</td>
+<td>✅</td>
+<td>❌</td>
+<td>调试命令，人看</td>
+</tr>
+<tr>
+<td>convert</td>
+<td>✅</td>
+<td>❌</td>
+<td>转换过程人看</td>
+</tr>
+</tbody>
+</table>
+<p><strong>建议</strong>：validate/diff/stats 三种支持 --format json。inspect/convert 只 pretty。</p>
+<hr />
+<p><strong>问题 H：inspect 命令输出什么内容？</strong></p>
+<p>单文件调试神器。输入一个 .md 文件，memlink 自动检测格式（或手动指定），输出 Canonical 表示 + warnings + extensions。</p>
+<pre><code>$ memlink inspect dynamic/user/sample.md
+
+  Format:   Ombre
+  Schema:   valid
+  Source:   ombre://dynamic/user/abcd1234-user-prefs
+
+  ── Canonical ──
+  id:              abcd1234-user-prefs
+  name:            用户偏好设置
+  kind:            dynamic
+  status:          active
+  domains:         [user, preferences]
+  tags:            [dark-mode, notifications, 中文标签]
+  importance:      7.0
+  valence:         0.8
+  body:            145 chars
+  checksum:        sha256:e65bfe66...
+
+  ── Warnings ──
+  (none)
+
+  ── Extensions ──
+  (none)
+</code></pre>
+<hr />
+<p><strong>问题 I：--verbose 三级各打什么？</strong></p>
+<table>
+<thead>
+<tr>
+<th>级别</th>
+<th>输出内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>默认</td>
+<td>只输出 summary（converted N、warnings count、feature loss）</td>
+</tr>
+<tr>
+<td>-v</td>
+<td>每条 warning 详情 + 跳过/失败文件名</td>
+</tr>
+<tr>
+<td>-vv</td>
+<td>每个文件转换过程（"parsing a.md → kind=dynamic ✓"）</td>
+</tr>
+<tr>
+<td>-vvv</td>
+<td>每个字段映射明细（"bucket_id→id: abcd1234"）</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="31-cli">3.1 CLI 架构</h3>
+<p><strong>拆分子包，不塞一个 200 行文件：</strong></p>
+<pre><code>memlink/
+  cli/
+    __init__.py     # main() + parser + dispatch
+    convert.py      # convert / ombre2claw / claw2ombre
+    validate.py     # validate
+    diff.py         # diff
+    inspect.py      # inspect
+    stats.py        # stats
+    formats.py      # formats
+</code></pre>
+<h3 id="32-cli">3.2 CLI 子命令实现详情</h3>
+<h4 id="memlink-formats"><code>memlink formats</code></h4>
+<pre><code>→ importlib.metadata.entry_points() 动态发现已安装插件
+→ 表格输出：
+
+  Format      Reader    Writer
+  ombre       ✅        ✅
+  openclaw    ✅        ✅
+</code></pre>
+<h4 id="memlink-convert"><code>memlink convert</code></h4>
+<pre><code>memlink convert --from &lt;FMT&gt; --to &lt;FMT&gt; -s &lt;PATH&gt; -t &lt;PATH&gt; [options]
+
+流程：
+  1. 解析 --from / --to → entry_points 查找对应 Reader/Writer 类
+  2. 实例化 reader、writer
+  3. 调用 convert(reader, writer, source_path, target_path, **filters)
+  4. 输出结果摘要 + Feature Loss Report + 耗时
+
+参数：
+  --from, -f         源格式名（必填）
+  --to, -t           目标格式名（必填）
+  -s, --source       源目录（必填）
+  -t, --target       目标目录（必填）
+  --domain, -d       只转换特定 domain
+  --kind, -k         只转换特定 kind
+  --status           active|archived（默认 active）
+  --dry-run          只解析，显示会转换的列表，不写入
+  --overwrite        覆盖已存在的目标文件（默认不覆盖）
+  --id-conflict      rename|skip|merge（默认 rename）
+  --merge-strategy   append|replace|reject
+  --filename         id|name（默认 id）
+  --rebuild-index    完全重建 MEMORY.md 索引
+  --include-archived 转换时包含已归档记忆
+  --unknown-domain-action  skip|default:&lt;name&gt;（默认 skip）
+  -v, -vv, -vvv      详细程度
+
+输出示例（默认）：
+  Converted: 117 memories (87 dynamic, 8 permanent, 17 emotion, 5 skipped)
+  Warnings: 2
+  Target: /path/to/output/
+  Time: 0.23s
+
+  ── Feature Loss ──
+  emotion (valence/arousal): 117 dropped  (Target plugin capability=false)
+  extensions: 1 dropped  (Target cannot preserve unknown extensions)
+</code></pre>
+<h4 id="memlink-ombre2claw-memlink-claw2ombre"><code>memlink ombre2claw</code> / <code>memlink claw2ombre</code></h4>
+<p>快捷命令——内部转调 <code>convert</code>：</p>
+<pre><code class="language-python">def ombre2claw(args):
+    args.from_format = &quot;ombre&quot;
+    args.to_format = &quot;openclaw&quot;
+    return convert_command(args)
+</code></pre>
+<h4 id="memlink-import"><code>memlink import</code></h4>
+<pre><code>memlink import --from &lt;FMT&gt; -s &lt;PATH&gt;
+
+同 convert，但：
+  - 目标格式自动检测当前目录
+  - --id-conflict 默认 skip（不覆盖已有记忆）
+  - 用于&quot;把外部记忆导入当前系统&quot;的语义
+</code></pre>
+<h4 id="memlink-inspect"><code>memlink inspect</code></h4>
+<pre><code>memlink inspect &lt;FILE&gt; [--format ombre|openclaw]
+
+单文件调试：
+  1. 自动检测格式（或手动指定）
+  2. 调用对应 Reader 的单文件读取
+  3. 输出 Canonical 表示 + source + warnings + extensions
+</code></pre>
+<h4 id="memlink-validate"><code>memlink validate</code></h4>
+<pre><code>memlink validate --level schema|semantic|roundtrip -s &lt;PATH&gt; [--format json]
+
+--level schema:   YAML 语法 + 必需字段
+--level semantic: 字段类型、值范围、重复 id
+--level roundtrip: A→B→A 一致性（Phase 2 后）
+
+--format pretty (默认):
+  ✓ 120 files valid
+  ✗ 3 errors:
+    ML002: Missing ID — broken/no-id.md
+    ML002: Missing ID — broken/invalid-yaml.md
+    ML004: Invalid YAML — broken/invalid-yaml.md
+
+--format json:
+  {
+    &quot;total&quot;: 120,
+    &quot;errors&quot;: [...],
+    &quot;warnings&quot;: [...]
+  }
+</code></pre>
+<h4 id="memlink-stats"><code>memlink stats</code></h4>
+<pre><code>memlink stats -s &lt;PATH&gt;
+
+统计：
+  Total:     120 memories
+  ├─ dynamic:     85 (70.8%) ████████████████████████
+  ├─ permanent:   30 (25.0%) ████████
+  └─ emotion:      5 ( 4.2%) █
+
+  Domain Distribution:
+    user:          45 ████████████████████
+    work:          30 █████████████
+    project:       25 ███████████
+    personal:      20 █████████
+</code></pre>
+<h4 id="memlink-diff"><code>memlink diff</code></h4>
+<pre><code>memlink diff -s &lt;PATH1&gt; &lt;PATH2&gt; [--format json]
+
+比较两个目录的 Canonical 表示：
+  1. 两侧各读一遍
+  2. 按 id 匹配
+  3. 输出差异摘要 + 详情
+
+--format pretty:
+  Only in source:      12
+  Only in target:       5
+  Common:              83
+    Content differs:    7
+    Metadata differs:  15
+
+  [Content Diff] project-alpha
+    importance_score: 8 → 6 (-2)
+    tags: +['urgent'] -['low-priority']
+
+Exit code: 0=一致, 1=有差异, 2=错误
+</code></pre>
+<h3 id="33-convert">3.3 Convert 命令详细流程</h3>
+<pre><code>convert 执行流程（每一步打日志）：
+  1. 解析 --from / --to → Plugin 发现（首次 entry_points() 后缓存为 dict）
+  2. Capability Check → 如有不兼容，提前 warning
+  3. Reader → 读源目录
+  4. Filter → --domain / --kind / --status 过滤
+  5. Dry-run? → 是则打印列表退出
+  6. Converter → 统一类型转换（datetime 等）
+  7. Writer → 写目标目录
+  8. Feature Loss Report → 统计丢失字段
+  9. Summary → 固定格式输出
+  10. Exit Code → 0 成功
+
+固定输出格式（Summary）：
+  Read:     120
+  Converted: 118
+  Skipped:     2
+  Warnings:    4
+  Duration:  0.38s
+
+  ── Feature Loss ──
+  emotion:       0 lost  (Preserved in metadata.memlink)
+  summary:       2 lost  (Ombre has no summary slot)
+  relationships: 8 lost  (v0 writer skip)
+</code></pre>
+<h3 id="34-inspect">3.4 inspect 命令详细输出</h3>
+<pre><code>不只是 Canonical。输出 5 个区域：
+
+  ── Raw Frontmatter ──
+  bucket_id: abcd1234
+  name: 用户偏好设置
+  type: dynamic
+  ...
+
+  ── Canonical ──
+  id:              abcd1234
+  name:            用户偏好设置
+  kind:            dynamic
+  status:          active
+  ...
+
+  ── Warnings ──
+  (none)
+
+  ── Extensions ──
+  mem0.user_id: abc
+
+  ── Capabilities ──
+  Reader supports: emotion, summary
+  Writer supports: summary
+</code></pre>
+<h3 id="35-diff-ignore">3.5 diff 命令增加 --ignore</h3>
+<pre><code>memlink diff -s old/ new/
+  比较 Canonical 表示，不是比较原始 Markdown
+
+memlink diff -s old/ new/ --ignore timestamps
+  忽略 created_at / updated_at 差异
+
+memlink diff -s old/ new/ --ignore tags
+  忽略 tags 差异
+
+memlink diff -s old/ new/ --ignore importance
+  忽略 importance_score / importance_label 差异
+
+用途：用户只想看&quot;实质内容&quot;变了没，不关心时间戳/标签调整
+</code></pre>
+<h3 id="36-stats">3.6 stats 命令扩展</h3>
+<pre><code>memlink stats -s memories/
+
+  Total:           120 memories
+  ├─ dynamic:       85 (70.8%)
+  ├─ permanent:     30 (25.0%)
+  └─ emotion:        5 ( 4.2%)
+
+  Domains:          12 unique
+  Average tags:      3.2 per memory
+  Average body:     245 chars
+  Oldest memory:    2024-01-15 (permanent/docs/manual)
+  Newest memory:    2024-07-15 (feel/sample)
+
+  Domain Distribution:
+    user:            45 ████████████████████
+    work:            30 █████████████
+    project:         25 ███████████
+    personal:        20 █████████
+</code></pre>
+<h3 id="37-ctrlc">3.7 Ctrl+C 清理</h3>
+<pre><code>捕获 KeyboardInterrupt →
+  1. 记录&quot;正在清理...&quot;
+  2. 检查目标目录中已写入的文件
+  3. 报告：&quot;Partially written: 2 files in /target/memory/&quot;
+  4. 不移除已写入文件（用户决定是否清理）
+  5. exit 130
+</code></pre>
+<h3 id="38-exit-code">3.8 统一 Exit Code（所有命令）</h3>
+<pre><code>0   Success                     # 一切正常
+1   Validation/Diff Failed       # validate 有 error，或 diff 有差异
+2   CLI Usage Error              # 参数错误、缺必填项
+3   Plugin Error                 # 格式不支持、插件加载失败
+4   I/O Error                    # 文件找不到、权限不够
+5   Unexpected Exception         # 未预期错误
+130 User Interrupted             # Ctrl+C
+</code></pre>
+<h3 id="39-plugin">3.9 Plugin 发现缓存</h3>
+<pre><code>首次 entry_points() 扫描 → 缓存为 dict {&quot;ombre&quot;: (Reader, Writer), ...}
+后续命令复用缓存，不重复扫描
+
+def get_reader(fmt: str) -&gt; type[FormatPlugin]:
+    _ensure_plugins_loaded()
+    if fmt not in _reader_cache:
+        raise PluginError(f&quot;Unknown format: {fmt}&quot;)
+    return _reader_cache[fmt]()
+</code></pre>
+<h3 id="34-fuzz-testing">3.4 Fuzz Testing</h3>
+<p>dev 依赖加 <code>hypothesis</code>，生成随机 Memory 确保 reader/writer 不崩。</p>
+<pre><code class="language-python"># tests/test_fuzz.py
+from hypothesis import given, strategies as st
+
+@given(
+    body=st.text(max_size=10000),
+    tags=st.lists(st.text(min_size=1, max_size=50), max_size=20),
+    domains=st.lists(st.text(min_size=1, max_size=30), max_size=10),
+    kind=st.sampled_from([&quot;dynamic&quot;, &quot;permanent&quot;, &quot;emotion&quot;, &quot;unknown-kind&quot;]),
+    importance=st.one_of(st.none(), st.floats(min_value=0, max_value=100)),
+    has_emoji=st.booleans(),
+)
+def test_roundtrip_fuzz(body, tags, domains, kind, importance, has_emoji):
+    &quot;&quot;&quot;随机构造 Memory → write → read → 语义一致&quot;&quot;&quot;
+    ...
+
+# 100 random cases, ~5s
+</code></pre>
+<hr />
+<h2 id="phase-25">Phase 2.5 — 集成测试 + 兼容性报告</h2>
+<p><strong>目标</strong>：在写 CLI 之前，先用真实数据跑完整 A→B→A 流程，生成量化报告。这是发布前最有价值的一步。</p>
+<h3 id="251">2.5.1 集成测试</h3>
+<pre><code>用 117 条真实 Ombre 数据：
+
+  1. Ombre → Canonical → OpenClaw
+  2. OpenClaw → Canonical → Ombre
+  3. 逐条 compare_memory(original, restored)
+  4. 生成报告
+
+用真实的 OpenClaw 数据（如果能拿到）：
+  1. OpenClaw → Canonical → Ombre
+  2. Ombre → Canonical → OpenClaw
+  3. 同上比较
+</code></pre>
+<h3 id="252-compatibility-report">2.5.2 Compatibility Report 格式</h3>
+<pre><code>$ python -m memlink.integration_test
+
+  ═══ Roundtrip Compatibility Report ═══
+  Dataset: 117 real Ombre memories (87 dynamic, 8 permanent, 17 emotion, 5 archived)
+
+  ── Roundtrip Success ──
+  Full match:      114/117 (97.4%)
+  Partial match:     3/117 (2.6%)  — description restored from metadata
+  Failed:            0/117 (0%)
+
+  ── Field-Level Loss ──
+  summary:       2 lost  (Ombre has no summary slot — preserved in metadata)
+  emotion:       0 lost  (full roundtrip preserved)
+  relationships: 8 lost  (v0 writer skip — stored in metadata.memlink.relationships)
+
+  ── Performance ──
+  Ombre→Canonical:      0.12s
+  Canonical→OpenClaw:   0.08s
+  OpenClaw→Canonical:   0.06s
+  Canonical→Ombre:      0.07s
+  Total roundtrip:      0.33s
+
+  ═══ Verdict: READY for Phase 3 ═══
+</code></pre>
+<h3 id="253-plugin-contract-tests">2.5.3 Plugin Contract Tests</h3>
+<p>提供公共测试模块 <code>memlink.testing</code>，任何新插件必须通过：</p>
+<pre><code class="language-python"># memlink/testing.py — 插件契约测试
+
+def test_plugin_contract(reader_cls, writer_cls):
+    &quot;&quot;&quot;
+    任何新格式插件必须通过以下测试：
+    1. 能读取最小合法样例
+    2. 能处理未知字段而不中断
+    3. 对非法输入返回结构化 warning，不抛异常
+    4. Canonical 一次往返语义一致（在声明的 Capabilities 范围内）
+    &quot;&quot;&quot;
+    # ... 标准测试套件
+</code></pre>
+<p>后续 Mem0、Zep、OpenMemory 等插件接入时，只需调用 <code>test_plugin_contract(Mem0Reader, Mem0Writer)</code>。</p>
+<hr />
+<h3 id="310">3.10 测试</h3>
+<pre><code>test_cli.py            # 每个子命令端到端 + exit code 验证
+test_fuzz.py           # hypothesis 100 random cases
+test_merge_strategy.py # append/replace/reject 完整测试
+test_edge_cases.py     # 空目录、全空 body、纯中文、emoji、超长 body、100+ 文件
+</code></pre>
+<h3 id="311-phase-3">3.11 Phase 3 完成标准</h3>
+<pre><code class="language-bash">$ memlink --help
+  (完整帮助信息，每个子命令有独立 help)
+
+$ memlink formats
+  ombre      reader+writer
+  openclaw   reader+writer
+
+$ memlink convert --from ombre --to openclaw \
+    -s ~/.claude/ombre-buckets -t ./memories/
+  Converted: 117 memories
+  ...
+
+$ memlink diff -s old/ new/ --format json
+  {&quot;only_in_source&quot;: 3, &quot;only_in_target&quot;: 1, ...}
+  (exit code 1)
+
+$ memlink validate --level sematic -s memories/ --format json
+  {&quot;errors&quot;: [...]}
+  (exit code 0 if clean)
+</code></pre>
+<hr />
+<h2 id="phase-4">Phase 4 — 发布</h2>
+<ul>
+<li>[ ] Golden Tests 全部通过</li>
+<li>[ ] CI 绿灯（Linux + macOS + Windows, 3.10/3.11/3.12）</li>
+<li>[ ] 真实 Ombre + OpenClaw 数据测试通过</li>
+<li>[ ] 兼容性承诺文档（Compatibility Promise）：</li>
+</ul>
+<pre><code>Canonical Schema v1    Stable（冻结，1.x 向后兼容）
+Plugin API             Experimental（v0.x 可能变）
+CLI                    Experimental（v0.x 可能变）
+Python API             Experimental（v0.x 可能变）
+</code></pre>
+<ul>
+<li>[ ] README 补充 "What memlink is NOT" 节：</li>
+</ul>
+<pre><code>× Synchronization Engine
+× Memory Database
+× Embedding Store
+× Vector Search
+× Knowledge Graph
+</code></pre>
+<ul>
+<li>[ ] <code>git tag v0.1.0</code> + <code>pip install memlink</code></li>
+</ul>
+<hr />
+<h2 id="_3">文件清单 + 预估行数</h2>
+<table>
+<thead>
+<tr>
+<th>文件</th>
+<th>Phase</th>
+<th>行数</th>
+<th>状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>models.py</code></td>
+<td>0.5</td>
+<td>100</td>
+<td>✅ 已有，待加 sanitize_id</td>
+</tr>
+<tr>
+<td><code>plugin.py</code></td>
+<td>0.5</td>
+<td>70</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><code>serialization.py</code></td>
+<td>0.5</td>
+<td>50</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><code>converter.py</code></td>
+<td>0.5</td>
+<td>100</td>
+<td>🚧 待补过滤+统计+datetime 转换</td>
+</tr>
+<tr>
+<td><code>validators.py</code></td>
+<td>0.5</td>
+<td>80</td>
+<td>🚧 骨架，待加错误码枚举</td>
+</tr>
+<tr>
+<td><code>ombre_reader.py</code></td>
+<td>1</td>
+<td>70</td>
+<td>🚧</td>
+</tr>
+<tr>
+<td><code>openclaw_writer.py</code></td>
+<td>1</td>
+<td>90</td>
+<td>🚧</td>
+</tr>
+<tr>
+<td><code>openclaw_reader.py</code></td>
+<td>2</td>
+<td>60</td>
+<td>🚧</td>
+</tr>
+<tr>
+<td><code>ombre_writer.py</code></td>
+<td>2</td>
+<td>60</td>
+<td>🚧</td>
+</tr>
+<tr>
+<td><code>cli/__init__.py</code></td>
+<td>3</td>
+<td>40</td>
+<td>🚧</td>
+</tr>
+<tr>
+<td><code>cli/convert.py</code></td>
+<td>3</td>
+<td>60</td>
+<td>🚧</td>
+</tr>
+<tr>
+<td><code>cli/validate.py</code></td>
+<td>3</td>
+<td>40</td>
+<td>🚧</td>
+</tr>
+<tr>
+<td><code>cli/diff.py</code></td>
+<td>3</td>
+<td>40</td>
+<td>🚧</td>
+</tr>
+<tr>
+<td><code>cli/inspect.py</code></td>
+<td>3</td>
+<td>30</td>
+<td>🚧</td>
+</tr>
+<tr>
+<td><code>cli/stats.py</code></td>
+<td>3</td>
+<td>40</td>
+<td>🚧</td>
+</tr>
+<tr>
+<td><code>testing.py</code></td>
+<td>2.5</td>
+<td>50</td>
+<td>🚧 Plugin Contract Tests</td>
+</tr>
+<tr>
+<td><strong>合计</strong></td>
+<td></td>
+<td><strong>~950</strong></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>测试：</p>
+<table>
+<thead>
+<tr>
+<th>文件</th>
+<th>Phase</th>
+<th>tests</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>test_models.py</code></td>
+<td>0.5</td>
+<td>30</td>
+</tr>
+<tr>
+<td><code>test_serialization.py</code></td>
+<td>0.5</td>
+<td>15</td>
+</tr>
+<tr>
+<td><code>test_validators.py</code></td>
+<td>0.5</td>
+<td>10</td>
+</tr>
+<tr>
+<td><code>test_plugin.py</code></td>
+<td>0.5</td>
+<td>5</td>
+</tr>
+<tr>
+<td><code>test_ombre_reader.py</code></td>
+<td>1</td>
+<td>15</td>
+</tr>
+<tr>
+<td><code>test_openclaw_writer.py</code></td>
+<td>1</td>
+<td>15</td>
+</tr>
+<tr>
+<td><code>test_converter.py</code></td>
+<td>1</td>
+<td>10</td>
+</tr>
+<tr>
+<td><code>test_openclaw_reader.py</code></td>
+<td>2</td>
+<td>20</td>
+</tr>
+<tr>
+<td><code>test_ombre_writer.py</code></td>
+<td>2</td>
+<td>20</td>
+</tr>
+<tr>
+<td><code>test_roundtrip.py</code>（含 Golden）</td>
+<td>2</td>
+<td>15</td>
+</tr>
+<tr>
+<td><code>test_domain_inference.py</code></td>
+<td>2</td>
+<td>8</td>
+</tr>
+<tr>
+<td><code>test_integration.py</code></td>
+<td>2.5</td>
+<td>10</td>
+</tr>
+<tr>
+<td><code>test_cli.py</code></td>
+<td>3</td>
+<td>20</td>
+</tr>
+<tr>
+<td><code>test_fuzz.py</code></td>
+<td>3</td>
+<td>10</td>
+</tr>
+<tr>
+<td><code>test_edge_cases.py</code></td>
+<td>3</td>
+<td>15</td>
+</tr>
+<tr>
+<td><strong>合计</strong></td>
+<td></td>
+<td><strong>~185</strong></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="_4">关键约束汇总</h2>
+<ol>
+<li><strong>单一依赖</strong>：<code>pyyaml&gt;=6.0</code>，其余标准库</li>
+<li><strong>Never Raise</strong>：Reader 解析失败不崩溃</li>
+<li><strong>Reader 不解析值</strong>：原始字符串存入，Converter 统一做类型转换</li>
+<li><strong>确定性排序</strong>：tags/domains sorted()、MEMORY.md 按 id 排序</li>
+<li><strong>percent-encoding 文件名</strong>：可逆、不撞名</li>
+<li><strong>casefold ID 冲突检测</strong>：跨平台一致</li>
+<li><strong>mtime+size 并发检测</strong>：O(1)，不用 SHA256</li>
+<li><strong>Golden Tests</strong>：每个 fixture 配 expected.json</li>
+<li><strong>Fuzz Testing</strong>：hypothesis 100 随机 case</li>
+<li><strong>Feature Loss Report + Reason</strong>：说清楚为什么丢字段</li>
+<li><strong>Verbose 三级</strong>：-v/-vv/-vvv</li>
+<li><strong>兼容性承诺</strong>：Schema Stable / Plugin+CLI Experimental</li>
+</ol>
+<hr />
+<h2 id="phase-23">本轮评审采纳（Phase 2/3 细节补充）</h2>
+<p>以下来自 Phase 2/3 执行方案的两轮外部评审，已确认采纳。</p>
+<h3 id="phase-2">Phase 2 采纳</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>建议</th>
+<th>来源</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>Reader 拆成 Pipeline</strong>：discover → parse → map → recover → validate → ReadResult</td>
+<td>建议2</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>文件发现容错</strong>：优先读 MEMORY.md 索引；索引损坏 → warning + fallback 递归扫描</td>
+<td>建议2</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>Original Recovery 白名单</strong>：恢复 id/kind/domains/importance/created_tz，<strong>不恢复</strong> body/summary（避免覆盖用户手动修改）</td>
+<td>建议2</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>importance label→score 映射</strong>：critical=10, high=8, medium=5, low=3, minimal=1</td>
+<td>建议1</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>Ombre Writer 固定字段顺序</strong>：bucket_id→name→type→domain→tags→importance→created→...</td>
+<td>建议2</td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>Ombre Writer 目录策略</strong>：domains[0] 作目录名，多值时 warning；_unknown→"general"</td>
+<td>建议2</td>
+</tr>
+<tr>
+<td>7</td>
+<td><strong>Roundtrip 用 Comparator</strong>：<code>compare_memory(a,b)</code> 返回结构化 Difference，不只 assert</td>
+<td>建议2</td>
+</tr>
+<tr>
+<td>8</td>
+<td><strong>Roundtrip 退出标准</strong>：Fixtures 100% + 真实数据 &gt;95%，不只看 test count</td>
+<td>建议2</td>
+</tr>
+</tbody>
+</table>
+<h3 id="phase-3">Phase 3 采纳</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>建议</th>
+<th>来源</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>CLI 拆分子包</strong>：<code>commands/convert.py validate.py diff.py inspect.py stats.py</code></td>
+<td>建议2</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>Convert 固定输出格式</strong>：Read N / Converted M / Skipped K / Warnings W / Duration</td>
+<td>建议2</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>inspect 输出扩展</strong>：Raw Frontmatter + Canonical + Warnings + Extensions + Capabilities</td>
+<td>建议2</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>validate JSON 含 summary</strong>：<code>{"summary": {"errors": N, "warnings": M}, "issues": [...]}</code></td>
+<td>建议2</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>diff 加 --ignore</strong>：<code>--ignore tags</code> / <code>--ignore timestamps</code> / <code>--ignore importance</code></td>
+<td>建议2</td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>stats 扩展</strong>：增加 average tags、average body length、oldest/newest memory</td>
+<td>建议2</td>
+</tr>
+<tr>
+<td>7</td>
+<td><strong>Plugin 发现缓存</strong>：首次 <code>entry_points()</code> 后缓存为 dict，避免重复扫描</td>
+<td>建议2</td>
+</tr>
+<tr>
+<td>8</td>
+<td><strong>统一退出码</strong>：0=Success, 1=Diff/Validate Failed, 2=CLI Error, 3=Plugin, 4=IO, 5=Unexpected</td>
+<td>建议2（替代原来只对 diff 的 0/1/2）</td>
+</tr>
+<tr>
+<td>9</td>
+<td><strong>Ctrl+C 清理</strong>：捕获后清理已写入的部分文件，exit 130</td>
+<td>建议2</td>
+</tr>
+<tr>
+<td>10</td>
+<td><strong>Plugin Contract Tests</strong>：公共测试模块，任何新插件必须通过（最小样例/未知字段/结构化 warning/一次往返一致）</td>
+<td>建议2</td>
+</tr>
+</tbody>
+</table>
+<h3 id="phase-25_1">新增 Phase 2.5 — 集成测试 + 兼容性报告</h3>
+<p>在 CLI 前增加一个集成验证阶段，用真实数据跑完整 A→B→A 流程，生成量化报告：</p>
+<pre><code>$ python -m memlink.integration_test
+
+  ── Roundtrip Report ──
+  Total memories:    117
+  Roundtrip success: 117/117 (100%)
+
+  ── Field-Level Loss ──
+  summary (description):   2 lost (Ombre has no summary slot)
+  emotion (valence/arousal): 0 lost (roundtrip preserved)
+  relationships:            8 lost (v0 writer skip)
+
+  ── Performance ──
+  Read (Ombre):     0.12s
+  Write (OpenClaw): 0.08s
+  Read (OpenClaw):  0.06s
+  Write (Ombre):    0.07s
+  Total roundtrip:  0.33s
+
+$ memlink validate --level roundtrip -s real-data/
+  ✓ 117/117 memories pass roundtrip
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>建议</th>
+<th>来源</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>在 CLI 前先跑真实数据集成测试</td>
+<td>建议2</td>
+</tr>
+<tr>
+<td>2</td>
+<td>生成量化 Compatibility Report（Roundtrip Rate + Loss + Performance）</td>
+<td>建议2</td>
+</tr>
+<tr>
+<td>3</td>
+<td>所有新插件必须通过 Plugin Contract Tests</td>
+<td>建议2</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="phase-23_1">终轮评审采纳（Phase 2/3 最终版）</h2>
+<h3 id="_5">设计变更</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>变更</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>Converter 不做类型转换</strong></td>
+<td>Reader 负责 raw→Canonical，Writer 负责 Canonical→raw。Converter 只管 filter/merge/feature-loss/compatibility，不碰 datetime</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>Atomic Write</strong></td>
+<td>所有 Writer 先写 <code>.tmp</code> → <code>fsync()</code> → <code>rename()</code>。README 写明 "All writes are atomic on the same filesystem"</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>Feature Loss 提前算</strong></td>
+<td>写入前做 Capability Check，提前告诉用户"将损失 X 个字段"，未来可加 <code>--interactive</code> 确认</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>Spec Compliance 清单</strong></td>
+<td>每个插件声明 Canonical 支持度：✅ Core / ✅ Summary / ⚠ Relationships (metadata only) 等</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_6">数据安全</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>建议</th>
+<th>来源</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>空 domains 处理</strong>：<code>domains=[]</code> 和 <code>domains=["_unknown"]</code> 都回退到 "general" + warning</td>
+<td>建议1</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>importance NaN/Inf 处理</strong>：<code>math.isnan()</code> / <code>math.isinf()</code> → 默认 5 + warning</td>
+<td>建议1</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>URL decode 文件名</strong>：<code>urllib.parse.unquote()</code> 还原 percent-encoded 字符</td>
+<td>建议1</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>Reader 区分 Fatal vs Recoverable</strong>：YAML 错/缺字段 → skip+warn；目录不存在/权限不足 → Fatal</td>
+<td>建议2</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>Checksum 写算法名</strong>：<code>{algorithm: "sha256", value: "xxx"}</code> 而非裸字符串</td>
+<td>建议2</td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>MEMORY.md 保留用户注释</strong>：Writer 只更新 <code>- memory/</code> 条目，不动其他文本</td>
+<td>建议2</td>
+</tr>
+<tr>
+<td>7</td>
+<td><strong>Reader Discovery 去重</strong>：resolved path → <code>set()</code>，避免同一文件读两遍</td>
+<td>建议2</td>
+</tr>
+</tbody>
+</table>
+<h3 id="cli">CLI 增强</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>建议</th>
+<th>来源</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>统一 JSON Schema</strong>：<code>validate_result.json</code> / <code>diff_result.json</code> / <code>stats_result.json</code> 结构固定</td>
+<td>建议1</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong><code>validate --strict</code></strong>：warning 也 exit 1（CI 友好）</td>
+<td>建议2</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong><code>inspect</code> 支持 stdin</strong>：<code>cat xxx.md \| memlink inspect -</code></td>
+<td>建议2</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong><code>diff --id-only</code></strong>：只输出新增/删除 ID，速度快</td>
+<td>建议2</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong><code>stats --format csv</code></strong>：id,kind,domain,tags_count,body_length（Excel 分析）</td>
+<td>建议2</td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>Plugin 错误详细报告</strong>：<code>memlink formats</code> 显示每个格式的加载状态（OK/Error）</td>
+<td>建议1</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_7">测试 + 质量</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>建议</th>
+<th>来源</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>Fuzz 用随机 text()</strong>：<code>kind=st.text()</code> 而非 <code>sampled_from</code>，疯狂一点</td>
+<td>建议2</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>Plugin Contract +1</strong>：Reader 必须 deterministic（同一输入两次 read() 结果完全一致）</td>
+<td>建议2</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>Difference 加 path</strong>：JSON Pointer 风格字段路径 <code>/metadata/tags/0</code></td>
+<td>建议2</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>P0 优先级</strong>：空 domains &gt; importance NaN &gt; URL decode &gt; JSON Schema &gt; Plugin 错误</td>
+<td>建议1</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_8">重要度排序（终版）</h3>
+<table>
+<thead>
+<tr>
+<th>优先级</th>
+<th>数量</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>P0</strong></td>
+<td>4</td>
+<td>空 domains、importance 边界、URL decode、Atomic Write</td>
+</tr>
+<tr>
+<td><strong>P1</strong></td>
+<td>5</td>
+<td>统一 JSON Schema、Feature Loss 提前、Plugin Contract deterministic、Fatal/Recoverable、Spec Compliance</td>
+</tr>
+<tr>
+<td><strong>P1</strong></td>
+<td>5</td>
+<td>validate --strict、inspect stdin、diff --id-only、checksum 算法名、MEMORY.md 保留注释</td>
+</tr>
+<tr>
+<td><strong>P2</strong></td>
+<td>6</td>
+<td>颜色高亮(rich)、进度条(tqdm)、stats csv、diff --ignore、MEMORY.md 分组、benchmark</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

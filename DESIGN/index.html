@@ -1,0 +1,2060 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="AI Memory Interchange Layer — bridge AI memory formats">
+      
+      
+      
+        <link rel="canonical" href="https://velnori.github.io/memlink/DESIGN/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>memlink — AI Memory Interchange Layer - memlink</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#memlink-ai-memory-interchange-layer" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="memlink" class="md-header__button md-logo" aria-label="memlink" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            memlink
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              memlink — AI Memory Interchange Layer
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/velnori/memlink" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    velnori/memlink
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="memlink" class="md-nav__button md-logo" aria-label="memlink" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    memlink
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/velnori/memlink" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    velnori/memlink
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Formats
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Formats
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../formats/ombre/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ombre Brain
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../formats/openclaw/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenClaw
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../formats/mem0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mem0
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../formats/zep/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Zep
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../formats/generic/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Generic Markdown
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../formats/chatgpt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ChatGPT Export
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../formats/claude_export/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Claude Export
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/plugin/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plugin API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        定位
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#schema" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Schema 兼容策略
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        项目结构
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#canonical-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        核心架构：Canonical Model
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="核心架构：Canonical Model">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#canonical-memory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Canonical Memory
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kind" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Kind 推荐值（非限制）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        字段分层
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#formatplugin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FormatPlugin 接口
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="FormatPlugin 接口">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#feature-loss-report" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        能力兼容检查 + Feature Loss Report
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        错误码体系
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exit-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Code
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        转换映射表
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="转换映射表">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ombre-canonical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ombre → Canonical
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ombre-openclaw" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ombre → OpenClaw（写入时）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kind-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Kind + Status 路由
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#openclaw-canonical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OpenClaw → Canonical
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#domain-openclaw-ombre" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Domain 推断（OpenClaw → Ombre）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        术语映射
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lossless-roundtripmetadatamemlink" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lossless Roundtrip：metadata.memlink
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Lossless Roundtrip：metadata.memlink">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#extensions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extensions 命名空间约定
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cli" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLI 设计
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inspect" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        inspect 命令输出
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        实现路线图
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="实现路线图">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        测试覆盖率目标
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compatibility-matrix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        兼容性矩阵（Compatibility Matrix）
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        关键约束
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        风险点
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        实现决策（执行计划评审后确定）
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="memlink-ai-memory-interchange-layer">memlink — AI Memory Interchange Layer</h1>
+<blockquote>
+<p>A language-neutral interchange layer for AI memory systems — similar in spirit to how Pandoc enables document interoperability.</p>
+</blockquote>
+<h2 id="_1">定位</h2>
+<p><strong>memlink</strong> 是 AI Memory 格式桥接层。通过统一的 Canonical Memory 中间格式，任何 AI 记忆系统只需各写一个 Reader + Writer 就能互通。</p>
+<p><strong>设计哲学</strong>：Canonical 是「无损运输层」，不是「标准化裁判」。不替用户改写数据，只管安全送达。</p>
+<p><strong>长期方向</strong>：规范与实现分离。<code>spec/</code> 定义 Canonical Schema（语言无关 + JSON Schema），Python 实现只是第一个。未来可以有 Rust、Go、TypeScript 实现同一套 Schema。</p>
+<p>v0 目标：Ombre Brain ↔ OpenClaw 双向转换。架构预留扩展到 Mem0、Zep、Claude Memory、OpenMemory 等。</p>
+<hr />
+<h2 id="schema">Schema 兼容策略</h2>
+<ul>
+<li><strong>1.x</strong>：向后兼容（只加字段、不删不改）</li>
+<li><strong>2.0</strong>：允许不兼容变更</li>
+</ul>
+<p>Reader/Writer 按 <code>schema_version</code> 做适配，不按 package version。</p>
+<hr />
+<h2 id="_2">项目结构</h2>
+<pre><code>memlink/
+├── spec/                       # 语言无关规范
+│   ├── canonical-v1.md         # Canonical Schema v1 规范
+│   ├── canonical-v1.schema.json # JSON Schema（自动校验用）
+│   └── source-uri.md           # Source URI 格式规范
+├── python/
+│   └── memlink/
+│       ├── __init__.py
+│       ├── models.py           # CanonicalMemory + Source + Relationship
+│       ├── plugin.py           # FormatPlugin + Capabilities + ReadResult
+│       ├── serialization.py    # 序列化安全（JSON/YAML/TOML）
+│       ├── cli.py
+│       ├── ombre_reader.py
+│       ├── ombre_writer.py
+│       ├── openclaw_reader.py
+│       ├── openclaw_writer.py
+│       ├── converter.py        # Normalize → Mapping → Transform → Validation
+│       └── validators.py       # 三级校验 + 结构化 issue
+└── tests/
+    ├── fixtures/
+    └── test_*.py
+</code></pre>
+<hr />
+<h2 id="canonical-model">核心架构：Canonical Model</h2>
+<p>不绑定具体格式。Reader 负责「格式 A → Canonical」，Writer 负责「Canonical → 格式 B」。复杂度 O(n)。</p>
+<h3 id="canonical-memory">Canonical Memory</h3>
+<pre><code class="language-python">from typing import Union, Literal
+from dataclasses import dataclass, field
+from datetime import datetime
+
+JSONValue = Union[None, bool, int, float, str, list[&quot;JSONValue&quot;], dict[str, &quot;JSONValue&quot;]]
+
+@dataclass
+class Source:
+    format: str                      # &quot;ombre&quot; / &quot;openclaw&quot; / &quot;mem0&quot;
+    path: str                        # &quot;dynamic/user/abc.md&quot;
+    uri: str | None = None           # &quot;ombre://dynamic/user/abc&quot;
+
+@dataclass
+class Memory:
+    schema_version: Literal[&quot;1&quot;]
+
+    # 标识
+    id: str
+    name: str | None = None
+    source: Source | None = None     # 替代 source_uri 字符串
+
+    # 内容
+    summary: str | None = None
+    body: str | None = None
+
+    # 分类（kind 为开放 str，规范推荐值见下方）
+    kind: str = &quot;dynamic&quot;
+    status: Literal[&quot;active&quot;, &quot;archived&quot;] = &quot;active&quot;
+
+    # 标签与领域
+    tags: list[str] = field(default_factory=list)
+    domains: list[str] = field(default_factory=list)
+
+    # 时间（UTC RFC 3339）
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+    # 情感
+    valence: float | None = None
+    arousal: float | None = None
+
+    # 重要性（不归一化）
+    importance_score: float | None = None
+    importance_label: str | None = None
+
+    pinned: bool = False
+
+    # 内容校验（可选，用于 diff/merge/去重）
+    checksum: str | None = None      # SHA256(body)
+
+    # 元数据分层
+    metadata: dict[str, JSONValue] = field(default_factory=dict)
+    extensions: dict[str, Any] = field(default_factory=dict)  # memlink 不解析，推荐 namespace
+
+@dataclass
+class Relationship:
+    target_id: str
+    type: str                        # 推荐：relates_to | parent | child | derived_from
+    weight: float | None = None
+</code></pre>
+<h3 id="kind">Kind 推荐值（非限制）</h3>
+<table>
+<thead>
+<tr>
+<th>推荐值</th>
+<th>语义</th>
+<th>Reader 映射示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dynamic</code></td>
+<td>日常浮沉</td>
+<td>dynamic、conversation、reflection、todo</td>
+</tr>
+<tr>
+<td><code>permanent</code></td>
+<td>永久保留</td>
+<td>permanent、fact、document、bookmark、skill</td>
+</tr>
+<tr>
+<td><code>emotion</code></td>
+<td>情感/感受</td>
+<td>emotion、feel、mood</td>
+</tr>
+</tbody>
+</table>
+<p>Writer 对不认识的 kind 回退 <code>dynamic</code> + warning。</p>
+<h3 id="_3">字段分层</h3>
+<pre><code>core fields   → id, name, body, kind, status, tags, domains, source, checksum ...
+                 ↑ Reader/Writers 必须处理
+metadata      → Canonical Schema 定义的扩展（memlink namespace），已知语义
+                 ↑ 规范的一部分
+extensions    → memlink 完全不理解，仅负责运输
+                 ↑ 第三方自由扩展，推荐 namespace 防撞名（extensions.mem0.xxx）
+metadata.memlink.original → 源格式原始字段快照
+                 ↑ lossless roundtrip 的关键
+</code></pre>
+<hr />
+<h2 id="formatplugin">FormatPlugin 接口</h2>
+<pre><code class="language-python">from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from enum import Enum
+
+class Severity(str, Enum):
+    ERROR = &quot;error&quot;
+    WARNING = &quot;warning&quot;
+    INFO = &quot;info&quot;
+
+@dataclass
+class ValidationIssue:
+    code: str                        # &quot;ML001&quot; 错误码
+    severity: Severity
+    file: str | None
+    field: str | None
+    message: str
+    suggestion: str | None = None
+
+@dataclass
+class ReadResult:
+    memories: list[Memory]
+    warnings: list[str]
+    stats: dict[str, int]            # {&quot;parsed&quot;: 245, &quot;skipped&quot;: 3, &quot;invalid&quot;: 0}
+
+@dataclass
+class Capabilities:
+    version: Literal[&quot;1&quot;] = &quot;1&quot;
+
+    # 功能支持
+    relationships: bool = False
+    attachments: bool = False
+    summary: bool = True
+    emotion: bool = False
+    importance_label: bool = False
+    ttl: bool = False
+    embedding: bool = False
+
+    # 约束
+    max_body_size: int | None = None          # 字节数
+    supported_kinds: set[str] | None = None   # None=所有
+
+    # 扩展能力
+    preserve_unknown_fields: bool = True       # 是否能保留 extensions
+
+class FormatPlugin(ABC):
+    name: str
+    version_supported: str             # semver range, e.g. &quot;&gt;=1,&lt;3&quot;
+    capabilities: Capabilities
+
+    @abstractmethod
+    def read(self, path: Path) -&gt; ReadResult: ...
+
+    @abstractmethod
+    def write(self, memories: Iterable[Memory], path: Path) -&gt; list[str]: ...
+
+    @abstractmethod
+    def validate(self, path: Path) -&gt; list[ValidationIssue]: ...
+</code></pre>
+<h3 id="feature-loss-report">能力兼容检查 + Feature Loss Report</h3>
+<p>转换前检查，转换后统计：</p>
+<pre><code>memlink convert --from ombre --to openclaw -s ... -t ...
+
+  WARNING: Target does not support relationships → 8 will be dropped
+  WARNING: Target cannot preserve unknown extensions → 5 will be dropped
+
+  Converted: 128
+
+  ── Feature Loss ──
+  relationships      8 dropped
+  emotion           14 dropped
+  extensions          5 dropped
+  ─────────────────
+  Total loss         27 fields across 19 memories
+</code></pre>
+<hr />
+<h2 id="_4">错误码体系</h2>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ML001</td>
+<td>InvalidDatetime — 时间戳格式错误</td>
+</tr>
+<tr>
+<td>ML002</td>
+<td>MissingID — 缺少必需 id</td>
+</tr>
+<tr>
+<td>ML003</td>
+<td>DuplicateID — 重复 id</td>
+</tr>
+<tr>
+<td>ML004</td>
+<td>InvalidSchema — schema_version 不兼容</td>
+</tr>
+<tr>
+<td>ML005</td>
+<td>CircularReference — metadata 循环引用</td>
+</tr>
+<tr>
+<td>ML006</td>
+<td>NestingTooDeep — metadata 嵌套过深</td>
+</tr>
+<tr>
+<td>ML007</td>
+<td>UnsupportedKind — kind 不被目标格式支持</td>
+</tr>
+<tr>
+<td>ML008</td>
+<td>BodyTooLarge — 超过目标格式大小限制</td>
+</tr>
+<tr>
+<td>ML009</td>
+<td>ConcurrentModification — MEMORY.md 并发修改</td>
+</tr>
+<tr>
+<td>ML010</td>
+<td>InvalidSourceURI — source URI 格式非法</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="exit-code">Exit Code</h2>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>Success</td>
+</tr>
+<tr>
+<td>1</td>
+<td>Diff found（diff 命令发现差异）</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Validation error（校验失败）</td>
+</tr>
+<tr>
+<td>3</td>
+<td>I/O error（文件读写错误）</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Concurrent modification（并发冲突）</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Format incompatible（能力不兼容）</td>
+</tr>
+<tr>
+<td>130</td>
+<td>User interrupted（Ctrl+C）</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="_5">转换映射表</h2>
+<h3 id="ombre-canonical">Ombre → Canonical</h3>
+<table>
+<thead>
+<tr>
+<th>Ombre 字段</th>
+<th>Canonical 字段</th>
+<th>规则</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>bucket_id</td>
+<td>id</td>
+<td>直接复制</td>
+</tr>
+<tr>
+<td>—</td>
+<td>source.format</td>
+<td><code>"ombre"</code></td>
+</tr>
+<tr>
+<td>—</td>
+<td>source.path</td>
+<td><code>{type}/{domain}/{name}.md</code></td>
+</tr>
+<tr>
+<td>—</td>
+<td>source.uri</td>
+<td><code>ombre://{type}/{domain}/{bucket_id}</code></td>
+</tr>
+<tr>
+<td>name</td>
+<td>name</td>
+<td>直接复制</td>
+</tr>
+<tr>
+<td>content (body)</td>
+<td>body</td>
+<td>直接复制</td>
+</tr>
+<tr>
+<td>—</td>
+<td>summary</td>
+<td>留空</td>
+</tr>
+<tr>
+<td>type</td>
+<td>kind</td>
+<td><code>dynamic→dynamic / permanent→permanent / feel→emotion</code></td>
+</tr>
+<tr>
+<td>—</td>
+<td>status</td>
+<td>默认 active</td>
+</tr>
+<tr>
+<td>domain</td>
+<td>domains</td>
+<td>多值保留为 list</td>
+</tr>
+<tr>
+<td>tags</td>
+<td>tags</td>
+<td>直接复制</td>
+</tr>
+<tr>
+<td>importance (1-10)</td>
+<td>importance_score</td>
+<td>原值保留</td>
+</tr>
+<tr>
+<td>valence</td>
+<td>valence</td>
+<td>直接复制</td>
+</tr>
+<tr>
+<td>arousal</td>
+<td>arousal</td>
+<td>直接复制</td>
+</tr>
+<tr>
+<td>created</td>
+<td>created_at</td>
+<td>原始时区→metadata.memlink.original.created_tz</td>
+</tr>
+<tr>
+<td>pinned</td>
+<td>pinned</td>
+<td>直接复制</td>
+</tr>
+<tr>
+<td>—</td>
+<td>checksum</td>
+<td>SHA256(body)</td>
+</tr>
+<tr>
+<td>—</td>
+<td>metadata.memlink</td>
+<td>原始字段快照</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ombre-openclaw">Ombre → OpenClaw（写入时）</h3>
+<table>
+<thead>
+<tr>
+<th>Canonical 字段</th>
+<th>OpenClaw 字段</th>
+<th>规则</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>文件名</td>
+<td>用 id，不用 name</td>
+</tr>
+<tr>
+<td>name</td>
+<td>frontmatter name</td>
+<td>直接复制</td>
+</tr>
+<tr>
+<td>summary</td>
+<td>description</td>
+<td>有则写入，无则取 body 首段 120 字</td>
+</tr>
+<tr>
+<td>body</td>
+<td>body</td>
+<td>直接复制</td>
+</tr>
+<tr>
+<td>source.uri</td>
+<td>metadata.source_uri</td>
+<td>直接复制</td>
+</tr>
+<tr>
+<td>domains</td>
+<td>metadata.domain</td>
+<td>逗号拼接</td>
+</tr>
+<tr>
+<td>tags</td>
+<td>metadata.tags</td>
+<td>YAML list</td>
+</tr>
+<tr>
+<td>importance_score / importance_label</td>
+<td>metadata.importance</td>
+<td>优先 label</td>
+</tr>
+<tr>
+<td>valence</td>
+<td>metadata.valence</td>
+<td>直接复制</td>
+</tr>
+<tr>
+<td>arousal</td>
+<td>metadata.arousal</td>
+<td>直接复制</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>metadata.created_at</td>
+<td>UTC ISO</td>
+</tr>
+<tr>
+<td>pinned</td>
+<td>metadata.pinned</td>
+<td>true/false</td>
+</tr>
+<tr>
+<td>checksum</td>
+<td>metadata.checksum</td>
+<td>直接复制</td>
+</tr>
+<tr>
+<td>kind + status</td>
+<td>路由</td>
+<td>见路由表</td>
+</tr>
+<tr>
+<td>metadata.memlink</td>
+<td>metadata.memlink</td>
+<td>原样保留</td>
+</tr>
+<tr>
+<td>extensions</td>
+<td>metadata.extensions</td>
+<td>YAML 序列化（若 preserve_unknown_fields=True）</td>
+</tr>
+</tbody>
+</table>
+<h3 id="kind-status">Kind + Status 路由</h3>
+<p>MEMORY.md 索引是 OpenClaw Writer 的实现细节，Canonical 不关心索引。</p>
+<table>
+<thead>
+<tr>
+<th>Canonical</th>
+<th>OpenClaw 目标</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>kind=dynamic, status=active</td>
+<td><code>memory/&lt;id&gt;.md</code> + MEMORY.md 索引</td>
+</tr>
+<tr>
+<td>kind=permanent, status=active</td>
+<td><code>memory/&lt;id&gt;.md</code> + <code>priority: high</code></td>
+</tr>
+<tr>
+<td>kind=emotion, status=active</td>
+<td><code>memory/feels/&lt;id&gt;.md</code></td>
+</tr>
+<tr>
+<td>status=archived</td>
+<td>跳过（<code>--include-archived</code> 强制转换）</td>
+</tr>
+<tr>
+<td>kind 为其他值</td>
+<td>回退 <code>dynamic</code> + warning</td>
+</tr>
+</tbody>
+</table>
+<h3 id="openclaw-canonical">OpenClaw → Canonical</h3>
+<table>
+<thead>
+<tr>
+<th>OpenClaw 字段</th>
+<th>Canonical 字段</th>
+<th>规则</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>文件名（去掉 .md）</td>
+<td>id</td>
+<td>若 metadata.memlink.original.id 存在则恢复</td>
+</tr>
+<tr>
+<td>—</td>
+<td>source.format</td>
+<td><code>"openclaw"</code></td>
+</tr>
+<tr>
+<td>—</td>
+<td>source.path</td>
+<td><code>memory/&lt;filename&gt;.md</code></td>
+</tr>
+<tr>
+<td>—</td>
+<td>source.uri</td>
+<td><code>openclaw://memory/&lt;filename&gt;</code></td>
+</tr>
+<tr>
+<td>name</td>
+<td>name</td>
+<td>直接复制</td>
+</tr>
+<tr>
+<td>description</td>
+<td>summary</td>
+<td>直接复制</td>
+</tr>
+<tr>
+<td>body</td>
+<td>body</td>
+<td>直接复制</td>
+</tr>
+<tr>
+<td>metadata.type</td>
+<td>domains[0]</td>
+<td>最高优先级</td>
+</tr>
+<tr>
+<td>metadata.tags</td>
+<td>tags</td>
+<td>直接复制</td>
+</tr>
+<tr>
+<td>metadata.importance</td>
+<td>importance_score / importance_label</td>
+<td>数值→score，非数值→label</td>
+</tr>
+<tr>
+<td>metadata.valence</td>
+<td>valence</td>
+<td>直接复制，无则 None</td>
+</tr>
+<tr>
+<td>metadata.arousal</td>
+<td>arousal</td>
+<td>直接复制，无则 None</td>
+</tr>
+<tr>
+<td>metadata.created_at</td>
+<td>created_at</td>
+<td>ISO→UTC</td>
+</tr>
+<tr>
+<td>metadata.pinned</td>
+<td>pinned</td>
+<td>无则 false</td>
+</tr>
+<tr>
+<td>metadata.checksum</td>
+<td>checksum</td>
+<td>直接复制</td>
+</tr>
+<tr>
+<td>metadata.memlink.original</td>
+<td>—</td>
+<td>反向转换恢复原始字段</td>
+</tr>
+</tbody>
+</table>
+<h3 id="domain-openclaw-ombre">Domain 推断（OpenClaw → Ombre）</h3>
+<p>不做 NLP。严格优先级：
+1. <code>metadata.memlink.original.domains</code>
+2. <code>metadata.domain</code> / <code>metadata.type</code>
+3. 无匹配 → <code>--unknown-domain-action skip|default:&lt;name&gt;</code>（默认 skip）</p>
+<h3 id="_6">术语映射</h3>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>Ombre</th>
+<th>Canonical</th>
+<th>OpenClaw</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>情感</td>
+<td>feel</td>
+<td>emotion</td>
+<td>feels/</td>
+</tr>
+<tr>
+<td>归档</td>
+<td>—</td>
+<td>status=archived</td>
+<td>—</td>
+</tr>
+<tr>
+<td>永久</td>
+<td>permanent</td>
+<td>kind=permanent</td>
+<td>priority: high</td>
+</tr>
+<tr>
+<td>动态</td>
+<td>dynamic</td>
+<td>kind=dynamic</td>
+<td>MEMORY.md 索引</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="lossless-roundtripmetadatamemlink">Lossless Roundtrip：metadata.memlink</h2>
+<pre><code class="language-yaml">metadata:
+  memlink:
+    source:
+      format: ombre
+      version: &quot;1.0&quot;              # 源格式版本
+    schema_version: &quot;1&quot;
+    converted_at: &quot;2026-06-28T10:00:00Z&quot;
+    original:
+      id: &quot;bucket_id_here&quot;
+      kind: dynamic
+      domains: [user, preferences, work]
+      importance: 8
+      created_tz: &quot;2024-06-28T10:00:00+08:00&quot;
+</code></pre>
+<p>反向转换时若 <code>metadata.memlink</code> 存在，优先恢复 <code>original</code> 中的字段。</p>
+<h3 id="extensions">Extensions 命名空间约定</h3>
+<p>三方扩展推荐用格式名作 namespace，避免撞名：</p>
+<pre><code class="language-yaml">extensions:
+  mem0:
+    user_id: &quot;abc&quot;
+  zep:
+    session_id: &quot;xyz&quot;
+</code></pre>
+<hr />
+<h2 id="cli">CLI 设计</h2>
+<pre><code class="language-bash">pip install memlink
+
+# 列出已安装格式
+memlink formats
+
+# 转换
+memlink convert --from ombre --to openclaw   -s ~/.claude/ombre-buckets -t ./memories/
+memlink convert --from openclaw --to ombre   -s ./memory/ -t ~/.claude/ombre-buckets/
+
+# 快捷
+memlink ombre2claw -s ~/.claude/ombre-buckets -t ./memories/
+memlink claw2ombre -s ./memory/ -t ~/.claude/ombre-buckets/
+
+# 导入（默认 --id-conflict=skip）
+memlink import --from ombre -s ~/.claude/ombre-buckets
+memlink import --from openclaw -s ./memory/
+
+# 调试：单文件解析检查
+memlink inspect sample.md                 # 自动检测格式
+memlink inspect --format ombre sample.md  # 指定格式
+
+# 选项
+--source, -s          源目录
+--target, -t          目标目录
+--domain, -d          只转换特定 domain
+--kind, -k            只转换特定 kind
+--status              active|archived
+--dry-run             只解析不写入
+--overwrite           覆盖已存在文件
+--id-conflict         rename|skip|merge（默认 rename）
+--merge-strategy      append|replace|reject
+--filename            id|name（默认 id）
+--rebuild-index       完全重建 MEMORY.md 索引
+--include-archived    包含已归档记忆
+--unknown-domain-action  skip|default:&lt;name&gt;（默认 skip）
+--verbose, -v
+
+# 校验
+memlink validate --level schema|semantic|roundtrip -s &lt;path&gt;
+memlink validate --level schema --format json -s &lt;path&gt;
+
+# 辅助
+memlink stats -s ombre-buckets/ openclaw-memories/
+memlink diff -s ombre-buckets/ openclaw-memories/
+memlink diff -s ombre/ openclaw/ --format json
+</code></pre>
+<hr />
+<h2 id="inspect">inspect 命令输出</h2>
+<pre><code>$ memlink inspect dynamic/user/sample.md
+
+  Format:   Ombre
+  Schema:   valid
+  Source:   ombre://dynamic/user/7f32c91e
+
+  ── Canonical ──
+  id:        7f32c91e
+  name:      &quot;User Preferences&quot;
+  kind:      dynamic
+  domains:   [user, preferences]
+  tags:      [dark-mode, notifications]
+  body:      234 chars
+
+  ── Warnings ──
+  (none)
+
+  ── Extensions ──
+  mem0.user_id: abc
+</code></pre>
+<hr />
+<h2 id="_7">实现路线图</h2>
+<table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>内容</th>
+<th>产出</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Phase 0.5</td>
+<td>spec/ + models.py + plugin.py + validators.py + serialization.py + 20 边界测试</td>
+<td>规范 + 接口 + 验证器</td>
+</tr>
+<tr>
+<td>Phase 1</td>
+<td>单向 Ombre → OpenClaw：reader + writer + converter + 能力检查</td>
+<td>可用 MVP</td>
+</tr>
+<tr>
+<td>Phase 2</td>
+<td>反向转换 + metadata.memlink roundtrip + Feature Loss Report</td>
+<td>roundtrip 测试</td>
+</tr>
+<tr>
+<td>Phase 3</td>
+<td>CLI 全子命令 + diff + exit code + inspect</td>
+<td>可发布 CLI</td>
+</tr>
+<tr>
+<td>Phase 4</td>
+<td>PyPI + README + GitHub Actions (Linux/macOS/Windows, 3.10-3.12)</td>
+<td>pip install</td>
+</tr>
+<tr>
+<td>Phase 5</td>
+<td>真实数据验证 + 文档 + Compatibility Matrix</td>
+<td>发版</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_8">测试覆盖率目标</h3>
+<table>
+<thead>
+<tr>
+<th>模块</th>
+<th>目标</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>models.py</td>
+<td>100%</td>
+</tr>
+<tr>
+<td>serialization.py</td>
+<td>100%</td>
+</tr>
+<tr>
+<td>validators.py</td>
+<td>95%+</td>
+</tr>
+<tr>
+<td>*_reader.py</td>
+<td>90%+</td>
+</tr>
+<tr>
+<td>*_writer.py</td>
+<td>90%+</td>
+</tr>
+<tr>
+<td>converter.py</td>
+<td>90%+</td>
+</tr>
+<tr>
+<td>项目整体</td>
+<td>≥85%</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="compatibility-matrix">兼容性矩阵（Compatibility Matrix）</h2>
+<p>README 中展示：</p>
+<table>
+<thead>
+<tr>
+<th>Format</th>
+<th>Read</th>
+<th>Write</th>
+<th>Roundtrip</th>
+<th>Lossless</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ombre Brain</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>OpenClaw</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>⚠️ summary</td>
+</tr>
+<tr>
+<td>Mem0</td>
+<td>🚧</td>
+<td>🚧</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Zep</td>
+<td>🚧</td>
+<td>🚧</td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="_9">关键约束</h2>
+<ul>
+<li>全程 pathlib.Path</li>
+<li>时间统一 UTC RFC 3339，原始时区保留到 metadata.memlink.original.created_tz</li>
+<li><code>body</code> 可为 <code>None</code></li>
+<li><code>kind</code> 和 <code>Relationship.type</code> 为开放 <code>str</code>，规范推荐值但不限制</li>
+<li>Reader.read() 返回 <code>ReadResult</code>（memories + warnings + stats）</li>
+<li>Writer.write() 返回 <code>list[str]</code>（warnings）</li>
+<li>文件名默认用 id</li>
+<li><code>metadata</code> 是 Canonical 定义的扩展，<code>extensions</code> 推荐 namespace 防撞名</li>
+<li>metadata 值限定 JSON 兼容类型（<code>serialization.py</code> 含深度限制 + 循环检测）</li>
+<li>MEMORY.md 是 Writer 实现细节，Canonical 不关心索引</li>
+<li>MEMORY.md 写入前 SHA256 检测并发修改</li>
+<li>不做 NLP domain 推断</li>
+<li>v0 支持 export/import，不支持 bidirectional sync</li>
+<li>Roundtrip 检查语义一致非字节一致，v0 豁免 relationships</li>
+<li>Plugin 声明 <code>version_supported</code> 语义化版本范围</li>
+<li>错误码统一 <code>MLxxx</code> 格式</li>
+</ul>
+<hr />
+<h2 id="_10">风险点</h2>
+<table>
+<thead>
+<tr>
+<th>风险</th>
+<th>概率</th>
+<th>应对</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ombre 中文 domain vs OpenClaw ASCII</td>
+<td>高</td>
+<td>文件名支持中文</td>
+</tr>
+<tr>
+<td>YAML id 类型推断</td>
+<td>中</td>
+<td>safe_load 后强制 str()</td>
+</tr>
+<tr>
+<td>Win/Mac/Linux 路径分隔符</td>
+<td>中</td>
+<td>全程 pathlib</td>
+</tr>
+<tr>
+<td>metadata 循环引用</td>
+<td>中</td>
+<td>serialization.py 循环检测</td>
+</tr>
+<tr>
+<td>MEMORY.md 并发写入</td>
+<td>中</td>
+<td>SHA256 检测（v0），filelock（v0.2）</td>
+</tr>
+<tr>
+<td>未来 kind 值爆炸</td>
+<td>已解决</td>
+<td>开放 str + 推荐值 + 未知回退</td>
+</tr>
+<tr>
+<td>importance 值域不统一</td>
+<td>已解决</td>
+<td>score+label 保留原值</td>
+</tr>
+<tr>
+<td>roundtrip 元数据流失</td>
+<td>已解决</td>
+<td>metadata.memlink + 时区保留 + format_version</td>
+</tr>
+<tr>
+<td>ID 冲突</td>
+<td>已解决</td>
+<td>--id-conflict rename|skip|merge</td>
+</tr>
+<tr>
+<td>文件名随 title 变</td>
+<td>已解决</td>
+<td>默认用 id</td>
+</tr>
+<tr>
+<td>Domain 推断出错</td>
+<td>已解决</td>
+<td>--unknown-domain-action skip|default</td>
+</tr>
+<tr>
+<td>Schema 演进不兼容</td>
+<td>已解决</td>
+<td>schema_version + 兼容策略声明</td>
+</tr>
+<tr>
+<td>能力不匹配静默丢弃</td>
+<td>已解决</td>
+<td>Capabilities + Feature Loss Report</td>
+</tr>
+<tr>
+<td>Extensions 字段撞名</td>
+<td>已解决</td>
+<td>namespace 约定</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="_11">实现决策（执行计划评审后确定）</h2>
+<p>以下决策来自 <a href="../IMPLEMENTATION/">IMPLEMENTATION.md</a> v2，经两轮评审确认：</p>
+<table>
+<thead>
+<tr>
+<th>决策</th>
+<th>选择</th>
+<th>理由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>YAML 解析</td>
+<td><strong>PyYAML</strong>（唯一运行时依赖）</td>
+<td>自研 parser 维护成本远超收益</td>
+</tr>
+<tr>
+<td>并发检测</td>
+<td><strong>mtime+size</strong></td>
+<td>O(1)，够用；SHA256 过重</td>
+</tr>
+<tr>
+<td>Reader 异常处理</td>
+<td><strong>Never Raise</strong></td>
+<td>解析失败→warning→skip→继续</td>
+</tr>
+<tr>
+<td>字段值解析</td>
+<td><strong>Reader 存原始字符串，Converter 统一转类型</strong></td>
+<td>保证不同 Reader 行为一致</td>
+</tr>
+<tr>
+<td>文件名非法字符</td>
+<td><strong>percent-encoding</strong>（<code>/</code>→<code>%2F</code>）</td>
+<td>可逆，<code>a/b</code> 和 <code>a-b</code> 不会撞</td>
+</tr>
+<tr>
+<td>ID 冲突检测</td>
+<td><strong>casefold()</strong></td>
+<td>Windows 大小写不敏感</td>
+</tr>
+<tr>
+<td>输出排序</td>
+<td><strong>确定性排序</strong>（tags/domains sorted()、MEMORY.md 按 id）</td>
+<td>Git Diff 干净</td>
+</tr>
+<tr>
+<td>测试策略</td>
+<td><strong>Golden Tests</strong>（fixture + expected.json）</td>
+<td>任何修改后立即发现差异</td>
+</tr>
+<tr>
+<td>Fuzz 测试</td>
+<td><strong>hypothesis</strong>（dev 依赖，100 随机 case）</td>
+<td>边缘情况自动发现</td>
+</tr>
+<tr>
+<td>Verbose</td>
+<td><strong>三级</strong>（-v/-vv/-vvv）</td>
+<td>调试 Reader 神器</td>
+</tr>
+<tr>
+<td>Feature Loss Report</td>
+<td><strong>含 Reason 字段</strong></td>
+<td>Debug 明确知道为什么丢</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
