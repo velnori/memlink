@@ -372,7 +372,14 @@ def test_non_tty_review_and_picker_do_not_fake_human_confirmation(private, tmp_p
 
 
 @pytest.mark.parametrize("kind", ["bytes", "records"])
-def test_budget_explicit_prefix_and_no_half_record(private, tmp_path, kind):
+@pytest.mark.parametrize("line_ending", [b"\n", b"\r\n"], ids=["lf", "crlf"])
+def test_budget_explicit_prefix_and_no_half_record(source, tmp_path, kind, line_ending):
+    for path in source.rglob("*.md"):
+        content = path.read_bytes().replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+        path.write_bytes(content.replace(b"\n", line_ending))
+    pack = tmp_path / "private-pack"
+    cb.pack(source, pack, include_user=True, include_dreams=True)
+    private = cb.load_bundle(pack)
     selection = cb.choose(private, all_records=True)
     first = cb.prepare_handoff(private, selection, max_records=1, truncate=True, secrets="redact")[0]
     options = {"max_bytes": first["budget"]["actual_bytes"]} if kind == "bytes" else {"max_records": 1}
@@ -385,7 +392,9 @@ def test_budget_explicit_prefix_and_no_half_record(private, tmp_path, kind):
     assert report["budget"]["actual_bytes"] == len((tmp_path / "prefix/context.md").read_bytes())
     manifest = load_json(tmp_path / "prefix/manifest.json")
     assert (tmp_path / "prefix/context.md").read_bytes() == render(manifest["records"])
-    assert manifest["records"][0]["body"] == private.records[0]["memory"]["body"]
+    raw_body = private.records[0]["memory"]["body"]
+    assert ("\r\n" in raw_body) == (line_ending == b"\r\n")
+    assert manifest["records"][0]["body"] == raw_body.replace("\r\n", "\n").replace("\r", "\n")
 
 
 def test_custom_redaction_covers_text_metadata_without_rule_values(source, tmp_path):
