@@ -1,20 +1,40 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1060" height="630" viewBox="0 0 1060 630" role="img" aria-labelledby="title description">
   <title id="title">MemLink canonical bridge</title>
   <desc id="description">Ombre, OpenClaw, Mem0, Zep and Generic Markdown have Readers and Writers, so each can be a source or destination through Canonical Memory. ChatGPT Export, Claude Export and Stream Summary have Readers only. The dashed Your format route shows the extension point for a new Reader and Writer plugin.</desc>
+  <style>
+    @media (prefers-color-scheme: dark) {
+      .canvas { fill: #0d1117; }
+      .title { fill: #f0e9ff; }
+      .secondary-labels { fill: #b3a4c7; }
+      .pair-arrow { fill: #c0a5fa; }
+      .reader-arrow { fill: #78d8be; }
+      .pair-routes { stroke: #c0a5fa; }
+      .pair-nodes { fill: #241c35; stroke: #705892; }
+      .extension-node { fill: #191322; }
+      .format-labels { fill: #eee8fb; }
+      .adapter-labels { fill: #c5b6db; }
+      .reader-route { stroke: #78d8be; }
+      .reader-route-label { fill: #78d8be; }
+      .reader-panel { fill: #112722; stroke: #345f53; }
+      .reader-panel-label { fill: #a6e8d6; }
+      .reader-chips { fill: #17352e; stroke: #3c6b5e; }
+      .reader-labels { fill: #b8f2e2; }
+    }
+  </style>
   <defs>
     <marker id="both-arrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
-      <path d="M 1 1 L 11 6 L 1 11 Z" fill="#7c5bc4"/>
+      <path class="pair-arrow" d="M 1 1 L 11 6 L 1 11 Z" fill="#7c5bc4"/>
     </marker>
     <marker id="read-arrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto">
-      <path d="M 1 1 L 11 6 L 1 11 Z" fill="#278779"/>
+      <path class="reader-arrow" d="M 1 1 L 11 6 L 1 11 Z" fill="#278779"/>
     </marker>
   </defs>
-  <rect width="1060" height="630" rx="12" fill="#ffffff"/>
+  <rect class="canvas" width="1060" height="630" rx="12" fill="#ffffff"/>
   <g font-family="Arial, Helvetica, sans-serif" text-anchor="middle">
-    <text x="530" y="38" fill="#302044" font-size="28" font-weight="700">Any format. One bridge.</text>
-    <text x="530" y="67" fill="#675b7a" font-size="18">Reader → Canonical Memory → Writer</text>
+    <text class="title" x="530" y="38" fill="#302044" font-size="28" font-weight="700">Any format. One bridge.</text>
+    <text class="secondary-labels" x="530" y="67" fill="#675b7a" font-size="18">Reader → Canonical Memory → Writer</text>
   </g>
-  <g fill="none" stroke="#7c5bc4" stroke-width="2" marker-start="url(#both-arrow)" marker-end="url(#both-arrow)">
+  <g class="pair-routes" fill="none" stroke="#7c5bc4" stroke-width="2" marker-start="url(#both-arrow)" marker-end="url(#both-arrow)">
     <path d="M 280 129 C 336 129 342 204 398 204"/>
     <path d="M 280 249 H 398"/>
     <path d="M 280 369 C 336 369 342 314 398 314"/>
@@ -22,15 +42,15 @@
     <path d="M 662 249 H 780"/>
     <path d="M 662 314 C 718 314 724 369 780 369" stroke-dasharray="7 7"/>
   </g>
-  <g fill="#f1edff" stroke="#b8a4e3" stroke-width="1.5">
+  <g class="pair-nodes" fill="#f1edff" stroke="#b8a4e3" stroke-width="1.5">
     <rect x="30" y="94" width="250" height="70" rx="10"/>
     <rect x="30" y="214" width="250" height="70" rx="10"/>
     <rect x="30" y="334" width="250" height="70" rx="10"/>
     <rect x="780" y="94" width="250" height="70" rx="10"/>
     <rect x="780" y="214" width="250" height="70" rx="10"/>
-    <rect x="780" y="334" width="250" height="70" rx="10" fill="#faf8ff" stroke-dasharray="7 7"/>
+    <rect class="extension-node" x="780" y="334" width="250" height="70" rx="10" fill="#faf8ff" stroke-dasharray="7 7"/>
   </g>
-  <g fill="#35254d" font-family="Arial, Helvetica, sans-serif" font-size="21" font-weight="700" text-anchor="middle">
+  <g class="format-labels" fill="#35254d" font-family="Arial, Helvetica, sans-serif" font-size="21" font-weight="700" text-anchor="middle">
     <text x="155" y="126">Ombre</text>
     <text x="155" y="246">Mem0</text>
     <text x="155" y="366">Generic Markdown</text>
@@ -38,7 +58,7 @@
     <text x="905" y="246">Zep</text>
     <text x="905" y="366">Your format</text>
   </g>
-  <g fill="#736184" font-family="Arial, Helvetica, sans-serif" font-size="16" text-anchor="middle">
+  <g class="adapter-labels" fill="#736184" font-family="Arial, Helvetica, sans-serif" font-size="16" text-anchor="middle">
     <text x="155" y="151">Reader + Writer</text>
     <text x="155" y="271">Reader + Writer</text>
     <text x="155" y="391">Reader + Writer</text>
@@ -53,26 +73,26 @@
     <text x="530" y="292" font-size="17">Read into it. Write from it.</text>
     <text x="530" y="323" fill="#e8dbfc" font-size="16">One bridge for every route.</text>
   </g>
-  <path d="M 530 466 V 351" fill="none" stroke="#278779" stroke-width="2" marker-end="url(#read-arrow)"/>
-  <text x="548" y="433" fill="#25776c" font-family="Arial, Helvetica, sans-serif" font-size="17">Reader</text>
-  <rect x="30" y="466" width="1000" height="111" rx="12" fill="#eff9f6" stroke="#a5d6cb" stroke-width="1.5"/>
-  <text x="52" y="493" fill="#256f64" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="700">READERS ONLY TODAY</text>
-  <g fill="#ffffff" stroke="#c3e4dc" stroke-width="1">
+  <path class="reader-route" d="M 530 466 V 351" fill="none" stroke="#278779" stroke-width="2" marker-end="url(#read-arrow)"/>
+  <text class="reader-route-label" x="548" y="433" fill="#25776c" font-family="Arial, Helvetica, sans-serif" font-size="17">Reader</text>
+  <rect class="reader-panel" x="30" y="466" width="1000" height="111" rx="12" fill="#eff9f6" stroke="#a5d6cb" stroke-width="1.5"/>
+  <text class="reader-panel-label" x="52" y="493" fill="#256f64" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="700">READERS ONLY TODAY</text>
+  <g class="reader-chips" fill="#ffffff" stroke="#c3e4dc" stroke-width="1">
     <rect x="52" y="511" width="298" height="44" rx="7"/>
     <rect x="370" y="511" width="298" height="44" rx="7"/>
     <rect x="688" y="511" width="320" height="44" rx="7"/>
   </g>
-  <g fill="#256f64" font-family="Arial, Helvetica, sans-serif" font-size="20" text-anchor="middle" dominant-baseline="middle">
+  <g class="reader-labels" fill="#256f64" font-family="Arial, Helvetica, sans-serif" font-size="20" text-anchor="middle" dominant-baseline="middle">
     <text x="201" y="533">ChatGPT Export</text>
     <text x="519" y="533">Claude Export</text>
     <text x="848" y="533">Stream Summary</text>
   </g>
   <g fill="none" stroke-width="2">
-    <path d="M 54 610 H 112" stroke="#7c5bc4" marker-start="url(#both-arrow)" marker-end="url(#both-arrow)"/>
-    <path d="M 426 610 H 484" stroke="#278779" marker-end="url(#read-arrow)"/>
-    <path d="M 752 610 H 810" stroke="#7c5bc4" stroke-dasharray="7 7"/>
+    <path class="pair-routes" d="M 54 610 H 112" stroke="#7c5bc4" marker-start="url(#both-arrow)" marker-end="url(#both-arrow)"/>
+    <path class="reader-route" d="M 426 610 H 484" stroke="#278779" marker-end="url(#read-arrow)"/>
+    <path class="pair-routes" d="M 752 610 H 810" stroke="#7c5bc4" stroke-dasharray="7 7"/>
   </g>
-  <g fill="#675b7a" font-family="Arial, Helvetica, sans-serif" font-size="17" dominant-baseline="middle">
+  <g class="secondary-labels" fill="#675b7a" font-family="Arial, Helvetica, sans-serif" font-size="17" dominant-baseline="middle">
     <text x="129" y="610">Reader + Writer</text>
     <text x="501" y="610">Reader only</text>
     <text x="827" y="610">New format plugin</text>
