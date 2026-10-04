@@ -1,0 +1,1085 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="AI Memory Interchange Layer — bridge AI memory formats">
+      
+      
+      
+        <link rel="canonical" href="https://velnori.github.io/memlink/guide/cli/">
+      
+      
+        <link rel="prev" href="../quickstart/">
+      
+      
+        <link rel="next" href="../migration-2.0/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>CLI - memlink</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#cli-contract-local-200" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="memlink" class="md-header__button md-logo" aria-label="memlink" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            memlink
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              CLI
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/velnori/memlink" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    velnori/memlink
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="memlink" class="md-nav__button md-logo" aria-label="memlink" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    memlink
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/velnori/memlink" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    velnori/memlink
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Commands
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conversion-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conversion options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#merge-comparison-and-broadcast" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Merge, comparison and broadcast
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#receipt-and-restore" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Receipt and restore
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exit-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit codes
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../migration-2.0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migration to 2.0
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../DESIGN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Formats
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Formats
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../formats/ombre/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ombre Brain
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../formats/openclaw/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenClaw
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../formats/mem0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mem0
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../formats/zep/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Zep
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../formats/generic/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Generic Markdown
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../formats/chatgpt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ChatGPT Export
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../formats/claude_export/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Claude Export
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../formats/stream-summary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stream Summary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/plugin/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plugin API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Commands
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conversion-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conversion options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#merge-comparison-and-broadcast" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Merge, comparison and broadcast
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#receipt-and-restore" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Receipt and restore
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exit-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit codes
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="cli-contract-local-200">CLI contract · local 2.0.0</h1>
+<p>This document describes the current checkout, not a published release. Run <code>python -m memlink.cli</code> with the repository's <code>python/</code> on <code>PYTHONPATH</code>, or use <code>memlink</code> after installing the local wheel. See <a href="../quickstart/">Quick Start</a> for fixture-backed commands and <a href="../migration-2.0/">2.0 migration</a> for compatibility changes.</p>
+<h2 id="commands">Commands</h2>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Inputs and behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>convert</code></td>
+<td><code>--from/-f FORMAT</code> (default <code>auto</code>), <code>--to/-t FORMAT</code>, <code>--source/-s PATH</code>, <code>--target/-T PATH</code>; export into a new/empty target</td>
+</tr>
+<tr>
+<td><code>migrate</code></td>
+<td>Same source/target arguments; existing file workspace; <code>--on-conflict skip\|replace\|rename</code> (default <code>skip</code>)</td>
+</tr>
+<tr>
+<td><code>ombre2claw</code>, <code>claw2ombre</code></td>
+<td>Conversion aliases; source/target arguments; use new/empty targets</td>
+</tr>
+<tr>
+<td><code>merge</code></td>
+<td><code>--sources/-s FORMAT:PATH ...</code>, <code>--to/-T FORMAT:PATH</code>; sources may also be supplied by repeated <code>--sources</code></td>
+</tr>
+<tr>
+<td><code>broadcast</code></td>
+<td><code>--from/-f FORMAT:PATH</code>, <code>--to/-T FORMAT:PATH ...</code>; repeated <code>--to</code> is also supported</td>
+</tr>
+<tr>
+<td><code>validate</code></td>
+<td><code>--source/-s PATH</code>, <code>--from FORMAT</code> (default <code>auto</code>), <code>--level schema\|semantic\|roundtrip</code>, <code>--intermediate FORMAT</code>, <code>--output-mode daily-notes\|structured</code>, <code>--format pretty\|json</code></td>
+</tr>
+<tr>
+<td><code>diff</code></td>
+<td><code>--source/-s PATH1 PATH2</code>, <code>--from-1 FORMAT</code>, <code>--from-2 FORMAT</code>, <code>--ignore FIELDS</code>, <code>--format pretty\|json</code></td>
+</tr>
+<tr>
+<td><code>stats</code></td>
+<td><code>--source/-s PATH</code>, <code>--from FORMAT</code>; counts and UTC date range</td>
+</tr>
+<tr>
+<td><code>inspect</code></td>
+<td>One file/path, <code>--format/-f FORMAT</code>, optional exact <code>--id ID</code>; missing IDs/files fail</td>
+</tr>
+<tr>
+<td><code>formats</code></td>
+<td>Actual registered reader/writer roles; eight built-in readers, five writers</td>
+</tr>
+</tbody>
+</table>
+<p><code>--version</code>, command <code>--help/-h</code> are available. Format auto-detection must be unambiguous. Multiple unrelated JSON candidates fail; explicit format does not mean “pick the first arbitrary JSON”. <code>inspect --format</code> selects the input adapter, unlike the output-format switch on conversion commands.</p>
+<p>The CLI configures stdout and stderr as UTF-8 before parsing arguments. Redirected and piped output uses UTF-8 without a BOM, including machine JSON, pretty output and diagnostics; <code>PYTHONUTF8</code> / <code>PYTHONIOENCODING</code> are not required. Consumers must decode these bytes as UTF-8. Unicode characters, including emoji, retain their values in JSON. Unpaired surrogate code points are escaped rather than causing an encoding failure. An enclosing shell or text consumer can re-encode captured output; byte-preserving redirection retains this CLI contract.</p>
+<p>A JSON directory represents one preferred/unique top-level export, not a recursive collection of independent exports. Its other files are listed as excluded/unsupported in the file ledger. <code>--all</code> selects every record in that declared input variant. To combine independent exports, pass their exact files as separate merge sources. Markdown workspace adapters discover their documented notes recursively.</p>
+<h2 id="conversion-options">Conversion options</h2>
+<p>These apply to convert, migrate, aliases, merge and broadcast:</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Contract</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--all</code></td>
+<td>Include all parseable records inside the supplied approved root, including archived records. Never scan home or the whole computer.</td>
+</tr>
+<tr>
+<td><code>--include-archived</code></td>
+<td>Include archived without selecting the <code>--all</code> intent. Default selection excludes archived.</td>
+</tr>
+<tr>
+<td><code>--kind/-k KIND ...</code>, <code>--domain/-d DOMAIN ...</code>, <code>--status active\|archived</code></td>
+<td>Actual selection filters; excluded records do not enter the output archive. <code>--all</code> does not disable explicit filters.</td>
+</tr>
+<tr>
+<td><code>--include-user</code>, <code>--include-dreams</code></td>
+<td>Explicitly include the OpenClaw user model or dreaming review surface; neither is implied by <code>--all</code>.</td>
+</tr>
+<tr>
+<td><code>--output-mode daily-notes\|structured</code></td>
+<td>OpenClaw writer only; default daily notes and legacy structured are independently tested.</td>
+</tr>
+<tr>
+<td><code>--dry-run</code></td>
+<td>No staging, locks, output directories, receipts on disk, or mtime changes; plan-only JSON marks fields <code>unknown</code>. It cannot prove serialization/readback.</td>
+</tr>
+<tr>
+<td><code>--strict</code>, <code>--fail-on-loss</code></td>
+<td>Same policy: fail with 5 before committing any meaningful unallowed archive-only, transformed, dropped or unknown field/input impact. Null/empty defaults alone do not imply loss.</td>
+</tr>
+<tr>
+<td><code>--allow-change FIELD</code></td>
+<td>Repeatable exception for a published canonical field; narrow and recorded in the receipt. Invalid field names fail.</td>
+</tr>
+<tr>
+<td><code>--format pretty\|json</code></td>
+<td>Pretty output always shows warnings; JSON carries the versioned receipt.</td>
+</tr>
+<tr>
+<td><code>--verbose/-v</code>, <code>-vv</code></td>
+<td>Add source accounting and record mapping; second level adds per-field impacts in pretty output.</td>
+</tr>
+</tbody>
+</table>
+<p>Default best effort finishes successfully at process level when the transaction succeeds. Its receipt is <code>partial</code> if warnings/field impacts exist. Invalid or unsupported source entries are accounted for; a mixed usable source can proceed with warnings. An entirely unreadable/unsupported source fails. A defined empty JSON array can pass schema validation, but cannot pass roundtrip as “zero records preserved”.</p>
+<h2 id="merge-comparison-and-broadcast">Merge, comparison and broadcast</h2>
+<p>Merge groups by source namespace + scope + native ID. Same bare IDs in different roots/users remain separate. <code>--link-by-id</code> is an explicit audited override. <code>--on-conflict newest|oldest|first|last</code> chooses only within the resulting identity group. Datetimes compare in UTC; naive values assume UTC, epoch 0 is dated, and dated records precede undated choices. Ties retain the earlier record; <code>first</code>/<code>last</code> follow input order.</p>
+<p>Diff compares all canonical fields, identities and duplicate occurrences. External checksum claims do not bypass body comparison. <code>--ignore</code> accepts comma-separated canonical field names and the groups <code>importance</code> and <code>timestamps</code>; it is not a blanket loss waiver for migration.</p>
+<p>Broadcast reads one source snapshot and executes an independent transaction per target. Any target failure makes the overall exit code nonzero. Successful destinations remain committed; there is no cross-target rollback guarantee.</p>
+<h2 id="receipt-and-restore">Receipt and restore</h2>
+<p>Native output, <code>.memlink/archive.json</code> and <code>.memlink/receipt.json</code> form one transport result. The archive stores only selected canonical records and original identity. Native-preserved means equality established through the actual native adapter without archive recovery; comments/sidecars cannot prove native semantics. Transformed/archive-only fields carry archive locations. Stale archive hashes produce a warning and use current native data; malformed/unknown-version archives fail validation.</p>
+<p>Migrate handles conflicts at <strong>file</strong> granularity. A daily note can hold multiple records; Mem0/Zep exports are grouped JSON files. <code>skip</code> leaves the whole conflicting file unchanged and reports selected incoming records as dropped. <code>replace</code> backs up then replaces that file. <code>rename</code> retains both using deterministic imported/segment paths. An unchanged native file whose canonical archive would change is also a conflict.</p>
+<p>Replacement backups remain at <code>.memlink/backups/&lt;transaction-id&gt;/</code>. <code>restore.json</code> lists replaced files, saved originals and newly created paths. Backups are not automatically deleted. To restore manually: stop concurrent writers; inspect the matching receipt/manifest; confirm current files still match that transaction's output hashes; copy saved originals back to their listed paths; remove only listed created paths that still match the transaction's outputs. Restore the old receipt/archive when listed. If a file has changed externally, preserve it and reconcile manually. There is no automatic restore CLI or power-loss recovery claim.</p>
+<p>The transaction rejects overlapping roots, links/reparse points/hardlinks, collisions and bounded-resource violations. It stages/readbacks, checks source and target snapshots before commit, verifies committed outputs, and rolls back only its own unchanged writes on failure. An external change is retained and incomplete rollback is reported. Cooperative locks do not prevent arbitrary outside programs writing in the final per-file check/write window. No global multi-file atomicity is promised.</p>
+<h2 id="exit-codes">Exit codes</h2>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>Command completed; inspect receipt for <code>success</code>, <code>partial</code> or dry-run <code>planned</code></td>
+</tr>
+<tr>
+<td>1</td>
+<td>Diff found differences</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Invalid input/format/schema/arguments or failed validation</td>
+</tr>
+<tr>
+<td>3</td>
+<td>I/O/commit failure; broadcast returns 3 if any target fails</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Source/target changed during reading/planning/commit checks</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Strict-mode incompatibility or unsupported safe migration target</td>
+</tr>
+<tr>
+<td>130</td>
+<td>User interrupted</td>
+</tr>
+</tbody>
+</table>
+<p>Reader-only transcript/stream formats have no writer and cannot perform a return trip to themselves. All core commands are local and require no AI API keys or network access.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
