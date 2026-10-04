@@ -1,6 +1,8 @@
 # memlink
 
-**Offline migration between AI memory file formats.**
+**Pandoc for AI memories.**
+
+Offline migration between AI memory file formats.
 
 [![CI](https://github.com/velnori/memlink/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/velnori/memlink/actions/workflows/test.yml?query=branch%3Amain)
 [![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue?logo=python&logoColor=white)](https://www.python.org/)
@@ -11,6 +13,30 @@
 Each format uses `Reader → Canonical Memory → Writer`. Canonical-v1 remains frozen. This checkout is the local **2.0.0** implementation; it has not been published.
 
 MemLink converts all records inside a supplied source root automatically. It requires no AI service, API key, per-record review, or manual classification. `--all` includes archived records inside that approved scope. Readers report invalid and unsupported inputs instead of silently counting them as successful conversions.
+
+## Why MemLink? n² → 2n
+
+Different tools store memories in different formats. Connecting every format directly to every other format creates a growing web of converters.
+
+For **n formats with both reading and writing support**, separate one-way converters need **n(n − 1)** routes: **O(n²)**. A shared canonical model needs **n Readers + n Writers = 2n adapters**: **O(n)**. With 10 such formats, that is 90 one-way converters versus 20 adapters.
+
+Each Reader brings its format into Canonical Memory; each Writer takes Canonical Memory into its target format. They form one bridge:
+
+```mermaid
+flowchart LR
+    O["Ombre"] --> R["Readers"]
+    M["Mem0"] --> R
+    G["Generic Markdown"] --> R
+    R --> C["Canonical Memory"]
+    C --> W["Writers"]
+    W --> P["OpenClaw"]
+    W --> Z["Zep"]
+    W --> O2["Ombre"]
+```
+
+Adding a format means contributing its adapters to this bridge, rather than implementing every pairwise converter. Read-only formats contribute a Reader; they do not imply a reverse Writer. The supported variants below show the actual available roles.
+
+The bridge handles conversion routes. Field differences are measured and reported in receipts, with recoverable canonical values kept in the archive; a shared schema does not make every field a native feature of every destination.
 
 ## Run this checkout
 
