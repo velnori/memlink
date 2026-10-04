@@ -20,21 +20,11 @@ Different tools store memories in different formats. Connecting every format dir
 
 For **n formats with both reading and writing support**, separate one-way converters need **n(n − 1)** routes: **O(n²)**. A shared canonical model needs **n Readers + n Writers = 2n adapters**: **O(n)**. With 10 such formats, that is 90 one-way converters versus 20 adapters.
 
-Each Reader brings its format into Canonical Memory; each Writer takes Canonical Memory into its target format. They form one bridge:
+MemLink's goal is **any memory format ↔ any memory format**, through one shared model. Each format contributes its own Reader and Writer. When both formats have these adapters, either can be the source or the destination:
 
-```mermaid
-flowchart LR
-    O["Ombre"] --> R["Readers"]
-    M["Mem0"] --> R
-    G["Generic Markdown"] --> R
-    R --> C["Canonical Memory"]
-    C --> W["Writers"]
-    W --> P["OpenClaw"]
-    W --> Z["Zep"]
-    W --> O2["Ombre"]
-```
+![Ombre, OpenClaw, Mem0, Zep and Generic Markdown connect both ways through Canonical Memory. ChatGPT Export, Claude Export and Stream Summary currently connect through Readers only. A new format joins through its own Reader and Writer plugins.](docs/assets/canonical-bridge.svg)
 
-Adding a format means contributing its adapters to this bridge, rather than implementing every pairwise converter. Read-only formats contribute a Reader; they do not imply a reverse Writer. The supported variants below show the actual available roles.
+Two-headed arrows show existing Reader + Writer pairs. One-way arrows show current Readers only. The dashed route is the extension point for [your own format](docs/api/plugin.md). Adding a format means contributing its adapters to this bridge, rather than implementing every pairwise converter. The supported variants below show the actual available roles.
 
 The bridge handles conversion routes. Field differences are measured and reported in receipts, with recoverable canonical values kept in the archive; a shared schema does not make every field a native feature of every destination.
 
