@@ -10,6 +10,11 @@ Any implementation — in any language — can use these documents to build a co
 | [canonical-v1.md](canonical-v1.md) | Canonical Memory Schema v1 — field definitions, types, semantics |
 | [canonical-v1.schema.json](canonical-v1.schema.json) | JSON Schema for machine validation |
 | [source-uri.md](source-uri.md) | Source URI format (RFC 3986 based) |
+| [context-handoff-v1.md](context-handoff-v1.md) | Additive private bundle, explicit selection, text projection and context receipt contract |
+| [memlink-context-bundle-v1.schema.json](memlink-context-bundle-v1.schema.json) | Private-pack and handoff manifests |
+| [memlink-context-selection-v1.schema.json](memlink-context-selection-v1.schema.json) | Digest-bound explicit approval |
+| [memlink-context-record-v1.schema.json](memlink-context-record-v1.schema.json) | Closed shareable record projection |
+| [memlink-context-report-v1.schema.json](memlink-context-report-v1.schema.json) | Context extension of the unified receipt |
 
 ## Stability
 

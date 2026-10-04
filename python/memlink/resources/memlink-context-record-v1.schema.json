@@ -1,0 +1,176 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://memlink.dev/memlink-context-record-v1.schema.json",
+  "title": "MemLink Context record v1",
+  "type": "object",
+  "properties": {
+    "record_id": {
+      "type": "string",
+      "pattern": "^r-[0-9a-f]{64}$"
+    },
+    "original_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "identity": {
+      "type": "object",
+      "properties": {
+        "namespace": {
+          "type": "string",
+          "pattern": "^openclaw:[0-9a-f]{20}$"
+        },
+        "scope": {
+          "type": "object",
+          "properties": {
+            "scope": {
+              "type": [
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "user_id": {
+              "type": [
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "agent_id": {
+              "type": [
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "run_id": {
+              "type": [
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "session_id": {
+              "type": [
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "native_id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "namespace",
+        "scope",
+        "native_id"
+      ],
+      "additionalProperties": false
+    },
+    "source": {
+      "type": "object",
+      "properties": {
+        "ref": {
+          "type": "string",
+          "pattern": "^s-[0-9a-f]{24}$"
+        },
+        "path": {
+          "type": "string"
+        },
+        "format": {
+          "const": "openclaw"
+        }
+      },
+      "required": [
+        "ref",
+        "path",
+        "format"
+      ],
+      "additionalProperties": false
+    },
+    "title": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "summary": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "body": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "kind": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "active",
+        "archived"
+      ]
+    },
+    "state": {
+      "type": "string"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 0,
+      "maxItems": 100000,
+      "uniqueItems": false
+    },
+    "project": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "created_at": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "updated_at": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "record_id",
+    "original_sha256",
+    "identity",
+    "source",
+    "title",
+    "summary",
+    "body",
+    "kind",
+    "status",
+    "state",
+    "tags",
+    "project",
+    "created_at",
+    "updated_at"
+  ],
+  "additionalProperties": false
+}

@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Offline Context Handoff: private `pack`, digest-bound `select`, controlled `handoff`, and bundle `verify`, including one-command `handoff --all` without human review.
+- Optional exact-text TTY review, deterministic secret policies/custom redaction, UTF-8 byte/record budgets and explicit record-boundary truncation.
+- Pack/selection/projection/report schemas, synthetic OpenClaw demos, privacy/threat model and Codex/Claude Code file-reading tutorials with unrun consumer tests distinguished.
+
 - Shared staged write transactions with source/target snapshot checks, readback verification, conflict handling, replacement backups and rollback reporting.
 - Versioned receipts and canonical recovery archives with output hashes, record accounting, field-impact reporting and detection of stale native output.
 - Strict conversion policies, explicit field exceptions and dry-run migration plans.

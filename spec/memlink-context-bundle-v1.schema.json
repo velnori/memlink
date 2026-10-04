@@ -1,0 +1,694 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://memlink.dev/memlink-context-bundle-v1.schema.json",
+  "title": "MemLink Context bundle v1",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "memlink-context-bundle"
+    },
+    "version": {
+      "const": "1"
+    },
+    "kind": {
+      "enum": [
+        "private-pack",
+        "handoff"
+      ]
+    },
+    "tool_version": {
+      "type": "string"
+    },
+    "bundle_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{32}$"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "scope": {
+      "type": "object",
+      "properties": {
+        "format": {
+          "const": "openclaw"
+        },
+        "namespace": {
+          "type": "string",
+          "pattern": "^openclaw:[0-9a-f]{20}$"
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "MEMORY.md",
+              "memory/**/*.md",
+              "USER.md",
+              "DREAMS.md"
+            ]
+          },
+          "minItems": 2,
+          "maxItems": 4,
+          "uniqueItems": true
+        },
+        "approved_root": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "format",
+        "namespace",
+        "rules"
+      ],
+      "additionalProperties": false
+    },
+    "snapshot_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "ref": {
+            "type": "string",
+            "pattern": "^s-[0-9a-f]{24}$"
+          },
+          "path": {
+            "type": "string"
+          },
+          "format": {
+            "const": "openclaw"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "ref",
+          "path"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 1,
+      "maxItems": 10000,
+      "uniqueItems": false
+    },
+    "records": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "minItems": 1,
+      "maxItems": 100000,
+      "uniqueItems": false
+    },
+    "policy": {
+      "type": "object",
+      "properties": {
+        "secrets": {
+          "enum": [
+            "private",
+            "warn",
+            "redact",
+            "fail"
+          ]
+        },
+        "literal_rules": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "pattern_rules": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "secrets",
+        "literal_rules",
+        "pattern_rules"
+      ],
+      "additionalProperties": false
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "path",
+          "sha256",
+          "bytes"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 2,
+      "maxItems": 10004,
+      "uniqueItems": false
+    },
+    "reader": {
+      "type": "object",
+      "properties": {
+        "variant": {
+          "type": "string"
+        },
+        "stats": {
+          "type": "object"
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 0,
+          "maxItems": 100000,
+          "uniqueItems": false
+        },
+        "suspected_credentials": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "variant",
+        "stats",
+        "warnings",
+        "suspected_credentials"
+      ],
+      "additionalProperties": false
+    },
+    "approval": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "enum": [
+            "all",
+            "selection"
+          ]
+        },
+        "pack_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "pack_record_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "pack_records_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "requested": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "record_id": {
+                "type": "string",
+                "pattern": "^r-[0-9a-f]{64}$"
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              }
+            },
+            "required": [
+              "record_id",
+              "sha256"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1,
+          "maxItems": 100000,
+          "uniqueItems": false
+        },
+        "excluded": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "record_id": {
+                "type": "string",
+                "pattern": "^r-[0-9a-f]{64}$"
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "reason": {
+                "const": "budget"
+              }
+            },
+            "required": [
+              "record_id",
+              "sha256",
+              "reason"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0,
+          "maxItems": 100000,
+          "uniqueItems": false
+        }
+      },
+      "required": [
+        "mode",
+        "pack_sha256",
+        "pack_record_count",
+        "pack_records_sha256",
+        "requested",
+        "excluded"
+      ],
+      "additionalProperties": false
+    },
+    "budget": {
+      "type": "object",
+      "properties": {
+        "max_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16777216
+        },
+        "max_records": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000
+        },
+        "actual_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "actual_records": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "truncate_at_record_boundary": {
+          "type": "boolean"
+        },
+        "truncated": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "max_bytes",
+        "max_records",
+        "actual_bytes",
+        "actual_records",
+        "truncate_at_record_boundary",
+        "truncated"
+      ],
+      "additionalProperties": false
+    },
+    "safety": {
+      "type": "object",
+      "properties": {
+        "detected": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "redacted": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "path_scrubbed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "text_escaped": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "detected",
+        "redacted",
+        "path_scrubbed",
+        "text_escaped"
+      ],
+      "additionalProperties": false
+    },
+    "human_reviewed": {
+      "type": "boolean"
+    },
+    "review": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "method": {
+          "const": "tty-confirmation"
+        },
+        "context_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "decision": {
+          "const": "approved"
+        }
+      },
+      "required": [
+        "method",
+        "context_sha256",
+        "decision"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "schema",
+    "version",
+    "kind",
+    "tool_version",
+    "bundle_id",
+    "created_at",
+    "scope",
+    "snapshot_sha256",
+    "sources",
+    "records",
+    "policy",
+    "files"
+  ],
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "private-pack"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "reader"
+        ],
+        "properties": {
+          "scope": {
+            "required": [
+              "approved_root"
+            ]
+          },
+          "sources": {
+            "items": {
+              "required": [
+                "sha256",
+                "bytes"
+              ]
+            }
+          },
+          "records": {
+            "items": {
+              "type": "object",
+              "properties": {
+                "record_id": {
+                  "type": "string",
+                  "pattern": "^r-[0-9a-f]{64}$"
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "identity": {
+                  "type": "object",
+                  "properties": {
+                    "namespace": {
+                      "type": "string",
+                      "pattern": "^openclaw:[0-9a-f]{20}$"
+                    },
+                    "scope": {
+                      "type": "object"
+                    },
+                    "native_id": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "namespace",
+                    "scope",
+                    "native_id"
+                  ],
+                  "additionalProperties": false
+                },
+                "source_ref": {
+                  "type": "string",
+                  "pattern": "^s-[0-9a-f]{24}$"
+                }
+              },
+              "required": [
+                "record_id",
+                "sha256",
+                "identity",
+                "source_ref"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "handoff"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "approval",
+          "budget",
+          "safety",
+          "human_reviewed",
+          "review"
+        ],
+        "properties": {
+          "records": {
+            "items": {
+              "type": "object",
+              "properties": {
+                "record_id": {
+                  "type": "string",
+                  "pattern": "^r-[0-9a-f]{64}$"
+                },
+                "original_sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "identity": {
+                  "type": "object",
+                  "properties": {
+                    "namespace": {
+                      "type": "string",
+                      "pattern": "^openclaw:[0-9a-f]{20}$"
+                    },
+                    "scope": {
+                      "type": "object",
+                      "properties": {
+                        "scope": {
+                          "type": [
+                            "string",
+                            "number",
+                            "boolean",
+                            "null"
+                          ]
+                        },
+                        "user_id": {
+                          "type": [
+                            "string",
+                            "number",
+                            "boolean",
+                            "null"
+                          ]
+                        },
+                        "agent_id": {
+                          "type": [
+                            "string",
+                            "number",
+                            "boolean",
+                            "null"
+                          ]
+                        },
+                        "run_id": {
+                          "type": [
+                            "string",
+                            "number",
+                            "boolean",
+                            "null"
+                          ]
+                        },
+                        "session_id": {
+                          "type": [
+                            "string",
+                            "number",
+                            "boolean",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [],
+                      "additionalProperties": false
+                    },
+                    "native_id": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "namespace",
+                    "scope",
+                    "native_id"
+                  ],
+                  "additionalProperties": false
+                },
+                "source": {
+                  "type": "object",
+                  "properties": {
+                    "ref": {
+                      "type": "string",
+                      "pattern": "^s-[0-9a-f]{24}$"
+                    },
+                    "path": {
+                      "type": "string"
+                    },
+                    "format": {
+                      "const": "openclaw"
+                    }
+                  },
+                  "required": [
+                    "ref",
+                    "path",
+                    "format"
+                  ],
+                  "additionalProperties": false
+                },
+                "title": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "summary": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "body": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "status": {
+                  "enum": [
+                    "active",
+                    "archived"
+                  ]
+                },
+                "state": {
+                  "type": "string"
+                },
+                "tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "minItems": 0,
+                  "maxItems": 100000,
+                  "uniqueItems": false
+                },
+                "project": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "created_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "updated_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "record_id",
+                "original_sha256",
+                "identity",
+                "source",
+                "title",
+                "summary",
+                "body",
+                "kind",
+                "status",
+                "state",
+                "tags",
+                "project",
+                "created_at",
+                "updated_at"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "sources": {
+            "items": {
+              "type": "object",
+              "properties": {
+                "ref": {
+                  "type": "string",
+                  "pattern": "^s-[0-9a-f]{24}$"
+                },
+                "path": {
+                  "type": "string"
+                },
+                "format": {
+                  "const": "openclaw"
+                }
+              },
+              "required": [
+                "ref",
+                "path",
+                "format"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "scope": {
+            "not": {
+              "required": [
+                "approved_root"
+              ]
+            }
+          }
+        }
+      }
+    }
+  ]
+}

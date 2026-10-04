@@ -117,6 +117,9 @@ def _build_parser() -> argparse.ArgumentParser:
     q.add_argument("--format", "-f", default="auto")
     q.add_argument("--id", dest="memory_id")
     sub.add_parser("formats")
+    from .context_cli import add_commands
+
+    add_commands(sub)
     return p
 
 
@@ -349,6 +352,11 @@ def _cmd_formats():
 
 
 def _dispatch(args):
+    if args.command in {"pack", "select", "handoff", "verify"}:
+        from .context_cli import run
+
+        run(args)
+        return
     commands = {
         "convert": _cmd_convert,
         "migrate": _cmd_convert,
