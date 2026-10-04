@@ -3,6 +3,7 @@
 See spec/canonical-v1.md for the full schema specification.
 """
 
+import hashlib
 import re
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -33,26 +34,31 @@ def sanitize_id(raw: str) -> str:
     Rules:
       1. Reserved characters → percent-encode (reversible).
       2. Unicode (中文/emoji) is preserved.
-      3. Length ≤ 255 bytes (UTF-8).
-      4. Windows device names get a leading underscore.
-      5. Empty string falls back to ``"unnamed"``.
+      3. Long UTF-8 names use a stable hash suffix, leaving room for extensions.
+      4. Edge dots/spaces and Windows device names are percent-encoded.
+      5. Empty string falls back to ``"%EMPTY"``.
     """
 
     def _encode(m: re.Match) -> str:
         return f"%{ord(m.group(0)):02X}"
 
-    out = _FILENAME_RESERVED.sub(_encode, raw)
-    out = out.strip(". ")
+    out = _FILENAME_RESERVED.sub(_encode, raw.replace("%", "%25"))
+    # Encode edge dots/spaces; never erase information.
+    leading = len(out) - len(out.lstrip(". "))
+    trailing = len(out.rstrip(". "))
+    out = "".join(f"%{ord(c):02X}" if i < leading or i >= trailing else c for i, c in enumerate(out))
 
-    if out.upper() in _RESERVED_NAMES:
-        out = f"_{out}"
+    if out.split(".")[0].upper() in _RESERVED_NAMES:
+        out = f"%{ord(out[0]):02X}" + out[1:]
 
     # Truncate to 255 UTF-8 bytes without splitting a multi-byte character.
     encoded = out.encode("utf-8")
-    if len(encoded) > 255:
-        out = encoded[:255].decode("utf-8", errors="ignore")
+    if len(encoded) > 180:
+        out = (
+            encoded[:140].decode("utf-8", errors="ignore") + "~" + hashlib.sha256(raw.encode("utf-8")).hexdigest()[:32]
+        )
 
-    return out or "unnamed"
+    return out or "%EMPTY"
 
 
 @dataclass

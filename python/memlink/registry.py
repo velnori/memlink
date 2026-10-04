@@ -6,6 +6,7 @@ fresh instances on each call, supporting **kwargs for construction params.
 
 from __future__ import annotations
 
+import re
 import warnings
 from typing import TYPE_CHECKING
 
@@ -32,12 +33,75 @@ class PluginNotFoundError(KeyError):
 
 def register_reader(cls: type[FormatPlugin]) -> None:
     """Register a Reader class (not an instance)."""
-    _readers[cls.name] = cls
+    _register(cls, _readers, "read")
 
 
 def register_writer(cls: type[FormatPlugin]) -> None:
     """Register a Writer class (not an instance)."""
-    _writers[cls.name] = cls
+    _register(cls, _writers, "write")
+
+
+def _register(cls, store, method):
+    from .plugin import Capabilities, FormatPlugin
+
+    if not isinstance(cls, type) or not issubclass(cls, FormatPlugin):
+        raise ValueError("Plugin must be a FormatPlugin subclass")
+    if not isinstance(getattr(cls, "name", None), str) or not re.fullmatch(r"[a-z][a-z0-9_-]*", cls.name):
+        raise ValueError("Invalid plugin name")
+    caps = getattr(cls, "capabilities", None)
+    if not isinstance(caps, Capabilities) or caps.version != "1":
+        raise ValueError("Missing capabilities or unknown capability version")
+    for flag in (
+        "relationships",
+        "attachments",
+        "summary",
+        "emotion",
+        "importance_label",
+        "ttl",
+        "embedding",
+        "preserve_unknown_fields",
+    ):
+        if not isinstance(getattr(caps, flag), bool):
+            raise ValueError(f"Invalid capability: {flag}")
+    if caps.supported_kinds is not None and (
+        not isinstance(caps.supported_kinds, set) or any(not isinstance(k, str) for k in caps.supported_kinds)
+    ):
+        raise ValueError("Invalid supported_kinds capability")
+    if caps.max_body_size is not None and (type(caps.max_body_size) is not int or caps.max_body_size <= 0):
+        raise ValueError("Invalid max_body_size capability")
+    version = getattr(cls, "version_supported", "")
+    if not _supports_v1(version):
+        raise ValueError(f"Unverified plugin version range: {version}")
+    if not callable(getattr(cls, method, None)) or getattr(cls, "__abstractmethods__", None):
+        raise ValueError(f"Plugin cannot implement {method}")
+    if cls.name in store and store[cls.name] is not cls:
+        raise ValueError(f"Duplicate plugin name: {cls.name}")
+    store[cls.name] = cls
+
+
+def _supports_v1(version) -> bool:
+    """Small documented numeric comparator grammar; unsupported syntax fails closed."""
+    if not isinstance(version, str) or not version:
+        return False
+    if version == "*":
+        return True
+    for part in version.split(","):
+        match = re.fullmatch(r"\s*(>=|<=|==|>|<)?\s*(\d+(?:\.\d+){0,2})\s*", part)
+        if not match:
+            return False
+        op = match.group(1) or "=="
+        numbers = tuple(int(x) for x in match.group(2).split("."))
+        other = numbers + (0,) * (3 - len(numbers))
+        current = (1, 0, 0)
+        if not {
+            ">=": current >= other,
+            "<=": current <= other,
+            "==": current == other,
+            ">": current > other,
+            "<": current < other,
+        }[op]:
+            return False
+    return True
 
 
 def get_reader(name: str, **kwargs) -> FormatPlugin:

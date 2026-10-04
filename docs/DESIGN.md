@@ -1,567 +1,84 @@
-# memlink — AI Memory Interchange Layer
+# MemLink 设计合同（2.0）
 
-> A language-neutral interchange layer for AI memory systems — similar in spirit to how Pandoc enables document interoperability.
+本文件描述当前代码。历史 v0/v1 执行计划保存在 `IMPLEMENTATION.md`；其中未实现的 CLI 设想和 Reader 不解析时间的旧决定已被本合同取代。当前范围是本地文件的 Trusted Conversion / Full Migration，不包含同步或在线 API 导入。
 
-## 定位
+## 保留的架构与 schema
 
-**memlink** 是 AI Memory 格式桥接层。通过统一的 Canonical Memory 中间格式，任何 AI 记忆系统只需各写一个 Reader + Writer 就能互通。
+仍使用 **Reader → Canonical Memory → Writer**。每个格式只实现自己的适配器，事务层负责所有格式共有的边界、验证、收据和提交。
 
-**设计哲学**：Canonical 是「无损运输层」，不是「标准化裁判」。不替用户改写数据，只管安全送达。
+`spec/canonical-v1.schema.json` 与规范字段语义保持不变。必需项仍是 `schema_version="1"` 和 `id`；name/body/time 可以为空，kind 保持开放词汇，valence/arousal 的范围仍为 0–1，importance 保留原生尺度。不得为了迁移方便修改 v1 的 required/type/默认值。运行资源原样打入 wheel/sdist，验证器缺资源或遇到未知版本时失败。
 
-**长期方向**：规范与实现分离。`spec/` 定义 Canonical Schema（语言无关 + JSON Schema），Python 实现只是第一个。未来可以有 Rust、Go、TypeScript 实现同一套 Schema。
+包版本、canonical 版本和 transport 版本分别管理：`_version.py` 是包/CLI 版本唯一来源；canonical 固定 v1；receipt/archive/compatibility 使用独立 v1 JSON 资源。
 
-v0 目标：Ombre Brain ↔ OpenClaw 双向转换。架构预留扩展到 Mem0、Zep、Claude Memory、OpenMemory 等。
+## 输入与身份
 
----
+只读用户给出的目录或文件。没有 home 自动发现。文件和 JSON/YAML 读取有大小、数量、深度、节点上限；拒绝链接、重复键、循环 alias、NaN/Inf。JSON 目录优先选择明确的标准文件名，否则只接受唯一候选，多个任意 JSON 不取第一个。自动识别需要正面结构证据，不能确定就要求明确格式。
 
-## Schema 兼容策略
+`ReadResult` 保留原有 memories/warnings/stats，并增加 files/records/errors/variant/valid_empty。每个输入文件有 parsed/excluded/invalid/unsupported 和 SHA256；每个记录有结果/原因。filter exclusion 与解析失败分别计数。合法空数组是显式空集；空目录、全部失败不算验证通过。
 
-- **1.x**：向后兼容（只加字段、不删不改）
-- **2.0**：允许不兼容变更
+默认身份为 `批准源根派生 namespace + scope + native id`。namespace 使用格式名及批准根的哈希，不在收据泄露绝对 home 路径。Mem0 scope 包含 user_id/agent_id/run_id，Zep 包含 session_id；无法确定时标记 unknown，不写成默认用户。未经验证的 `_memlink_identity` 不覆盖源派生身份，原声明留在 `_claimed_identity`。与原生文件哈希、读回正文一致的 archive 可以携带原始身份，使转换后的源仍可认出共同来源。
 
-Reader/Writer 按 `schema_version` 做适配，不按 package version。
+目标 ID/路径映射确定性生成。`sanitize_id` 先转义 `%`，再编码非法字符、边缘点/空格和 Windows 保留名。长名称截断带 SHA256 后缀；receipt/archive 明确映射，不能只靠截断猜原 ID。NFC/casefold 冲突添加稳定后缀。Ombre 外来非 hex ID 使用 identity 派生的 12 位 hex；原 canonical ID 留在归档。
 
----
+## Export 与 migrate
 
-## 项目结构
+`convert`/公共 `writer.write` 只接受新或无文件的目标。`migrate` 支持已有目标，默认为 skip，replace/rename 必须显式选择。migrate 不删除未知目标文件，不写 OpenClaw TOOLS/SOUL/AGENTS/配置/认证状态。
 
-```
-memlink/
-├── spec/                       # 语言无关规范
-│   ├── canonical-v1.md         # Canonical Schema v1 规范
-│   ├── canonical-v1.schema.json # JSON Schema（自动校验用）
-│   └── source-uri.md           # Source URI 格式规范
-├── python/
-│   └── memlink/
-│       ├── __init__.py
-│       ├── models.py           # CanonicalMemory + Source + Relationship
-│       ├── plugin.py           # FormatPlugin + Capabilities + ReadResult
-│       ├── serialization.py    # 序列化安全（JSON/YAML/TOML）
-│       ├── cli.py
-│       ├── ombre_reader.py
-│       ├── ombre_writer.py
-│       ├── openclaw_reader.py
-│       ├── openclaw_writer.py
-│       ├── converter.py        # Normalize → Mapping → Transform → Validation
-│       └── validators.py       # 三级校验 + 结构化 issue
-└── tests/
-    ├── fixtures/
-    └── test_*.py
-```
+步骤：
 
----
+1. 解析批准源、过滤、验证 canonical，取得输入 ledger/快照。
+2. 取得目标文件快照（hash、size、mtime_ns），分配稳定目标 ID 和冲突策略。已有目标上的 rename 同时避开已存在的记录 ID。
+3. 在最近存在的目标父目录取得 root 协作锁。staging 与目标在同一文件系统；没有副作用的 dry-run 不取锁、不建立目录。
+4. 原有 serializer 写入 staging。目标的实际 native reader 读取所有目标记录，验证数量/ID及逐字段值。Capabilities 不参与最终 preserved 判断。
+5. 构造有定位路径、native hash/body/scope 的完整 canonical archive，再读实际归档字节验证。skip 的输入记录不偷偷进入 archive。相同 native bytes 但不同旧 archive 也视为语义冲突。
+6. 再检查源文件集合/每个摘要及目标快照。改动则退出 4。建立目标和 `.memlink/backups/<transaction-id>`，备份将更新的文件及旧 receipt，写 restore manifest。
+7. 逐文件提交：新增独占创建，更新先验证旧摘要再替换。核对已提交摘要、实际 native 读回和记录，再写 receipt。
+8. 失败时倒序恢复本次提交的文件、删除本次新建文件和空目录。对提交后被别人改变的文件不恢复覆盖，保留并返回非零/incomplete rollback。保留备份，不自动清理用户目标。
 
-## 核心架构：Canonical Model
+这不是多文件全局原子事务。协作锁协调 MemLink；外部应用不遵守该锁，hash 检查也无法消除检查到操作之间的所有 OS 竞争窗口。崩溃/断电不是异常 rollback，需使用保留备份。广播目标各自提交，成功目标不会因另一目标失败被撤销。
 
-不绑定具体格式。Reader 负责「格式 A → Canonical」，Writer 负责「Canonical → 格式 B」。复杂度 O(n)。
+冲突以目标文档为单位：daily 同日记录、MEMORY 长期文件、Mem0/Zep 单个 JSON 都可能包含多条。skip 会跳过对应整份文档，replace 替换整份文档，rename 保留旧文档另建可定位的新文档。Mem0/Zep rename 生成额外离线 JSON segment；bridge 根据 archive 的明确文件清单读各 segment 的实际 JSON。在线服务如何导入多个文件不属于本实现。
 
-### Canonical Memory
+## 实际字段收据
 
-```python
-from typing import Union, Literal
-from dataclasses import dataclass, field
-from datetime import datetime
+最终状态来自 serializer 字节与真实 native reader：
 
-JSONValue = Union[None, bool, int, float, str, list["JSONValue"], dict[str, "JSONValue"]]
+| 状态 | 实际含义 |
+|---|---|
+| native-preserved | 公开 native 字段映射且实际值相等 |
+| archive-only | native 不表达，该值已在可定位、验证过的本次归档 |
+| transformed | 公开确定性映射导致值不同；receipt 有原值/目标值，archive 有完整原值 |
+| dropped | skip 冲突等导致本次输入未进入输出；不能算作已经归档 |
+| unsupported/unknown | 无法解释的输入/未运行验证；不得当 preserved |
 
-@dataclass
-class Source:
-    format: str                      # "ombre" / "openclaw" / "mem0"
-    path: str                        # "dynamic/user/abc.md"
-    uri: str | None = None           # "ombre://dynamic/user/abc"
+receipt 包含工具/transport 版本、source variant/识别依据、scope/identity、输入文件与记录统计、filters/excluded、目标模式、逐字段影响、输出摘要、readback、conflict、backup、warnings/errors/status。`.memlink/receipt.json` 不包含自身递归摘要；archive 是版本化独立输出。合法输出仍可能 partial，exit 0 只表示 best-effort 工作流完成。I/O、竞争、严格策略失败均非零。
 
-@dataclass
-class Memory:
-    schema_version: Literal["1"]
+默认归档所有选中的 canonical 字段，不能归档被过滤的记录。Reader 只有在 native 文件摘要、record body、path/scope/ID 和 archive canonical schema 都正确时恢复原值。native 被修改后，保留当前 native 数据并明确 archive stale。archive 哈希不是数字签名，不表示第三方输入可信。
 
-    # 标识
-    id: str
-    name: str | None = None
-    source: Source | None = None     # 替代 source_uri 字符串
+严格模式在 staging/归档验证后、真实目标任何修改前阻断有值的 archive/transformed 字段或 skip 冲突；invalid/unsupported 源记录也阻断。`--allow-change` 仅接受公开 canonical 字段名，逐项记录；警告和字段真实状态仍保留。None/空集合及默认 pinned=False 不算有值的变化。dry-run 是 planned，字段 unknown，不能声称验证成功。
 
-    # 内容
-    summary: str | None = None
-    body: str | None = None
-
-    # 分类（kind 为开放 str，规范推荐值见下方）
-    kind: str = "dynamic"
-    status: Literal["active", "archived"] = "active"
-
-    # 标签与领域
-    tags: list[str] = field(default_factory=list)
-    domains: list[str] = field(default_factory=list)
-
-    # 时间（UTC RFC 3339）
-    created_at: datetime | None = None
-    updated_at: datetime | None = None
-
-    # 情感
-    valence: float | None = None
-    arousal: float | None = None
-
-    # 重要性（不归一化）
-    importance_score: float | None = None
-    importance_label: str | None = None
-
-    pinned: bool = False
-
-    # 内容校验（可选，用于 diff/merge/去重）
-    checksum: str | None = None      # SHA256(body)
-
-    # 元数据分层
-    metadata: dict[str, JSONValue] = field(default_factory=dict)
-    extensions: dict[str, Any] = field(default_factory=dict)  # memlink 不解析，推荐 namespace
-
-@dataclass
-class Relationship:
-    target_id: str
-    type: str                        # 推荐：relates_to | parent | child | derived_from
-    weight: float | None = None
-```
+## 格式行为
 
-### Kind 推荐值（非限制）
-
-| 推荐值 | 语义 | Reader 映射示例 |
-|--------|------|----------------|
-| `dynamic` | 日常浮沉 | dynamic、conversation、reflection、todo |
-| `permanent` | 永久保留 | permanent、fact、document、bookmark、skill |
-| `emotion` | 情感/感受 | emotion、feel、mood |
-
-Writer 对不认识的 kind 回退 `dynamic` + warning。
-
-### 字段分层
+- **OpenClaw**：根据当前官方 [memory](https://docs.openclaw.ai/concepts/memory) 与 [workspace](https://docs.openclaw.ai/concepts/agent-workspace) 语义读取 plain MEMORY、daily/slug/recursive imported notes。USER 是 user model，DREAMS 是 dreaming 人工 review；默认排除，显式参数批准才读。普通 DREAMS 作为 review 文档，历史 MemLink emotion entries 是单独兼容变体。default writer 把 permanent 写 MEMORY，其余写 UTC daily/undated，不把 emotion 自动写 DREAMS。MEMORY 的 plain 与历史 index 不能混淆，dangling index 明确告警。
+- **OpenClaw transport**：daily 使用版本化、长度定义的 comment/header/payload 边界。同日三条保持三条，正文的标题、横线、普通 comment 和 CRLF 原样保留。comment 中 canonical 数据是运输信息，不冒充 OpenClaw native emotion/关系/身份。structured 独立可选、独立 roundtrip 测试。
+- **Ombre**：Reader 解析 created 到 UTC created_at，raw/timezone 留 original；writer 沿用 native type/domain 路由、安全 YAML、importance 原生尺度规则，实际差异进入 receipt。没有日期不能写成字符串 None。
+- **Generic**：plain/optional frontmatter；输出 notes/*.md 的 v1 frontmatter 能直接表达完整 canonical 字段；扩展保存在 extensions，额外顶层兼容键不能覆盖 id/核心字段。不同应用的 block reference、数据库、附件行为不在承诺内。
+- **Mem0/Zep**：离线 JSON 读写，原生字段及 scope 按公开映射；emotion/relationships 等无 native 表达则 archive-only。未知 record/top-level 字段与原始 scope 保留。metadata-only 记录仍输出，不默默消失。
+- **ChatGPT/Claude**：transcript reader，不是 Saved Memory。ChatGPT 遵守 current_node/parent，缺 active 时只允许唯一链；环、孤点/缺 parent 等明确失败。其他分支完整 graph 留 transport。Claude 选择文本 blocks/fallback text；不同 alternate text、tool、attachment 数据留完整原 transcript 并告警，不做 OCR/二进制获取。无支持正文的 conversation 在 source ledger 明确 unsupported，不假装已迁移。
+- **Stream summary**：date/timezone→created_at；status/零事件/peak hour=0 保留；采集状态等 unknown raw fields 可恢复。系统没有 IANA tz database 时明确 UTC assumption 告警，保留原 timezone；不会安装额外数据库。
 
-```
-core fields   → id, name, body, kind, status, tags, domains, source, checksum ...
-                 ↑ Reader/Writers 必须处理
-metadata      → Canonical Schema 定义的扩展（memlink namespace），已知语义
-                 ↑ 规范的一部分
-extensions    → memlink 完全不理解，仅负责运输
-                 ↑ 第三方自由扩展，推荐 namespace 防撞名（extensions.mem0.xxx）
-metadata.memlink.original → 源格式原始字段快照
-                 ↑ lossless roundtrip 的关键
-```
-
----
-
-## FormatPlugin 接口
-
-```python
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from enum import Enum
-
-class Severity(str, Enum):
-    ERROR = "error"
-    WARNING = "warning"
-    INFO = "info"
-
-@dataclass
-class ValidationIssue:
-    code: str                        # "ML001" 错误码
-    severity: Severity
-    file: str | None
-    field: str | None
-    message: str
-    suggestion: str | None = None
-
-@dataclass
-class ReadResult:
-    memories: list[Memory]
-    warnings: list[str]
-    stats: dict[str, int]            # {"parsed": 245, "skipped": 3, "invalid": 0}
-
-@dataclass
-class Capabilities:
-    version: Literal["1"] = "1"
-
-    # 功能支持
-    relationships: bool = False
-    attachments: bool = False
-    summary: bool = True
-    emotion: bool = False
-    importance_label: bool = False
-    ttl: bool = False
-    embedding: bool = False
-
-    # 约束
-    max_body_size: int | None = None          # 字节数
-    supported_kinds: set[str] | None = None   # None=所有
-
-    # 扩展能力
-    preserve_unknown_fields: bool = True       # 是否能保留 extensions
-
-class FormatPlugin(ABC):
-    name: str
-    version_supported: str             # semver range, e.g. ">=1,<3"
-    capabilities: Capabilities
-
-    @abstractmethod
-    def read(self, path: Path) -> ReadResult: ...
-
-    @abstractmethod
-    def write(self, memories: Iterable[Memory], path: Path) -> list[str]: ...
-
-    @abstractmethod
-    def validate(self, path: Path) -> list[ValidationIssue]: ...
-```
-
-### 能力兼容检查 + Feature Loss Report
-
-转换前检查，转换后统计：
-
-```
-memlink convert --from ombre --to openclaw -s ... -t ...
-
-  WARNING: Target does not support relationships → 8 will be dropped
-  WARNING: Target cannot preserve unknown extensions → 5 will be dropped
-
-  Converted: 128
-
-  ── Feature Loss ──
-  relationships      8 dropped
-  emotion           14 dropped
-  extensions          5 dropped
-  ─────────────────
-  Total loss         27 fields across 19 memories
-```
-
----
-
-## 错误码体系
-
-| Code | 含义 |
-|------|------|
-| ML001 | InvalidDatetime — 时间戳格式错误 |
-| ML002 | MissingID — 缺少必需 id |
-| ML003 | DuplicateID — 重复 id |
-| ML004 | InvalidSchema — schema_version 不兼容 |
-| ML005 | CircularReference — metadata 循环引用 |
-| ML006 | NestingTooDeep — metadata 嵌套过深 |
-| ML007 | UnsupportedKind — kind 不被目标格式支持 |
-| ML008 | BodyTooLarge — 超过目标格式大小限制 |
-| ML009 | ConcurrentModification — MEMORY.md 并发修改 |
-| ML010 | InvalidSourceURI — source URI 格式非法 |
-
----
-
-## Exit Code
-
-| Code | 含义 |
-|------|------|
-| 0 | Success |
-| 1 | Diff found（diff 命令发现差异） |
-| 2 | Validation error（校验失败） |
-| 3 | I/O error（文件读写错误） |
-| 4 | Concurrent modification（并发冲突） |
-| 5 | Format incompatible（能力不兼容） |
-| 130 | User interrupted（Ctrl+C） |
-
----
-
-## 转换映射表
-
-### Ombre → Canonical
-
-| Ombre 字段 | Canonical 字段 | 规则 |
-|-----------|---------------|------|
-| bucket_id | id | 直接复制 |
-| — | source.format | `"ombre"` |
-| — | source.path | `{type}/{domain}/{name}.md` |
-| — | source.uri | `ombre://{type}/{domain}/{bucket_id}` |
-| name | name | 直接复制 |
-| content (body) | body | 直接复制 |
-| — | summary | 留空 |
-| type | kind | `dynamic→dynamic / permanent→permanent / feel→emotion` |
-| — | status | 默认 active |
-| domain | domains | 多值保留为 list |
-| tags | tags | 直接复制 |
-| importance (1-10) | importance_score | 原值保留 |
-| valence | valence | 直接复制 |
-| arousal | arousal | 直接复制 |
-| created | created_at | 原始时区→metadata.memlink.original.created_tz |
-| pinned | pinned | 直接复制 |
-| — | checksum | SHA256(body) |
-| — | metadata.memlink | 原始字段快照 |
-
-### Ombre → OpenClaw（写入时）
-
-| Canonical 字段 | OpenClaw 字段 | 规则 |
-|---------------|-------------|------|
-| id | 文件名 | 用 id，不用 name |
-| name | frontmatter name | 直接复制 |
-| summary | description | 有则写入，无则取 body 首段 120 字 |
-| body | body | 直接复制 |
-| source.uri | metadata.source_uri | 直接复制 |
-| domains | metadata.domain | 逗号拼接 |
-| tags | metadata.tags | YAML list |
-| importance_score / importance_label | metadata.importance | 优先 label |
-| valence | metadata.valence | 直接复制 |
-| arousal | metadata.arousal | 直接复制 |
-| created_at | metadata.created_at | UTC ISO |
-| pinned | metadata.pinned | true/false |
-| checksum | metadata.checksum | 直接复制 |
-| kind + status | 路由 | 见路由表 |
-| metadata.memlink | metadata.memlink | 原样保留 |
-| extensions | metadata.extensions | YAML 序列化（若 preserve_unknown_fields=True） |
-
-### Kind + Status 路由
-
-MEMORY.md 索引是 OpenClaw Writer 的实现细节，Canonical 不关心索引。
-
-| Canonical | OpenClaw 目标 |
-|-----------|--------------|
-| kind=dynamic, status=active | `memory/<id>.md` + MEMORY.md 索引 |
-| kind=permanent, status=active | `memory/<id>.md` + `priority: high` |
-| kind=emotion, status=active | `memory/feels/<id>.md` |
-| status=archived | 跳过（`--include-archived` 强制转换） |
-| kind 为其他值 | 回退 `dynamic` + warning |
-
-### OpenClaw → Canonical
-
-| OpenClaw 字段 | Canonical 字段 | 规则 |
-|-------------|---------------|------|
-| 文件名（去掉 .md） | id | 若 metadata.memlink.original.id 存在则恢复 |
-| — | source.format | `"openclaw"` |
-| — | source.path | `memory/<filename>.md` |
-| — | source.uri | `openclaw://memory/<filename>` |
-| name | name | 直接复制 |
-| description | summary | 直接复制 |
-| body | body | 直接复制 |
-| metadata.type | domains[0] | 最高优先级 |
-| metadata.tags | tags | 直接复制 |
-| metadata.importance | importance_score / importance_label | 数值→score，非数值→label |
-| metadata.valence | valence | 直接复制，无则 None |
-| metadata.arousal | arousal | 直接复制，无则 None |
-| metadata.created_at | created_at | ISO→UTC |
-| metadata.pinned | pinned | 无则 false |
-| metadata.checksum | checksum | 直接复制 |
-| metadata.memlink.original | — | 反向转换恢复原始字段 |
-
-### Domain 推断（OpenClaw → Ombre）
-
-不做 NLP。严格优先级：
-1. `metadata.memlink.original.domains`
-2. `metadata.domain` / `metadata.type`
-3. 无匹配 → `--unknown-domain-action skip|default:<name>`（默认 skip）
-
-### 术语映射
-
-| 概念 | Ombre | Canonical | OpenClaw |
-|------|-------|-----------|----------|
-| 情感 | feel | emotion | feels/ |
-| 归档 | — | status=archived | — |
-| 永久 | permanent | kind=permanent | priority: high |
-| 动态 | dynamic | kind=dynamic | MEMORY.md 索引 |
-
----
-
-## Lossless Roundtrip：metadata.memlink
-
-```yaml
-metadata:
-  memlink:
-    source:
-      format: ombre
-      version: "1.0"              # 源格式版本
-    schema_version: "1"
-    converted_at: "2026-06-28T10:00:00Z"
-    original:
-      id: "bucket_id_here"
-      kind: dynamic
-      domains: [user, preferences, work]
-      importance: 8
-      created_tz: "2024-06-28T10:00:00+08:00"
-```
-
-反向转换时若 `metadata.memlink` 存在，优先恢复 `original` 中的字段。
-
-### Extensions 命名空间约定
-
-三方扩展推荐用格式名作 namespace，避免撞名：
-
-```yaml
-extensions:
-  mem0:
-    user_id: "abc"
-  zep:
-    session_id: "xyz"
-```
-
----
-
-## CLI 设计
-
-```bash
-pip install memlink
-
-# 列出已安装格式
-memlink formats
-
-# 转换
-memlink convert --from ombre --to openclaw   -s ~/.claude/ombre-buckets -t ./memories/
-memlink convert --from openclaw --to ombre   -s ./memory/ -t ~/.claude/ombre-buckets/
-
-# 快捷
-memlink ombre2claw -s ~/.claude/ombre-buckets -t ./memories/
-memlink claw2ombre -s ./memory/ -t ~/.claude/ombre-buckets/
-
-# 导入（默认 --id-conflict=skip）
-memlink import --from ombre -s ~/.claude/ombre-buckets
-memlink import --from openclaw -s ./memory/
-
-# 调试：单文件解析检查
-memlink inspect sample.md                 # 自动检测格式
-memlink inspect --format ombre sample.md  # 指定格式
-
-# 选项
---source, -s          源目录
---target, -t          目标目录
---domain, -d          只转换特定 domain
---kind, -k            只转换特定 kind
---status              active|archived
---dry-run             只解析不写入
---overwrite           覆盖已存在文件
---id-conflict         rename|skip|merge（默认 rename）
---merge-strategy      append|replace|reject
---filename            id|name（默认 id）
---rebuild-index       完全重建 MEMORY.md 索引
---include-archived    包含已归档记忆
---unknown-domain-action  skip|default:<name>（默认 skip）
---verbose, -v
-
-# 校验
-memlink validate --level schema|semantic|roundtrip -s <path>
-memlink validate --level schema --format json -s <path>
-
-# 辅助
-memlink stats -s ombre-buckets/ openclaw-memories/
-memlink diff -s ombre-buckets/ openclaw-memories/
-memlink diff -s ombre/ openclaw/ --format json
-```
-
----
-
-## inspect 命令输出
-
-```
-$ memlink inspect dynamic/user/sample.md
-
-  Format:   Ombre
-  Schema:   valid
-  Source:   ombre://dynamic/user/7f32c91e
-
-  ── Canonical ──
-  id:        7f32c91e
-  name:      "User Preferences"
-  kind:      dynamic
-  domains:   [user, preferences]
-  tags:      [dark-mode, notifications]
-  body:      234 chars
-
-  ── Warnings ──
-  (none)
-
-  ── Extensions ──
-  mem0.user_id: abc
-```
-
----
-
-## 实现路线图
-
-| 阶段 | 内容 | 产出 |
-|------|------|------|
-| Phase 0.5 | spec/ + models.py + plugin.py + validators.py + serialization.py + 20 边界测试 | 规范 + 接口 + 验证器 |
-| Phase 1 | 单向 Ombre → OpenClaw：reader + writer + converter + 能力检查 | 可用 MVP |
-| Phase 2 | 反向转换 + metadata.memlink roundtrip + Feature Loss Report | roundtrip 测试 |
-| Phase 3 | CLI 全子命令 + diff + exit code + inspect | 可发布 CLI |
-| Phase 4 | PyPI + README + GitHub Actions (Linux/macOS/Windows, 3.10-3.12) | pip install |
-| Phase 5 | 真实数据验证 + 文档 + Compatibility Matrix | 发版 |
-
-### 测试覆盖率目标
-
-| 模块 | 目标 |
-|------|------|
-| models.py | 100% |
-| serialization.py | 100% |
-| validators.py | 95%+ |
-| *_reader.py | 90%+ |
-| *_writer.py | 90%+ |
-| converter.py | 90%+ |
-| 项目整体 | ≥85% |
-
----
-
-## 兼容性矩阵（Compatibility Matrix）
-
-README 中展示：
-
-| Format | Read | Write | Roundtrip | Lossless |
-|--------|------|-------|-----------|----------|
-| Ombre Brain | ✅ | ✅ | ✅ | ✅ |
-| OpenClaw | ✅ | ✅ | ✅ | ⚠️ summary |
-| Mem0 | 🚧 | 🚧 | — | — |
-| Zep | 🚧 | 🚧 | — | — |
-
----
-
-## 关键约束
-
-- 全程 pathlib.Path
-- 时间统一 UTC RFC 3339，原始时区保留到 metadata.memlink.original.created_tz
-- `body` 可为 `None`
-- `kind` 和 `Relationship.type` 为开放 `str`，规范推荐值但不限制
-- Reader.read() 返回 `ReadResult`（memories + warnings + stats）
-- Writer.write() 返回 `list[str]`（warnings）
-- 文件名默认用 id
-- `metadata` 是 Canonical 定义的扩展，`extensions` 推荐 namespace 防撞名
-- metadata 值限定 JSON 兼容类型（`serialization.py` 含深度限制 + 循环检测）
-- MEMORY.md 是 Writer 实现细节，Canonical 不关心索引
-- MEMORY.md 写入前 SHA256 检测并发修改
-- 不做 NLP domain 推断
-- v0 支持 export/import，不支持 bidirectional sync
-- Roundtrip 检查语义一致非字节一致，v0 豁免 relationships
-- Plugin 声明 `version_supported` 语义化版本范围
-- 错误码统一 `MLxxx` 格式
-
----
-
-## 风险点
-
-| 风险 | 概率 | 应对 |
-|------|------|------|
-| Ombre 中文 domain vs OpenClaw ASCII | 高 | 文件名支持中文 |
-| YAML id 类型推断 | 中 | safe_load 后强制 str() |
-| Win/Mac/Linux 路径分隔符 | 中 | 全程 pathlib |
-| metadata 循环引用 | 中 | serialization.py 循环检测 |
-| MEMORY.md 并发写入 | 中 | SHA256 检测（v0），filelock（v0.2） |
-| 未来 kind 值爆炸 | 已解决 | 开放 str + 推荐值 + 未知回退 |
-| importance 值域不统一 | 已解决 | score+label 保留原值 |
-| roundtrip 元数据流失 | 已解决 | metadata.memlink + 时区保留 + format_version |
-| ID 冲突 | 已解决 | --id-conflict rename\|skip\|merge |
-| 文件名随 title 变 | 已解决 | 默认用 id |
-| Domain 推断出错 | 已解决 | --unknown-domain-action skip\|default |
-| Schema 演进不兼容 | 已解决 | schema_version + 兼容策略声明 |
-| 能力不匹配静默丢弃 | 已解决 | Capabilities + Feature Loss Report |
-| Extensions 字段撞名 | 已解决 | namespace 约定 |
-
----
-
-## 实现决策（执行计划评审后确定）
-
-以下决策来自 [IMPLEMENTATION.md](IMPLEMENTATION.md) v2，经两轮评审确认：
-
-| 决策 | 选择 | 理由 |
-|------|------|------|
-| YAML 解析 | **PyYAML**（唯一运行时依赖） | 自研 parser 维护成本远超收益 |
-| 并发检测 | **mtime+size** | O(1)，够用；SHA256 过重 |
-| Reader 异常处理 | **Never Raise** | 解析失败→warning→skip→继续 |
-| 字段值解析 | **Reader 存原始字符串，Converter 统一转类型** | 保证不同 Reader 行为一致 |
-| 文件名非法字符 | **percent-encoding**（`/`→`%2F`） | 可逆，`a/b` 和 `a-b` 不会撞 |
-| ID 冲突检测 | **casefold()** | Windows 大小写不敏感 |
-| 输出排序 | **确定性排序**（tags/domains sorted()、MEMORY.md 按 id） | Git Diff 干净 |
-| 测试策略 | **Golden Tests**（fixture + expected.json） | 任何修改后立即发现差异 |
-| Fuzz 测试 | **hypothesis**（dev 依赖，100 随机 case） | 边缘情况自动发现 |
-| Verbose | **三级**（-v/-vv/-vvv） | 调试 Reader 神器 |
-| Feature Loss Report | **含 Reason 字段** | Debug 明确知道为什么丢 |
+## Merge、compare、validate
+
+同 identity 才默认 merge；显式 link-by-id 入 receipt。newest/oldest 优先 updated_at 再 created_at；有日期优先无日期，tie 保留已有记录；naive 按 UTC，epoch 0 有效。first/last 不比较日期。
+
+compare 按完整 identity 分组保留 duplicate 数量，不先转 dict 丢记录。默认比较全部 canonical 字段，包括 source/metadata/extensions/relationships/status/time/body；实际正文参与比较，外部 checksum 不能短路。明确 `CompareOptions.ignore`/CLI ignore 才允许字段差异。
+
+validate 使用对应真实 reader 和实例 schema/semantic 校验；roundtrip 必须明确或可靠识别源，走对应 reader/writer，默认测试 daily-notes，不强制 structured。零记录及 invalid/unsupported 源不能绿色通过。reader-only transcript/stream 没有反向 writer，roundtrip 明确失败而不是换用 Ombre。
+
+## 插件与边界
+
+保留 FormatPlugin read/write/validate 签名，ReadResult 原字段保持。`__init_subclass__` 给公共 write 包事务 wrapper，raw serializer 只拿 staging；read 包统一 guard。registry 检查 capability 类型/版本、numeric version range、role、重复名称。reader-only/writer-only 各自注册；缺少匹配 reader 的 writer 无法完成验证导出，不能造成功收据。未知第三方格式的 safe apply 未验证，migrate 退出 5；其配对 reader 能验证的 export 可使用 archive，但没有内置 native 字段映射时不宣称 native-preserved。
+
+第三方插件仍是可信 Python 执行代码，wrapper 不是任意恶意 Python 的进程沙箱。代码不依赖网络、AI API、token、上传或遥测。
+
+2.0 采用更严格写入/校验/比较行为，因此保留历史 1.x 稳定承诺作为兼容性背景，明确破坏性行为、理由和迁移示例见 [升级说明](guide/migration-2.0.md)。使用方式、退出码、收据和事务限制见 [CLI 合同](guide/cli.md)；维护者检查命令见仓库 README 和 CONTRIBUTING。

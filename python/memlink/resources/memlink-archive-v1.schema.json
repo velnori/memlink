@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://memlink.dev/memlink-archive-v1.schema.json",
+  "title": "MemLink canonical transport archive v1",
+  "type": "object",
+  "required": [
+    "schema",
+    "version",
+    "records"
+  ],
+  "properties": {
+    "schema": {
+      "const": "memlink-archive"
+    },
+    "version": {
+      "const": "1"
+    },
+    "records": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "target_id",
+          "path",
+          "sha256",
+          "native_body",
+          "native_scope",
+          "memory"
+        ],
+        "properties": {
+          "target_id": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "native_body": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "native_scope": {
+            "type": "object"
+          },
+          "memory": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  }
+}

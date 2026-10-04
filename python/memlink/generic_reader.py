@@ -1,51 +1,45 @@
-"""Generic Markdown → Canonical Memory reader.
-
-Reads any directory of .md files with optional YAML frontmatter.
-
-Covered formats (one reader, many apps):
-  - Obsidian, Logseq, Bear, iA Writer — YAML frontmatter + body
-  - Plain Markdown notes — no frontmatter required
-  - Any app that exports .md files with optional frontmatter
-
-This single Reader proves the O(n) architecture: adding Obsidian + Logseq +
-Bear + iA Writer + plain notes = 0 core code changes.
-"""
+"""Plain Markdown / optional YAML frontmatter; no application-specific semantics."""
 
 from __future__ import annotations
 
-import contextlib
-import hashlib
-from datetime import date, datetime
 from pathlib import Path
 
-import yaml
-
-from .models import Memory, Source
+from ._frontmatter import parse_frontmatter
+from .codec import memory_from_dict, parse_time
 from .plugin import Capabilities, FormatPlugin, ReadResult
+from .read_support import markdown_files, relative, stats_init
 from .serialization import sanitize
 
-# Known frontmatter fields — others go to extensions
-_KNOWN_FIELDS = frozenset(
-    {
-        "id",
-        "title",
-        "name",
-        "tags",
-        "category",
-        "folder",
-        "type",
-        "status",
-        "description",
-        "summary",
-        "created",
-        "date",
-        "updated",
-        "pinned",
-    }
-)
-
-# Type/status → kind mapping
-_TYPE_TO_KIND: dict[str, str] = {
+_KNOWN = {
+    "id",
+    "title",
+    "name",
+    "tags",
+    "category",
+    "folder",
+    "type",
+    "kind",
+    "status",
+    "description",
+    "summary",
+    "created",
+    "date",
+    "updated",
+    "pinned",
+    "domains",
+    "metadata",
+    "extensions",
+    "source",
+    "schema_version",
+    "valence",
+    "arousal",
+    "importance_score",
+    "importance_label",
+    "relationships",
+    "checksum",
+    "_memlink_body_length",
+}
+_TYPE_TO_KIND = {
     "permanent": "permanent",
     "pinned": "permanent",
     "emotion": "emotion",
@@ -59,127 +53,85 @@ _TYPE_TO_KIND: dict[str, str] = {
 class GenericReader(FormatPlugin):
     name = "generic"
     version_supported = ">=1,<3"
-    capabilities = Capabilities(
-        summary=True,
-        preserve_unknown_fields=True,
-        supported_kinds=None,
-    )
+    capabilities = Capabilities(emotion=True, relationships=True, importance_label=True)
 
     def read(self, path: Path) -> ReadResult:
-        memories: list[Memory] = []
-        warnings: list[str] = []
-        stats: dict[str, int] = {"parsed": 0, "skipped": 0, "invalid": 0}
-
-        for md_file in sorted(path.rglob("*.md")):
-            rel = md_file.relative_to(path)
+        result = ReadResult([], stats=stats_init(), variant="plain-markdown+yaml-frontmatter")
+        for file in markdown_files(path):
+            rel = relative(file, path)
             try:
-                text = md_file.read_text(encoding="utf-8")
-            except Exception:
-                stats["skipped"] += 1
-                continue
-
-            # No frontmatter → whole file as body, filename as title
-            if not text.startswith("---"):
-                mem_id = md_file.stem
-                memories.append(
-                    Memory(
-                        id=mem_id,
-                        name=md_file.stem.replace("-", " ").replace("_", " "),
-                        body=text.strip() or None,
-                        kind="dynamic",
-                        source=Source(format="generic", path=str(rel)),
-                        checksum=_sha256(text),
-                    )
+                text = file.read_bytes().decode("utf-8")
+                fm, body = parse_frontmatter(text)
+                raw_tags = fm.get("tags", [])
+                tags = (
+                    raw_tags
+                    if isinstance(raw_tags, list)
+                    else [s.strip() for s in str(raw_tags).split(",") if s.strip()]
                 )
-                stats["parsed"] += 1
-                continue
-
-            # Parse frontmatter
-            parts = text.split("---", 2)
-            if len(parts) < 3:
-                stats["skipped"] += 1
-                continue
-
-            try:
-                fm = yaml.safe_load(parts[1]) or {}
-            except yaml.YAMLError:
-                stats["skipped"] += 1
-                warnings.append(f"Invalid YAML in {rel}")
-                continue
-            if not isinstance(fm, dict):
-                fm = {}
-
-            body = parts[2]
-            mem_id = str(fm.get("id") or fm.get("title") or md_file.stem)
-            name = str(fm.get("title") or fm.get("name") or md_file.stem.replace("-", " ").replace("_", " "))
-
-            # Tags
-            raw_tags = fm.get("tags", [])
-            if isinstance(raw_tags, str):
-                tags = sorted(t.strip() for t in raw_tags.split(",") if t.strip())
-            elif isinstance(raw_tags, list):
-                tags = sorted(str(t) for t in raw_tags)
-            else:
-                tags = []
-
-            # Domain
-            domain = fm.get("category") or fm.get("folder") or fm.get("type")
-            domains = [domain.strip()] if isinstance(domain, str) else [rel.parts[0]] if len(rel.parts) > 1 else []
-
-            # Kind: infer from type/status fields
-            kind = _infer_kind(fm, tags)
-
-            # Status
-            status_tags = {str(t).lower() for t in tags}
-            status = "archived" if "archived" in status_tags else "active"
-
-            # Timestamps
-            created_at = _parse_optional_datetime(fm.get("created") or fm.get("date"))
-            updated_at = _parse_optional_datetime(fm.get("updated"))
-
-            # Extensions: unknown fields, sanitized for JSON compatibility
-            extensions = {}
-            for k, v in fm.items():
-                if k not in _KNOWN_FIELDS:
-                    with contextlib.suppress(Exception):
-                        extensions[str(k)] = sanitize(v)
-
-            # Original metadata snapshot
-            memlink_original = {}
-            for k, v in fm.items():
-                try:
-                    memlink_original[str(k)] = sanitize(v)
-                except Exception:
-                    memlink_original[str(k)] = str(v)
-
-            memories.append(
-                Memory(
-                    id=mem_id,
-                    name=name,
-                    summary=fm.get("description") or fm.get("summary"),
-                    body=body.strip() or None,
-                    kind=kind,
-                    status=status,  # type: ignore[arg-type]
-                    tags=tags,
-                    domains=domains,
-                    created_at=created_at,
-                    updated_at=updated_at,
-                    pinned=bool(fm.get("pinned", False)),
-                    checksum=_sha256(body),
-                    extensions=extensions,  # type: ignore[arg-type]
-                    source=Source(format="generic", path=str(rel)),
-                    metadata={
+                status = fm.get("status", "archived" if "archived" in tags else "active")
+                if status not in {"active", "archived"}:
+                    raise ValueError("Unsupported status")
+                domain = fm.get("category", fm.get("folder", fm.get("type")))
+                domains = fm.get("domains")
+                if domains is None:
+                    domains = (
+                        [domain.strip()]
+                        if isinstance(domain, str)
+                        else [Path(rel).parts[0]]
+                        if len(Path(rel).parts) > 1
+                        else []
+                    )
+                if not isinstance(domains, list):
+                    raise ValueError("domains must be an array")
+                body_value = body.strip() or None
+                if "_memlink_body_length" in fm:
+                    length = fm["_memlink_body_length"]
+                    body_value = None if length is None else body.removeprefix("\n\n")[: int(length)]
+                data = {
+                    "schema_version": fm.get("schema_version", "1"),
+                    "id": str(fm.get("id", fm.get("title", file.stem))),
+                    "name": fm.get("name", fm.get("title", file.stem.replace("-", " ").replace("_", " "))),
+                    "body": body_value,
+                    "summary": fm.get("description", fm.get("summary")),
+                    "kind": fm.get("kind", _infer_kind(fm, tags)),
+                    "status": status,
+                    "tags": sorted(str(t) for t in tags),
+                    "domains": [str(d) for d in domains],
+                    "created_at": parse_time(fm.get("created", fm.get("date"))),
+                    "updated_at": parse_time(fm.get("updated")),
+                    "pinned": fm.get("pinned", False),
+                    "source": fm.get("source") or {"format": "generic", "path": rel},
+                    "metadata": fm.get("metadata") or {},
+                    "extensions": fm.get("extensions")
+                    or {str(k): sanitize(v) for k, v in fm.items() if k not in _KNOWN},
+                }
+                for field in (
+                    "valence",
+                    "arousal",
+                    "importance_score",
+                    "importance_label",
+                    "relationships",
+                    "checksum",
+                ):
+                    if field in fm:
+                        data[field] = fm[field]
+                if "_memlink_body_length" not in fm and fm:
+                    data["metadata"] = {
                         "memlink": {
                             "source": {"format": "generic", "version": "1.0"},
                             "schema_version": "1",
-                            "original": memlink_original,
-                        },
-                    },
-                )
-            )
-            stats["parsed"] += 1
-
-        return ReadResult(memories=memories, warnings=warnings, stats=stats)
+                            "original": sanitize(fm),
+                        }
+                    }
+                memory = memory_from_dict(data)
+                setattr(memory, "_native_path", rel)  # noqa: B010 - transient path; canonical schema stays frozen.
+                result.memories.append(memory)
+                result.files.append({"path": rel, "outcome": "parsed"})
+            except (ValueError, TypeError, OSError, KeyError) as exc:
+                result.stats["invalid"] += 1
+                result.warnings.append(f"Invalid YAML/record in {rel}: {exc}")
+                result.files.append({"path": rel, "outcome": "invalid"})
+        return result
 
     def write(self, memories, path):
         raise NotImplementedError("GenericReader is read-only")
@@ -187,48 +139,19 @@ class GenericReader(FormatPlugin):
     def validate(self, path):
         from .validators import validate_schema
 
-        return validate_schema(path)
-
-
-# ── Helpers ─────────────────────────────────────────────────────────
-
-
-def _sha256(s: str) -> str:
-    return hashlib.sha256(s.encode("utf-8")).hexdigest()
+        return validate_schema(path, source_format=self.name)
 
 
 def _infer_kind(fm: dict, tags: list[str]) -> str:
-    """Infer Canonical kind from frontmatter type/status fields."""
-    raw_type = str(fm.get("type") or "").lower()
-    raw_status = str(fm.get("status") or "").lower()
-
-    # Direct type match
-    if raw_type in _TYPE_TO_KIND:
-        return _TYPE_TO_KIND[raw_type]
-
-    # Status-based inference
-    if raw_status in _TYPE_TO_KIND:
-        return _TYPE_TO_KIND[raw_status]
-
-    # Tag-based inference
-    tag_set = {t.lower() for t in tags}
-    if "journal" in tag_set or "emotion" in tag_set:
+    value = str(fm.get("type") or "").lower()
+    if value in _TYPE_TO_KIND:
+        return _TYPE_TO_KIND[value]
+    if str(fm.get("status", "")).lower() in _TYPE_TO_KIND:
+        return _TYPE_TO_KIND[str(fm["status"]).lower()]
+    if {str(t).lower() for t in tags} & {"journal", "emotion"}:
         return "emotion"
-    if "permanent" in tag_set:
-        return "permanent"
-
-    return "dynamic"
+    return "permanent" if "permanent" in tags else "dynamic"
 
 
-def _parse_optional_datetime(val) -> datetime | None:
-    """Parse an optional datetime from string, date, or datetime object."""
-    if val is None:
-        return None
-    if isinstance(val, datetime):
-        return val
-    if isinstance(val, date):
-        return datetime.combine(val, datetime.min.time())
-    try:
-        return datetime.fromisoformat(str(val))
-    except (ValueError, TypeError):
-        return None
+def _parse_optional_datetime(value):
+    return parse_time(value)

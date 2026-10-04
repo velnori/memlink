@@ -104,9 +104,10 @@ class TestZepWriter:
             root = Path(td)
             warnings = writer.write([Memory(id="empty-1", name=None, body=None)], root)
             data = json.loads((root / "facts.json").read_text(encoding="utf-8"))
-            assert len(data["facts"]) == 0
+            assert len(data["facts"]) == 1
+            assert ZepReader().read(root).memories[0].body is None
             assert len(warnings) >= 1
-            assert any("empty-1" in w for w in warnings)
+            assert writer.last_receipt["records"][0]["fields"]["body"]["status"] == "transformed"
 
     def test_datetime_iso_format(self):
         writer = ZepWriter()

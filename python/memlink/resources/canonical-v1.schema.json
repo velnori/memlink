@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://memlink.dev/canonical-v1.schema.json",
+  "title": "Canonical Memory v1",
+  "description": "Language-neutral intermediate representation for AI memory systems",
+  "type": "object",
+  "required": ["schema_version", "id"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1"
+    },
+    "id": {
+      "type": "string",
+      "description": "Stable identifier, unique within a dataset"
+    },
+    "name": {
+      "type": ["string", "null"],
+      "description": "Display title"
+    },
+    "source": {
+      "type": ["object", "null"],
+      "properties": {
+        "format": {"type": "string"},
+        "path": {"type": "string"},
+        "uri": {"type": ["string", "null"]}
+      },
+      "required": ["format", "path"]
+    },
+    "summary": {
+      "type": ["string", "null"],
+      "description": "Short description"
+    },
+    "body": {
+      "type": ["string", "null"],
+      "description": "Full content. May be null for metadata-only memories."
+    },
+    "kind": {
+      "type": "string",
+      "default": "dynamic",
+      "description": "Recommended: dynamic, permanent, emotion"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["active", "archived"],
+      "default": "active"
+    },
+    "tags": {
+      "type": "array",
+      "items": {"type": "string"},
+      "default": []
+    },
+    "domains": {
+      "type": "array",
+      "items": {"type": "string"},
+      "default": []
+    },
+    "created_at": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "UTC RFC 3339"
+    },
+    "updated_at": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "UTC RFC 3339"
+    },
+    "valence": {
+      "type": ["number", "null"],
+      "minimum": 0.0,
+      "maximum": 1.0
+    },
+    "arousal": {
+      "type": ["number", "null"],
+      "minimum": 0.0,
+      "maximum": 1.0
+    },
+    "importance_score": {
+      "type": ["number", "null"],
+      "description": "Format-native numeric importance (not normalized)"
+    },
+    "importance_label": {
+      "type": ["string", "null"],
+      "description": "Label-based importance (e.g. high, critical)"
+    },
+    "pinned": {
+      "type": "boolean",
+      "default": false
+    },
+    "checksum": {
+      "type": ["string", "null"],
+      "description": "SHA256 of body content"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Canonical-defined extensions with known semantics",
+      "additionalProperties": true
+    },
+    "extensions": {
+      "type": "object",
+      "description": "Opaque pass-through for third-party extensions. Recommended namespace: {format_name: {...}}",
+      "additionalProperties": true
+    },
+    "relationships": {
+      "type": "array",
+      "description": "v0 reserved — stored in metadata.memlink.relationships",
+      "items": {
+        "type": "object",
+        "properties": {
+          "target_id": {"type": "string"},
+          "type": {"type": "string"},
+          "weight": {"type": ["number", "null"]}
+        },
+        "required": ["target_id", "type"]
+      },
+      "default": []
+    }
+  }
+}

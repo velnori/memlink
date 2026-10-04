@@ -38,7 +38,12 @@ jobs:
         run: mypy python/memlink/
 
       - name: Schema validation
-        run: python -c 'import json; s=json.load(open("spec/canonical-v1.schema.json")); print("Schema valid:", s["title"])'
+        run: >-
+          python -c "from memlink.validators import validate_instance;
+          assert not validate_instance({'schema_version':'1','id':'valid','valence':0.0});
+          assert validate_instance({'schema_version':'future','id':'invalid'});
+          assert validate_instance({'schema_version':'1','id':'invalid','valence':2.0});
+          print('Packaged canonical schema and actual instances validated')"
 
       - name: Test
         run: pytest tests/ -v --cov=memlink --cov-report=xml --cov-report=term

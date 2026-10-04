@@ -85,7 +85,8 @@ Body
 """)
         reader = OpenClawReader()
         result = reader.read(tmp_path)
-        assert result.stats["skipped"] >= 1
+        assert result.stats["parsed"] == 1
+        assert result.memories[0].body == "Body"
 
     def test_restore_from_memlink_metadata(self, tmp_path):
         memory_dir = tmp_path / "memory"
@@ -305,82 +306,83 @@ class TestOpenClawReaderDreams:
 
     def test_dreams_entries_are_read(self, tmp_path):
         ws = self._make_workspace(tmp_path)
-        result = OpenClawReader().read(ws)
+        result = OpenClawReader(include_dreams=True).read(ws)
         ids = [m.id for m in result.memories]
         assert "abc123def456" in ids
         assert "999888777666" in ids
 
     def test_dreams_kind_is_emotion(self, tmp_path):
         ws = self._make_workspace(tmp_path)
-        result = OpenClawReader().read(ws)
+        result = OpenClawReader(include_dreams=True).read(ws)
         m = next(m for m in result.memories if m.id == "abc123def456")
         assert m.kind == "emotion"
 
     def test_dreams_valence_arousal(self, tmp_path):
         ws = self._make_workspace(tmp_path)
-        result = OpenClawReader().read(ws)
+        result = OpenClawReader(include_dreams=True).read(ws)
         m = next(m for m in result.memories if m.id == "abc123def456")
         assert m.valence == pytest.approx(0.8)
         assert m.arousal == pytest.approx(0.3)
 
     def test_dreams_domains_and_tags(self, tmp_path):
         ws = self._make_workspace(tmp_path)
-        result = OpenClawReader().read(ws)
+        result = OpenClawReader(include_dreams=True).read(ws)
         m = next(m for m in result.memories if m.id == "abc123def456")
         assert "日常" in m.domains
         assert "test" in m.tags
 
     def test_dreams_importance_score(self, tmp_path):
         ws = self._make_workspace(tmp_path)
-        result = OpenClawReader().read(ws)
+        result = OpenClawReader(include_dreams=True).read(ws)
         m = next(m for m in result.memories if m.id == "abc123def456")
         assert m.importance_score == pytest.approx(5.0)
 
     def test_dreams_pinned(self, tmp_path):
         ws = self._make_workspace(tmp_path)
-        result = OpenClawReader().read(ws)
+        result = OpenClawReader(include_dreams=True).read(ws)
         m = next(m for m in result.memories if m.id == "999888777666")
         assert m.pinned is True
 
     def test_dreams_body_extracted(self, tmp_path):
         ws = self._make_workspace(tmp_path)
-        result = OpenClawReader().read(ws)
+        result = OpenClawReader(include_dreams=True).read(ws)
         m = next(m for m in result.memories if m.id == "abc123def456")
         assert m.body is not None
         assert "CLAUDE.md" in m.body
 
     def test_dreams_source_format(self, tmp_path):
         ws = self._make_workspace(tmp_path)
-        result = OpenClawReader().read(ws)
+        result = OpenClawReader(include_dreams=True).read(ws)
         m = next(m for m in result.memories if m.id == "abc123def456")
         assert m.source.format == "openclaw"
         assert "DREAMS.md" in m.source.path
 
     def test_dreams_combined_with_memory_dir(self, tmp_path):
         ws = self._make_workspace(tmp_path, with_memory=True)
-        result = OpenClawReader().read(ws)
+        result = OpenClawReader(include_dreams=True).read(ws)
         assert result.stats["parsed"] == 3  # 2 dreams + 1 memory
 
     def test_no_dreams_file_is_fine(self, tmp_path):
         memory_dir = tmp_path / "memory"
         memory_dir.mkdir()
         (memory_dir / "x.md").write_text("---\nname: X\n---\nBody\n", encoding="utf-8")
-        result = OpenClawReader().read(tmp_path)
+        result = OpenClawReader(include_dreams=True).read(tmp_path)
         assert result.stats["parsed"] == 1
         assert not any("DREAMS" in w for w in result.warnings)
 
-    def test_dreams_no_roundtrip_block_is_skipped(self, tmp_path):
+    def test_dreams_without_legacy_metadata_is_plain_review(self, tmp_path):
         content = "## badfeed000001\n\nNo roundtrip block and no valence.\n"
         ws = self._make_workspace(tmp_path, dreams_content=content)
-        result = OpenClawReader().read(ws)
+        result = OpenClawReader(include_dreams=True).read(ws)
         ids = [m.id for m in result.memories]
         assert "badfeed000001" not in ids
-        assert result.stats["skipped"] >= 1
+        assert result.memories[0].id == "DREAMS.md"
+        assert result.memories[0].body == (ws / "DREAMS.md").read_bytes().decode("utf-8")
 
     def test_dreams_deduplication(self, tmp_path):
         doubled = DREAMS_CONTENT + DREAMS_CONTENT
         ws = self._make_workspace(tmp_path, dreams_content=doubled)
-        result = OpenClawReader().read(ws)
+        result = OpenClawReader(include_dreams=True).read(ws)
         dream_ids = [m.id for m in result.memories]
         assert dream_ids.count("abc123def456") == 1
 
@@ -403,13 +405,13 @@ class TestOpenClawReaderNativeDreams:
 
     def test_dream_date_header_recognized(self, tmp_path):
         ws = self._make_workspace(tmp_path)
-        result = OpenClawReader().read(ws)
+        result = OpenClawReader(include_dreams=True).read(ws)
         ids = [m.id for m in result.memories]
         assert "dream-2026-06-30" in ids
 
     def test_no_roundtrip_with_valence_parses(self, tmp_path):
         ws = self._make_workspace(tmp_path)
-        result = OpenClawReader().read(ws)
+        result = OpenClawReader(include_dreams=True).read(ws)
         m = next(m for m in result.memories if m.id == "dream-2026-06-30")
         assert m.kind == "emotion"
         assert m.valence == 0.85
@@ -417,13 +419,13 @@ class TestOpenClawReaderNativeDreams:
 
     def test_no_roundtrip_no_valence_skipped(self, tmp_path):
         ws = self._make_workspace(tmp_path)
-        result = OpenClawReader().read(ws)
+        result = OpenClawReader(include_dreams=True).read(ws)
         ids = [m.id for m in result.memories]
         assert "Deep Sleep" not in ids  # doesn't match hex or dream- regex, silently ignored
 
     def test_body_excludes_valence_line(self, tmp_path):
         ws = self._make_workspace(tmp_path)
-        result = OpenClawReader().read(ws)
+        result = OpenClawReader(include_dreams=True).read(ws)
         m = next(m for m in result.memories if m.id == "dream-2026-06-30")
         assert m.body is not None
         assert "valence:" not in m.body
@@ -431,7 +433,7 @@ class TestOpenClawReaderNativeDreams:
 
     def test_created_at_from_dream_date(self, tmp_path):
         ws = self._make_workspace(tmp_path)
-        result = OpenClawReader().read(ws)
+        result = OpenClawReader(include_dreams=True).read(ws)
         m = next(m for m in result.memories if m.id == "dream-2026-06-30")
         assert m.created_at is not None
         assert m.created_at.year == 2026
@@ -441,7 +443,7 @@ class TestOpenClawReaderNativeDreams:
     def test_dream_date_with_suffix(self, tmp_path):
         content = "## dream-2026-07-01-2\n\nAnother sweep.\n\nvalence: 0.6 / arousal: 0.2\n"
         ws = self._make_workspace(tmp_path, dreams_content=content)
-        result = OpenClawReader().read(ws)
+        result = OpenClawReader(include_dreams=True).read(ws)
         assert "dream-2026-07-01-2" in [m.id for m in result.memories]
 
     def test_dream_sweep_freetext_header_recognized(self, tmp_path):
@@ -481,7 +483,7 @@ class TestOpenClawReaderNativeDreams:
 """
         (tmp_path / "DREAMS.md").write_text(content, encoding="utf-8")
         (tmp_path / "memory").mkdir()
-        result = OpenClawReader().read(tmp_path)
+        result = OpenClawReader(include_dreams=True).read(tmp_path)
         ids = [m.id for m in result.memories]
         assert "dream-sweep-示例集" in ids
         m = next(m for m in result.memories if m.id == "dream-sweep-示例集")

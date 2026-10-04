@@ -2,8 +2,12 @@
 
 from datetime import datetime, timezone
 
+import pytest
+import yaml
+
 from memlink.models import Memory
 from memlink.ombre_writer import OmbreWriter
+from memlink.transaction import TransactionError
 
 
 class TestOmbreWriter:
@@ -63,9 +67,10 @@ class TestOmbreWriter:
         )
         writer = OmbreWriter()
         writer.write([mem], tmp_path)
-        file_path = tmp_path / "dynamic" / "user" / "original-bucket-id.md"
+        file_path = tmp_path / "dynamic" / "user" / "renamed-id.md"
         assert file_path.exists()
-        assert "bucket_id: original-bucket-id" in file_path.read_text()
+        assert "bucket_id: renamed-id" in file_path.read_text()
+        assert writer.last_receipt["records"][0]["id"] == "renamed-id"
 
     def test_restore_original_importance(self, tmp_path):
         mem = Memory(
@@ -149,9 +154,10 @@ class TestOmbreWriter:
             id="test", name="Test", body="Content", kind="dynamic", domains=["user"], importance_score=float("nan")
         )
         writer = OmbreWriter()
-        writer.write([mem], tmp_path)
-        content = (tmp_path / "dynamic" / "user" / "test.md").read_text()
-        assert "importance: 5" in content
+        with pytest.raises(TransactionError) as failure:
+            writer.write([mem], tmp_path)
+        assert failure.value.exit_code == 2
+        assert not list(tmp_path.iterdir())
 
     def test_importance_negative_clamp(self, tmp_path):
         mem = Memory(id="test", name="Test", body="Content", kind="dynamic", domains=["user"], importance_score=-3.5)
@@ -174,7 +180,7 @@ class TestOmbreWriter:
         writer = OmbreWriter()
         writer.write([mem], tmp_path)
         content = (tmp_path / "dynamic" / "user" / "test.md").read_text()
-        assert 'name: "Project: Alpha"' in content
+        assert yaml.safe_load(content.split("---", 2)[1])["name"] == "Project: Alpha"
 
     def test_batch_write(self, tmp_path):
         memories = [
@@ -224,15 +230,16 @@ class TestOmbreWriter:
             valence=0.75,
             arousal=0.3,
         )
-        warnings = OmbreWriter().write([mem], tmp_path)
-        assert any("dream-sweep-示例集" in w and "generated" in w for w in warnings)
+        writer = OmbreWriter()
+        writer.write([mem], tmp_path)
+        assert writer.last_receipt["records"][0]["fields"]["id"]["status"] == "transformed"
         import re as _re
 
         files = list((tmp_path / "feel").rglob("*.md"))
         assert len(files) == 1
         assert _re.match(r"^[0-9a-f]{12}$", files[0].stem)
-        content = files[0].read_text(encoding="utf-8")
-        assert "original_id: dream-sweep-示例集" in content
+        assert writer.last_receipt["records"][0]["id"] == "dream-sweep-示例集"
+        assert writer.last_receipt["records"][0]["target_id"] == files[0].stem
 
     def test_valid_hex_id_unchanged(self, tmp_path):
         from memlink.models import Memory, Source
@@ -247,8 +254,9 @@ class TestOmbreWriter:
             domains=[],
             tags=[],
         )
-        warnings = OmbreWriter().write([mem], tmp_path)
-        assert not any("generated" in w for w in warnings)
+        writer = OmbreWriter()
+        writer.write([mem], tmp_path)
+        assert writer.last_receipt["records"][0]["target_id"] == mem.id
         files = list((tmp_path / "dynamic").rglob("*.md"))
         assert files[0].stem == "a1b2c3d4e5f6"
 
@@ -265,8 +273,9 @@ class TestOmbreWriter:
             domains=[],
             tags=[],
         )
-        warnings = OmbreWriter().write([mem], tmp_path)
-        assert any("dream-2026-06-30" in w and "generated" in w for w in warnings)
+        writer = OmbreWriter()
+        writer.write([mem], tmp_path)
+        assert writer.last_receipt["records"][0]["fields"]["id"]["status"] == "transformed"
         import re as _re
 
         files = list((tmp_path / "feel").rglob("*.md"))

@@ -81,7 +81,8 @@ class TestZepReader:
         d = Path(tempfile.mkdtemp())
         (d / "facts.json").write_text('{"facts": [{"fact": "No uuid here"}]}', encoding="utf-8")
         result = reader.read(d)
-        assert result.stats["skipped"] >= 1
+        assert result.stats["invalid"] >= 1
+        assert any(r["outcome"] == "invalid" for r in result.records)
         assert any("uuid" in w.lower() for w in result.warnings)
 
     def test_missing_fact_skip(self):
@@ -91,7 +92,8 @@ class TestZepReader:
         d = Path(tempfile.mkdtemp())
         (d / "facts.json").write_text('{"facts": [{"uuid": "no-fact-001"}]}', encoding="utf-8")
         result = reader.read(d)
-        assert result.stats["skipped"] >= 1
+        assert result.stats["invalid"] >= 1
+        assert any(r["outcome"] == "invalid" for r in result.records)
         assert any("fact" in w.lower() for w in result.warnings)
 
     def test_broken_json_no_crash(self):

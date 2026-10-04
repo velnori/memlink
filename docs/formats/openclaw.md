@@ -1,38 +1,15 @@
-# OpenClaw
+# OpenClaw file workspace
 
-[OpenClaw](https://github.com/openclaw/openclaw) is an AI agent platform with a file-based memory system.
+Format `openclaw` reads plain `MEMORY.md` and recursive Markdown under `memory/`, including dates, date-plus-slug and imported notes. Frontmatter is optional. Names follow file headings/names; dated filenames provide daily context. Official workspace shapes and file roles were checked on 2026-10-03 against [memory documentation](https://docs.openclaw.ai/concepts/memory) and [agent workspace documentation](https://docs.openclaw.ai/concepts/agent-workspace).
 
-## Capabilities
+Native plain notes without a logical ID use their source-relative path, including the extension, as the stable canonical ID; for example `memory/2026-10-04.md`. Identity also includes the source namespace and scope, so equal relative paths in different source roots remain distinct. Re-reading the same root/path retains identity; moving or renaming a plain note changes its path identity. Export to generic safely encodes this ID and appends the target extension, producing `memory%2F2026-10-04.md.md`; the original `.md` is part of the ID, not an extra extension to remove. Logical IDs carried by legacy or MemLink transport records retain their existing mapping.
 
-| Feature | Status |
-|---------|--------|
-| Read | ✅ |
-| Write | ✅ |
+`USER.md` is an optional user model; `DREAMS.md` is a dreaming review surface. They are excluded unless explicitly requested with `--include-user` / `--include-dreams`, including when `--all` is used. Roles are recorded in extensions. Plain DREAMS is retained as a review document; legacy MemLink emotion entries retain the original review text. Emotions are not automatically classified as native DREAMS records. Other configuration/instruction files are not written.
 
-## Output Modes
+Legacy entries sharing an ID with a separate note remain separate record occurrences. Duplicate mirrored entries within one legacy review preserve its complete source text and produce a warning; bare IDs never justify dropping a different approved file.
 
-- **daily-notes** (default): `memory/YYYY-MM-DD.md` grouped by date, with `MEMORY.md` as curated long-term memory and `DREAMS.md` for emotion memories.
-- **structured**: One file per memory (`memory/<id>.md`) with a `MEMORY.md` index. Use for lossless roundtrip.
+Default writer mode `daily-notes` maps permanent records to `MEMORY.md`; other kinds go to `memory/<UTC-day>.md`, or `memory/undated.md`. Multiple same-day records use a versioned, length-defined comment frame around readable Markdown. Literal headings, separators, comments and line endings survive actual readback. IDs/emotion/classification carried only by frame metadata or sidecar are not claimed as native OpenClaw semantics. Full canonical values remain in `.memlink/archive.json`.
 
-Select mode with `--output-mode`:
+Legacy `structured` is independently selectable with `--output-mode structured`; it creates per-record frontmatter notes and an index. Index-only/no-memory cases are deterministic, not zero-record success. Default roundtrip exercises daily notes; structured validation requires its separate switch.
 
-```bash
-memlink convert --from ombre --to openclaw \
-  --output-mode structured \
-  -s ombre/ -T openclaw/
-```
-
-## Field Mapping
-
-| OpenClaw | Canonical |
-|----------|-----------|
-| `name` | `name` |
-| `description` | `summary` |
-| body (after frontmatter) | `body` |
-| `metadata.type` | `domains[0]` |
-| `metadata.tags` | `tags` |
-| `metadata.importance` | `importance_score` or `importance_label` |
-
-## Storage
-
-YAML frontmatter Markdown files in `memory/*.md` with index in `MEMORY.md`.
+Migration is file-based: skip/replace/rename can affect all records in a conflicting daily note. Rename of `MEMORY.md` becomes a deterministic imported long-term note under `memory/`. No OpenClaw process is started/restarted and no live retrieval quality is asserted. Acceptance fixtures are synthetic official-shape notes, not captured exports from an installed OpenClaw runtime. See [CLI](../guide/cli.md) for backups and per-file concurrency limits.

@@ -1,17 +1,20 @@
 """Canonical Memory → Ombre Brain writer.
 
 Writes ombre-buckets/{type}/{domain}/{id}.md.
-Fixed frontmatter field order, comma-separated tags, no yaml.dump (Ombre style).
+Fixed frontmatter field order and comma-separated tags, with safe YAML quoting.
 """
 
 from __future__ import annotations
 
+import hashlib
 import math
 import re
-import secrets
 from collections.abc import Iterable
 from pathlib import Path
 
+import yaml
+
+from .codec import identity, stable_json
 from .models import Memory, sanitize_id
 from .plugin import Capabilities, FormatPlugin
 
@@ -51,10 +54,7 @@ class OmbreWriter(FormatPlugin):
     def write(self, memories: Iterable[Memory], path: Path) -> list[str]:
         warnings: list[str] = []
         for mem in memories:
-            try:
-                self._write_one(mem, path, warnings)
-            except Exception as e:
-                warnings.append(f"{mem.id}: {e}")
+            self._write_one(mem, path, warnings)
         return warnings
 
     def validate(self, path):
@@ -69,18 +69,14 @@ class OmbreWriter(FormatPlugin):
         ombre_type = _KIND_TO_TYPE.get(mem.kind)
         if not ombre_type:
             # Try to recover from original metadata (e.g. archived)
-            orig_type = original.get("type")
-            if orig_type:
-                ombre_type = str(orig_type)
-            else:
-                warnings.append(f"{mem.id}: Unknown kind '{mem.kind}' → 'dynamic'")
-                ombre_type = "dynamic"
+            warnings.append(f"{mem.id}: Unknown kind '{mem.kind}' → 'dynamic'")
+            ombre_type = "dynamic"
 
         # Domain → directory name (empty = no domain subdir)
         domain = _pick_domain(mem, warnings)
 
         # ID → bucket_id
-        bucket_id = str(original.get("id") or original.get("bucket_id") or mem.id)
+        bucket_id = mem.id
 
         # If bucket_id is not a valid 12-char hex AND the memory came from a
         # known non-Ombre source (e.g. OpenClaw Dream Sweep), generate hex + preserve original
@@ -88,11 +84,11 @@ class OmbreWriter(FormatPlugin):
         source_fmt = mem.source.format if mem.source else ""
         if source_fmt and source_fmt != "ombre" and not _HEX12_RE.match(bucket_id):
             original_id_label = bucket_id
-            bucket_id = secrets.token_hex(6)
+            bucket_id = hashlib.sha256(stable_json(identity(mem)).encode("utf-8")).hexdigest()[:12]
             warnings.append(f"Non-hex id '{original_id_label}' → generated '{bucket_id}'")
 
         # Create directory
-        type_dir = root / ombre_type / domain if domain else root / ombre_type
+        type_dir = root / sanitize_id(ombre_type) / sanitize_id(domain) if domain else root / sanitize_id(ombre_type)
         type_dir.mkdir(parents=True, exist_ok=True)
 
         # Build frontmatter (fixed order, Ombre style)
@@ -122,7 +118,7 @@ class OmbreWriter(FormatPlugin):
         # Write
         safe_id = sanitize_id(bucket_id)
         filepath = type_dir / f"{safe_id}.md"
-        filepath.write_text(content, encoding="utf-8")
+        filepath.write_text(content, encoding="utf-8", newline="")
 
         if mem.status == "archived":
             warnings.append(f"{mem.id}: Ombre has no archived concept — saved as active")
@@ -169,7 +165,7 @@ def _importance_for_ombre(mem: Memory, original: dict, warnings: list[str]) -> i
 
 def _created_for_ombre(mem: Memory, original: dict) -> str:
     """Get created timestamp, preferring original timezone string."""
-    if "created_tz" in original:
+    if original.get("created_tz") is not None:
         return str(original["created_tz"])
     if "created" in original and isinstance(original["created"], str):
         return original["created"]
@@ -185,20 +181,6 @@ def _format_domains(domains: list[str]) -> str:
 
 def _add_field(lines: list[str], key: str, value, quote_if_special: bool = False) -> None:
     """Append a YAML field line. Ombre-style: comma-separated strings, no quotes unless needed."""
-    if value is None or value == "":
-        lines.append(f"{key}:")
-    elif value is True:
-        lines.append(f"{key}: true")
-    elif value is False:
-        lines.append(f"{key}: false")
-    elif isinstance(value, (int, float)):
-        if isinstance(value, float) and value == int(value):
-            lines.append(f"{key}: {int(value)}")
-        else:
-            lines.append(f"{key}: {value}")
-    else:
-        s = str(value)
-        if quote_if_special and (":" in s or "#" in s or s.startswith(("-", "["))):
-            lines.append(f'{key}: "{s}"')
-        else:
-            lines.append(f"{key}: {s}")
+    # Let the established YAML implementation quote multiline and special strings.
+    rendered = yaml.safe_dump({key: value}, allow_unicode=True, sort_keys=False).rstrip()
+    lines.extend(rendered.splitlines())

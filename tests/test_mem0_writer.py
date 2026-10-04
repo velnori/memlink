@@ -65,7 +65,7 @@ class TestMem0Writer:
             root = Path(td)
             writer.write([Memory(id="t1", name="Test", body="X.")], root)
             data = json.loads((root / "memories.json").read_text(encoding="utf-8"))
-            assert data["results"][0]["user_id"] == "default"
+            assert "user_id" not in data["results"][0]
 
     def test_roundtrip_mem0(self):
         reader = Mem0Reader()
@@ -114,9 +114,10 @@ class TestMem0Writer:
             root = Path(td)
             warnings = writer.write([Memory(id="empty-1", name=None, body=None)], root)
             data = json.loads((root / "memories.json").read_text(encoding="utf-8"))
-            assert len(data["results"]) == 0
+            assert len(data["results"]) == 1
+            assert Mem0Reader().read(root).memories[0].body is None
             assert len(warnings) >= 1
-            assert any("empty-1" in w for w in warnings)
+            assert writer.last_receipt["records"][0]["fields"]["body"]["status"] == "transformed"
 
     def test_datetime_iso_format(self):
         writer = Mem0Writer()

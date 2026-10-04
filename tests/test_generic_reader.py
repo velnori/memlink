@@ -69,7 +69,7 @@ class TestGenericReader:
         result = reader.read(obsidian_dir)
         mem = next(m for m in result.memories if m.name == "plain")
         assert mem.kind == "dynamic"
-        assert mem.body == "No frontmatter here\nJust text."
+        assert mem.body == (obsidian_dir / "notes/plain.md").read_bytes().decode("utf-8").strip()
 
     def test_archived_from_tags(self, obsidian_dir):
         reader = GenericReader()

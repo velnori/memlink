@@ -1,220 +1,98 @@
 # memlink
 
-**Pandoc for AI memories.**
+**Offline migration between AI memory file formats.**
 
-One canonical schema to bridge AI memory systems.
+Each format uses `Reader → Canonical Memory → Writer`. Canonical-v1 remains frozen. This checkout is the local **2.0.0** implementation; it has not been published.
 
-Stop writing n² converters between memory formats.  
-Write one Reader + one Writer per format. Everything else is automatic.
+MemLink converts all records inside a supplied source root automatically. It requires no AI service, API key, per-record review, or manual classification. `--all` includes archived records inside that approved scope. Readers report invalid and unsupported inputs instead of silently counting them as successful conversions.
 
-*Explicit compatibility reports. No silent data loss.*
+## Run this checkout
 
-Built for developers building AI assistants, memory platforms, and agent frameworks.
+Python 3.10–3.12 and PyYAML ≥6.0.3 are the declared environment. Install this checkout with `python -m pip install .`, or use the source package with the declared dependency installed.
 
-[![CI](https://github.com/velnori/memlink/actions/workflows/test.yml/badge.svg)](https://github.com/velnori/memlink/actions/workflows/test.yml)
-[![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue)](https://www.python.org/)
-[![PyPI version](https://img.shields.io/pypi/v/memlink-bridge)](https://pypi.org/project/memlink-bridge/)
-[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-261230)](https://github.com/astral-sh/ruff)
+From the repository root in PowerShell, expose the source package for these reproducible examples:
 
----
-
-## Why memlink?
-
-Different AI tools store memories differently. memlink lets them exchange memories without every project writing custom converters.
-
-**Without memlink** — 10 memory formats need 45 converters. Every new format makes it worse:
-
-```
-Ombre → OpenClaw    Ombre → Mem0    Ombre → Zep
-Mem0 → Zep          ...
+```powershell
+$env:PYTHONPATH = (Resolve-Path python).Path
+python -m memlink.cli --version
+python -m memlink.cli formats
 ```
 
-**With memlink** — each format writes one Reader + one Writer:
+After installing the local wheel, `memlink` is the equivalent command. Use a new/empty destination for `convert`.
 
-```
-         ┌── Reader → Canonical ──┬── Writer → OpenClaw
-  Ombre ─┤                        ├── Writer → Any Format
-         └── ...                   └── Writer → Any Format
-```
+## Full migration
 
-**n systems = 2n plugins.** Not n² converters.
+The included synthetic workspace contains five records: three on the same UTC day, several kinds/domains, an archived record, zero-valued emotion, a relationship, and unknown fields.
 
----
-
-## Quick Start
-
-```bash
-pip install memlink-bridge
-
-# Create a demo memory file
-mkdir -p /tmp/memlink-demo
-cat > /tmp/memlink-demo/hello.md << 'EOF'
----
-title: Hello MemLink
-tags: [demo]
----
-This is a memory. memlink can bridge it across AI memory formats.
-EOF
-
-# Convert Generic Markdown → OpenClaw
-memlink convert --from generic --to openclaw \
-  -s /tmp/memlink-demo \
-  -T /tmp/memlink-output
-
-# Show installed formats
-memlink formats
+```powershell
+python -m memlink.cli convert --from generic --to openclaw --source tests/fixtures/module01/full-workspace --target demo-output/openclaw --all --format json
+python -m memlink.cli validate --from openclaw --source demo-output/openclaw --level schema
+python -m memlink.cli validate --from generic --source tests/fixtures/module01/full-workspace --level roundtrip
 ```
 
-**What just happened:** A plain Markdown file was read into Canonical Memory format, then written as an OpenClaw memory.
+The output contains readable Markdown, `.memlink/archive.json`, and `.memlink/receipt.json`. Keep the archive with the native files to recover canonical fields the destination cannot express. Recovery validates the native file hashes and record bodies; edited native files are read as current data with a stale-archive warning.
 
-Sample output:
+Default best effort finishes with visible warnings and `partial` when differences need an archive or transformation. This does not mean those fields became native destination features. Strict mode stops before committing unallowed changes and exits **5**:
 
-```
-Read:     1 memories from generic
-Warnings: 0
-Time:     0.00s
+```powershell
+python -m memlink.cli convert --from generic --to mem0 --source tests/fixtures/module01/full-workspace --target demo-output/strict-blocked --all --strict --format json
 ```
 
-You should now see an OpenClaw-style memory file in `/tmp/memlink-output/`. The Compatibility Report tells you exactly what was preserved or dropped — no silent data loss.
+The expected exit code is 5 and `strict-blocked` is not created. `--fail-on-loss` is an alias. `--allow-change FIELD` is an explicit, recorded strict-mode field exception.
 
----
+## An existing destination
 
-## Supported Formats
+`migrate` plans conflicts, stages and reads back the output, detects changes to source/target snapshots, backs up replacements, then commits files. The default conflict policy is `skip`. Select `replace` or `rename` explicitly. `--dry-run` changes no files and marks field results `unknown`; it is an estimate without serialization/readback.
 
-| Format | Read | Write | Since |
-|--------|------|-------|-------|
-| Ombre Brain | ✅ | ✅ | v0.1.0 |
-| OpenClaw | ✅ | ✅ | v0.1.0 |
-| Generic Markdown | ✅ | ✅ | v0.1.1 |
-| Mem0 | ✅ | ✅ | v0.2.0 |
-| Zep | ✅ | ✅ | v0.3.0 |
-| ChatGPT Export | ✅ | — | v0.6.0 |
-| Claude Export | ✅ | — | v0.6.0 |
-
-**Generic Markdown** works with YAML-frontmatter Markdown used by tools like Obsidian, Logseq, Bear, and plain Markdown. Tool-specific extensions are preserved as metadata or reported as compatibility notes.
-
-### Planned Formats
-
-| Format | Target |
-|--------|--------|
-| ChatGPT/Claude Writers | later |
-
----
-
-## Feature Compatibility
-
-MemLink is honest about what transfers and what doesn't.
-
-**Without a compatibility layer:**
-- Format-specific fields can disappear silently.
-
-**With MemLink:**
-- Preserved fields stay in Canonical Memory.
-- Format-specific fields are preserved in metadata when possible.
-- Compatibility reports explain what changed.
-
-*Multi-format demo — convert, merge, broadcast:*
-
-```
-$ memlink convert --from ombre --to mem0 -s ./ombre-data -T ./mem0-out --verbose
-
-Read:     4 memories from ombre
-
-Compatibility Report:
-  [ok] Preserved via metadata:
-    Emotion fields (valence/arousal): 3 field values (75%)
-  [~] Degraded:
-    Unsupported memory kinds: 2 field values (50%)
-Warnings: 2
-Time:     0.00s
-
-$ memlink merge --sources mem0:./mem0-out ombre:./ombre-data --to openclaw:./merged --verbose
-
-Source mem0: 4 memories from ./mem0-out
-Source ombre: 4 memories from ./ombre-data
-Sources:  2 (mem0(4), ombre(4))
-Total:    8 memories
-Unique:   4
-Resolved: 4 conflicts (strategy: newest)
-Warnings: 0
-Time:     0.00s
-
-$ memlink formats
-
-Format          Reader     Writer
------------------------------------
-chatgpt         yes        no
-claude_export   yes        no
-generic         yes        yes
-mem0            yes        yes
-ombre           yes        yes
-openclaw        yes        yes
-zep             yes        yes
+```powershell
+python -m memlink.cli migrate --from generic --to openclaw --source tests/fixtures/module01/full-workspace --target demo-output/openclaw --all --on-conflict replace --dry-run --format json
+python -m memlink.cli migrate --from generic --to openclaw --source tests/fixtures/module01/full-workspace --target demo-output/openclaw --all --on-conflict replace --format json
 ```
 
----
+Backups remain in `.memlink/backups/<transaction-id>/` with a restore manifest. Failures roll back owned changes. Files changed by an outside writer are retained and incomplete recovery is reported. Commits are per file; multiple files or broadcast destinations are not globally atomic. OpenClaw configuration files are not migration targets.
 
-## Architecture
+## Other workflows
 
-```
-  Ombre ──┐
-  Mem0  ──┼──→ Reader → Canonical Memory → Writer ──┬──→ OpenClaw
-Generic ──┘                                          └──→ Ombre
-```
+Default merge identity is **source namespace + scope + native id**. Equal IDs from different sources/users remain separate. Explicit `--link-by-id` overrides this and is recorded. Broadcast uses independent transactions and exits nonzero if any target fails.
 
-Each format implements three methods:
-
-```python
-class FormatPlugin:
-    def read(path) → ReadResult       # Format → Canonical
-    def write(memories, path) → []    # Canonical → Format
-    def validate(path) → [Issue]      # Integrity checks
+```powershell
+python -m memlink.cli merge --sources generic:tests/fixtures/module01/full-workspace mem0:tests/fixtures/mem0_samples --to generic:demo-output/merged --all --format json
+python -m memlink.cli broadcast --from generic:tests/fixtures/module01/full-workspace --to mem0:demo-output/mem0 zep:demo-output/zep --all --format json
+python -m memlink.cli inspect tests/fixtures/module01/full-workspace/daily-a.md --format generic --id daily-a
+python -m memlink.cli stats --from generic --source tests/fixtures/module01/full-workspace
+python -m memlink.cli diff --from-1 generic --from-2 generic --source tests/fixtures/module01/full-workspace tests/fixtures/module01/full-workspace --format json
 ```
 
-Add a new format = write one plugin. Zero changes to core code.
+## Supported file variants
 
----
+| CLI format | Read | Write | Actual scope |
+|---|---|---|---|
+| `ombre` | yes | yes | YAML bucket Markdown; UTC time plus original timezone; deterministic target IDs |
+| `openclaw` | yes | yes | Plain `MEMORY.md`, recursive `memory/*.md` including daily/slug/imported notes; framed daily output by default; separate legacy `structured` mode |
+| `generic` | yes | yes | Plain Markdown and documented optional frontmatter; generated `notes/*.md` preserves canonical fields |
+| `mem0` | yes | yes | Offline `results`/array JSON; user/agent/run scope retained; `memories.json` output |
+| `zep` | yes | yes | Offline facts/results/array/session-summary JSON; session scope retained; `facts.json` output |
+| `chatgpt` | yes | no | Conversation transcript JSON; active branch selected; raw graph retained/reported |
+| `claude_export` | yes | no | Conversation transcript JSON; text/content blocks selected; opaque tools/attachment data retained/reported |
+| `stream-summary` | yes | no | `memlink-stream-summary-v1` Markdown, dates/status/collection fields |
 
-## What memlink is NOT
+OpenClaw `USER.md` is an optional user model; `DREAMS.md` is a dreaming review surface. Read them only with `--include-user` / `--include-dreams`. MemLink does not automatically turn emotion records into DREAMS entries. [Official memory semantics](https://docs.openclaw.ai/concepts/memory).
 
-- ❌ **Sync engine** — v1.0 is export/import only
-- ❌ **Memory database** — Works with files, not APIs
-- ❌ **Embedding store** — No vector search
-- ❌ **Knowledge graph** — No traversal or inference
-- ⚠️ **Battle-tested** — v1.0 API is stable, but not yet tested at scale (10K+ memories) or with production workloads. Use with that in mind.
+Mem0/Zep writers create local files; no online API import is claimed. Chat exports are transcripts, not Saved Memory. Generic Markdown support does not imply complete Obsidian/Logseq/Bear application semantics.
 
----
+## Evidence and boundaries
 
-## Roadmap
+Receipts version actual file/record accounting, filters, identity, native/archive/transformed/dropped field results, conflict policy, output hashes, readback and backup status. Capabilities are preflight hints. See [DESIGN](docs/DESIGN.md), [CLI contract](docs/guide/cli.md), [2.0 migration](docs/guide/migration-2.0.md), and [plugin contract](docs/api/plugin.md).
 
-| Version | Focus |
-|---------|-------|
-| **v0.2** | Mem0 Reader ✅, `--fail-on-loss` ✅ |
-| **v0.3** | Zep Reader ✅, MkDocs ✅, merge ✅ |
-| **v0.4** | Mem0 Writer ✅, `memlink merge` ✅ |
-| **v0.5** | Zep Writer ✅, `memlink broadcast` ✅ |
-| **v0.6** | ChatGPT + Claude Export Readers ✅ |
-| **v1.0** | Schema Frozen, Plugin API Stable ✅ (current) |
-
----
+Limits are enforced: 16 MiB per file, 256 MiB per scanned root, 10,000 files, 100,000 records, nesting depth 100 and 100,000 serialization nodes. Generated archives must also fit the file limits. Symlinks, junctions and hardlinks are rejected; sources/targets may not overlap. Third-party plugins are trusted Python code, not sandboxed executables. No claims are made about power-loss recovery, arbitrarily large inputs, live service ingestion, or AI retrieval quality.
 
 ## Development
 
-```bash
-git clone https://github.com/velnori/memlink.git
-cd memlink
-pip install -e ".[dev]"
-
-pytest tests/ -v          # 257 tests
-ruff check python/memlink/       # Lint
-mypy python/memlink/             # Type check
+```powershell
+python -m pytest tests/ -q
+python -m ruff check python/memlink/ tests/
+python -m ruff format --check python/memlink/ tests/
+python -m mypy python/memlink/
 ```
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for how to add a new format.
-
----
-
-## License
 
 MIT — see [LICENSE](LICENSE).

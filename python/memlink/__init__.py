@@ -1,11 +1,10 @@
 """memlink — AI Memory Interchange Layer.
 
-v1.0: Canonical Memory Schema and Plugin API are stable.
-See spec/README.md for the language-neutral specification.
+Canonical-v1 remains frozen. Version 2 adds verified transactions and receipts.
+The historical 1.x API promise and behavior changes are documented in docs/guide/migration-2.0.md.
 """
 
-__version__ = "1.0.8"
-
+from ._version import __version__
 from .converter import ConversionAnalysis, FeatureImpact, analyze_conversion, compare_memories
 from .models import JSONValue, Memory, Relationship, Source
 from .plugin import Capabilities, FormatPlugin, ReadResult, Severity, ValidationIssue

@@ -1,219 +1,72 @@
-"""Three-level validation: schema, semantic, roundtrip.
-
-Error codes use the MLxxx namespace for stable CI/IDE references.
-"""
+"""Adapter-aware validation and packaged canonical-v1 instance checks."""
 
 from __future__ import annotations
 
-import contextlib
+import json
+import math
 import re
+import warnings
 from enum import Enum
+from importlib.resources import files
 from pathlib import Path
 
-from ._frontmatter import parse_frontmatter as _parse_frontmatter
+from .codec import identity_key, memory_dict, parse_time
+from .models import Memory
 from .plugin import Severity, ValidationIssue
-
-# ── Error codes ───────────────────────────────────────────────────
 
 
 class ErrorCode(str, Enum):
-    # Schema errors (ML001–ML099)
     INVALID_DATETIME = "ML001"
     MISSING_ID = "ML002"
     DUPLICATE_ID = "ML003"
     INVALID_SCHEMA = "ML004"
     MISSING_REQUIRED_FIELD = "ML005"
     INVALID_SOURCE_URI = "ML010"
-
-    # Semantic warnings/errors (ML100–ML199)
     BODY_EMPTY = "ML100"
     VALUE_OUT_OF_RANGE = "ML101"
     UNSUPPORTED_KIND = "ML102"
     UNKNOWN_DOMAIN = "ML103"
-
-    # I/O errors (ML200–ML299)
     FILE_NOT_FOUND = "ML200"
     PERMISSION_DENIED = "ML201"
     CORRUPT_FILE = "ML202"
-
-    # Conversion errors (ML300–ML399)
     CONCURRENT_MODIFICATION = "ML300"
     FORMAT_INCOMPATIBLE = "ML301"
     ID_CONFLICT = "ML302"
     VALIDATION_ERROR = "ML303"
-
-    # Roundtrip errors (ML400–ML499)
     ROUNDTRIP_ID_MISMATCH = "ML400"
     ROUNDTRIP_KIND = "ML401"
     ROUNDTRIP_BODY = "ML402"
     ROUNDTRIP_IMPORTANCE = "ML403"
     ROUNDTRIP_TIME = "ML404"
-    # Legacy alias
-    ROUNDTRIP_CONTENT_MISMATCH = "ML401"  # deprecated — use ROUNDTRIP_KIND
+    ROUNDTRIP_CONTENT_MISMATCH = "ML401"
 
 
-# ── Schema validation ─────────────────────────────────────────────
+_SCHEMA_CACHE = None
 
 
-def _load_canonical_schema() -> dict | None:
-    """Load the Canonical Memory JSON Schema for validation."""
-    import json
-
-    schema_path = Path(__file__).parent.parent.parent / "spec" / "canonical-v1.schema.json"
-    if not schema_path.exists():
-        return None
-    try:
-        return json.loads(schema_path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError):
-        return None
+def _load_canonical_schema() -> dict:
+    data = json.loads(files("memlink").joinpath("resources/canonical-v1.schema.json").read_text(encoding="utf-8"))
+    if data.get("$id") != "https://memlink.dev/canonical-v1.schema.json":
+        raise ValueError("Canonical schema resource is missing or invalid")
+    return data
 
 
-_SCHEMA_CACHE: dict | None = None
-
-
-def _get_schema() -> dict | None:
+def _get_schema() -> dict:
     global _SCHEMA_CACHE
     if _SCHEMA_CACHE is None:
         _SCHEMA_CACHE = _load_canonical_schema()
     return _SCHEMA_CACHE
 
 
-def validate_schema(path: Path) -> list[ValidationIssue]:
-    """Validate YAML syntax, required fields, and JSON Schema compliance."""
-    issues: list[ValidationIssue] = []
-    schema = _get_schema()
-
-    for md_file in sorted(path.rglob("*.md")):
-        try:
-            text = md_file.read_text(encoding="utf-8")
-        except Exception:
-            issues.append(
-                ValidationIssue(
-                    code=ErrorCode.FILE_NOT_FOUND,
-                    severity=Severity.ERROR,
-                    path=str(md_file),
-                    message=f"Cannot read file: {md_file}",
-                )
-            )
-            continue
-
-        fm, body = _parse_frontmatter(text)
-
-        # Check frontmatter is valid dict
-        if not isinstance(fm, dict):
-            issues.append(
-                ValidationIssue(
-                    code=ErrorCode.INVALID_SCHEMA,
-                    severity=Severity.ERROR,
-                    path=str(md_file),
-                    message="YAML frontmatter did not parse to a dictionary",
-                    suggestion="Ensure the file starts with '---' followed by valid YAML key:value pairs",
-                )
-            )
-            continue
-
-        # Required: id (bucket_id for Ombre)
-        mem_id = fm.get("id") or fm.get("bucket_id")
-        if not mem_id:
-            issues.append(
-                ValidationIssue(
-                    code=ErrorCode.MISSING_ID,
-                    severity=Severity.ERROR,
-                    path=str(md_file),
-                    message="Missing required field: id or bucket_id",
-                    suggestion="Add 'id:' or 'bucket_id:' to the frontmatter",
-                )
-            )
-        elif not isinstance(mem_id, (str, int, float)):
-            issues.append(
-                ValidationIssue(
-                    code=ErrorCode.MISSING_ID,
-                    severity=Severity.ERROR,
-                    path=str(md_file),
-                    field="id",
-                    message=f"id must be a string, got {type(mem_id).__name__}",
-                )
-            )
-
-        # JSON Schema validation
-        if schema and fm:
-            with contextlib.suppress(Exception):
-                _validate_against_schema(fm, body, schema, md_file, issues)
-
-    return issues
-
-
-def _validate_against_schema(fm: dict, body: str, schema: dict, file: Path, issues: list[ValidationIssue]) -> None:
-    mem_dict = {
-        "schema_version": "1",
-        "id": str(fm.get("id") or fm.get("bucket_id") or ""),
-        "name": fm.get("name") or fm.get("title"),
-        "body": body.strip() or None,
-        "kind": fm.get("kind") or fm.get("type", "dynamic"),
-        "status": "active",
-        "tags": fm.get("tags") if isinstance(fm.get("tags"), list) else [],
-        "domains": [],
-        "pinned": bool(fm.get("pinned", False)),
-    }
-    for field, value in mem_dict.items():
-        if field not in schema.get("properties", {}):
-            continue
-        prop = schema["properties"][field]
-        expected = prop.get("type")
-        if expected is None:
-            continue
-        if isinstance(expected, list) and "null" in expected and value is None:
-            continue
-        types = expected if isinstance(expected, list) else [expected]
-        type_ok = _check_json_type(value, types)
-        if not type_ok:
-            issues.append(
-                ValidationIssue(
-                    code=ErrorCode.INVALID_SCHEMA,
-                    severity=Severity.WARNING,
-                    path=str(file),
-                    field=field,
-                    message=f"Type mismatch: expected {expected}, got {type(value).__name__}",
-                )
-            )
-            continue
-
-        # Enum validation
-        enum_vals = prop.get("enum")
-        if enum_vals and value not in enum_vals:
-            issues.append(
-                ValidationIssue(
-                    code=ErrorCode.INVALID_SCHEMA,
-                    severity=Severity.WARNING,
-                    path=str(file),
-                    field=field,
-                    message=f"Invalid value '{value}' — allowed: {enum_vals}",
-                )
-            )
-
-        # Pattern validation (string fields)
-        pattern = prop.get("pattern")
-        if pattern and isinstance(value, str) and not re.match(pattern, value):
-            issues.append(
-                ValidationIssue(
-                    code=ErrorCode.INVALID_SCHEMA,
-                    severity=Severity.WARNING,
-                    path=str(file),
-                    field=field,
-                    message=f"Value '{value}' does not match pattern {pattern}",
-                )
-            )
-
-
 def _check_json_type(value, types: list[str]) -> bool:
     for t in types:
         if t == "string" and isinstance(value, str):
             return True
-        if t == "number" and isinstance(value, (int, float)):
+        if t == "number" and type(value) in {int, float} and math.isfinite(value):
             return True
-        if t == "integer" and isinstance(value, int) and not isinstance(value, bool):
+        if t == "integer" and type(value) is int:
             return True
-        if t == "boolean" and isinstance(value, bool):
+        if t == "boolean" and type(value) is bool:
             return True
         if t == "array" and isinstance(value, list):
             return True
@@ -224,134 +77,152 @@ def _check_json_type(value, types: list[str]) -> bool:
     return False
 
 
-# ── Semantic validation ────────────────────────────────────────────
-
-
-def validate_semantic(path: Path) -> list[ValidationIssue]:
-    """Validate field types, value ranges, domain integrity."""
-    issues: list[ValidationIssue] = []
-    seen_ids: dict[str, Path] = {}
-
-    for md_file in sorted(path.rglob("*.md")):
-        text = md_file.read_text(encoding="utf-8")
-        fm, body = _parse_frontmatter(text)
-
-        mem_id = str(fm.get("id") or fm.get("bucket_id") or "")
-        file_path = str(md_file)
-
-        # Duplicate ID (casefold for cross-platform)
-        if mem_id:
-            key = mem_id.casefold()
-            if key in seen_ids:
-                issues.append(
-                    ValidationIssue(
-                        code=ErrorCode.DUPLICATE_ID,
-                        severity=Severity.ERROR,
-                        path=file_path,
-                        memory_id=mem_id,
-                        message=f"Duplicate ID '{mem_id}' (case-insensitive match with '{seen_ids[key].name}')",
-                        suggestion="Memory IDs must be unique within a dataset.",
-                    )
-                )
-            else:
-                seen_ids[key] = md_file
-
-        # Valence range
-        valence = fm.get("valence")
-        if valence is not None:
+def validate_instance(data, schema: dict | None = None, prefix: str = "") -> list[str]:
+    """Validate every keyword used by the frozen canonical-v1 schema (no external refs)."""
+    schema = _get_schema() if schema is None else schema
+    problems = []
+    types = schema.get("type")
+    if types and not _check_json_type(data, types if isinstance(types, list) else [types]):
+        return [f"{prefix or 'record'}: invalid type for {types}"]
+    if "const" in schema and data != schema["const"]:
+        problems.append(f"{prefix}: unknown schema version/value")
+    if "enum" in schema and data not in schema["enum"]:
+        problems.append(f"{prefix}: invalid enum value")
+    if data is None:
+        return problems
+    if type(data) in {int, float}:
+        if "minimum" in schema and data < schema["minimum"]:
+            problems.append(f"{prefix}: below minimum")
+        if "maximum" in schema and data > schema["maximum"]:
+            problems.append(f"{prefix}: above maximum")
+    if isinstance(data, str):
+        if "pattern" in schema and not re.search(schema["pattern"], data):
+            problems.append(f"{prefix}: invalid pattern")
+        if schema.get("format") == "date-time":
             try:
-                v = float(valence)
-                if not (0.0 <= v <= 1.0):
-                    issues.append(
-                        ValidationIssue(
-                            code=ErrorCode.VALUE_OUT_OF_RANGE,
-                            severity=Severity.WARNING,
-                            path=file_path,
-                            memory_id=mem_id,
-                            field="valence",
-                            message=f"valence={v} is outside [0.0, 1.0]",
-                        )
-                    )
-            except (ValueError, TypeError):
-                pass
-
-        # Arousal range
-        arousal = fm.get("arousal")
-        if arousal is not None:
-            try:
-                a = float(arousal)
-                if not (0.0 <= a <= 1.0):
-                    issues.append(
-                        ValidationIssue(
-                            code=ErrorCode.VALUE_OUT_OF_RANGE,
-                            severity=Severity.WARNING,
-                            path=file_path,
-                            memory_id=mem_id,
-                            field="arousal",
-                            message=f"arousal={a} is outside [0.0, 1.0]",
-                        )
-                    )
-            except (ValueError, TypeError):
-                pass
-
-        # Body empty warning (info level, not an error)
-        if not body.strip():
-            issues.append(
-                ValidationIssue(
-                    code=ErrorCode.BODY_EMPTY,
-                    severity=Severity.INFO,
-                    path=file_path,
-                    memory_id=mem_id,
-                    message="Body is empty",
-                    suggestion="Consider adding content or a summary.",
-                )
-            )
-
-        # Datetime format
-        created = fm.get("created") or fm.get("created_at")
-        if isinstance(created, str) and not _is_iso_datetime(created):
-            issues.append(
-                ValidationIssue(
-                    code=ErrorCode.INVALID_DATETIME,
-                    severity=Severity.WARNING,
-                    path=file_path,
-                    memory_id=mem_id,
-                    field="created",
-                    message=f"Datetime '{created}' is not valid ISO 8601",
-                    suggestion="Use format: 2024-01-01T10:00:00Z",
-                )
-            )
-
-    return issues
+                dt = parse_time(data)
+                if dt is None or not re.search(r"[T ]\d{2}:\d{2}", data):
+                    raise ValueError("not datetime")
+            except (ValueError, TypeError, OverflowError):
+                problems.append(f"{prefix}: invalid datetime")
+    if isinstance(data, dict):
+        for key in schema.get("required", []):
+            if key not in data:
+                problems.append(f"{prefix}.{key}: required field missing")
+        for key, sub in schema.get("properties", {}).items():
+            if key in data:
+                problems.extend(validate_instance(data[key], sub, f"{prefix}.{key}".lstrip(".")))
+    if isinstance(data, list) and "items" in schema:
+        for i, value in enumerate(data):
+            problems.extend(validate_instance(value, schema["items"], f"{prefix}[{i}]"))
+    return problems
 
 
-# ── Roundtrip validation ───────────────────────────────────────────
-
-
-def validate_roundtrip(
-    path: Path, source_format: str = "ombre", intermediate_format: str = "openclaw"
-) -> list[ValidationIssue]:
-    """Validate A→B→A canonical consistency (semantic, not byte-level)."""
-    from .converter import run_roundtrip
-
+def validate_memory(memory: Memory) -> list[ValidationIssue]:
     try:
-        report = run_roundtrip(path, source_format, intermediate_format)
-        return report.issues
-    except Exception as e:
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "error", message="Non-serializable type .* converted to string", category=UserWarning
+            )
+            data = memory_dict(memory)
+        problems = validate_instance(data)
+        if not isinstance(memory.id, str) or not memory.id:
+            problems.append("id: missing stable ID")
+        if memory.source and (not isinstance(memory.source.format, str) or not isinstance(memory.source.path, str)):
+            problems.append("source: invalid")
         return [
             ValidationIssue(
-                code=ErrorCode.VALIDATION_ERROR,
+                code=ErrorCode.MISSING_ID if p.startswith("id:") else ErrorCode.INVALID_SCHEMA,
                 severity=Severity.ERROR,
-                message=f"Roundtrip validation failed: {e}",
+                memory_id=memory.id,
+                field=p.split(":")[0],
+                message=p,
+            )
+            for p in problems
+        ]
+    except Exception as exc:
+        return [
+            ValidationIssue(
+                code=ErrorCode.INVALID_SCHEMA,
+                severity=Severity.ERROR,
+                memory_id=memory.id,
+                message=f"Canonical validation failed: {exc}",
             )
         ]
 
 
-# ── Helpers ────────────────────────────────────────────────────────
+def _read_validation(path: Path, source_format: str | None) -> tuple[list[Memory], list[ValidationIssue]]:
+    from .detection import detect_format
+    from .read_support import read_issues
+    from .registry import get_reader
+
+    try:
+        _get_schema()
+        result = get_reader(source_format or detect_format(path)).read(path)
+        issues = read_issues(result)
+        for memory in result.memories:
+            issues.extend(validate_memory(memory))
+        return result.memories, issues
+    except Exception as exc:
+        return [], [
+            ValidationIssue(code=ErrorCode.INVALID_SCHEMA, severity=Severity.ERROR, path=str(path), message=str(exc))
+        ]
 
 
-_ISO_RE = re.compile(r"^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2})?([+-]\d{2}:?\d{2}|Z)?$")
+def validate_schema(path: Path, source_format: str | None = None) -> list[ValidationIssue]:
+    return _read_validation(path, source_format)[1]
+
+
+def validate_semantic(path: Path, source_format: str | None = None) -> list[ValidationIssue]:
+    memories, issues = _read_validation(path, source_format)
+    seen = set()
+    for memory in memories:
+        key = identity_key(memory)
+        if key in seen:
+            issues.append(
+                ValidationIssue(
+                    code=ErrorCode.DUPLICATE_ID,
+                    severity=Severity.ERROR,
+                    memory_id=memory.id,
+                    message="Duplicate scoped identity",
+                )
+            )
+        seen.add(key)
+        if not memory.body or not memory.body.strip():
+            issues.append(
+                ValidationIssue(
+                    code=ErrorCode.BODY_EMPTY, severity=Severity.INFO, memory_id=memory.id, message="Body is empty"
+                )
+            )
+    return issues
+
+
+def validate_roundtrip(
+    path: Path,
+    source_format: str | None = None,
+    intermediate_format: str = "openclaw",
+    output_mode: str = "daily-notes",
+) -> list[ValidationIssue]:
+    from .converter import run_roundtrip
+    from .detection import detect_format
+
+    try:
+        return run_roundtrip(
+            path, source_format or detect_format(path), intermediate_format, output_mode=output_mode
+        ).issues
+    except Exception as exc:
+        return [
+            ValidationIssue(
+                code=ErrorCode.VALIDATION_ERROR, severity=Severity.ERROR, message=f"Roundtrip validation failed: {exc}"
+            )
+        ]
+
+
+_ISO_RE = re.compile(r"^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}")
 
 
 def _is_iso_datetime(s: str) -> bool:
-    return bool(_ISO_RE.match(s))
+    try:
+        return bool(_ISO_RE.match(s) and parse_time(s))
+    except ValueError:
+        return False

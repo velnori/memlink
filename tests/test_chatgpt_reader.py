@@ -15,7 +15,9 @@ class TestChatGPTReader:
         result = reader.read(FIXTURES / "chatgpt_samples")
         assert result.stats["parsed"] == 2
         assert result.stats["skipped"] == 1  # conv-003: system-only
-        assert len(result.warnings) == 1
+        assert any("conv-003" in w for w in result.warnings)
+        assert result.stats["unsupported"] == 1
+        assert all("chatgpt_transcript" in m.extensions for m in result.memories)
 
     def test_field_mapping_id(self):
         reader = ChatGPTReader()

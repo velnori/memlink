@@ -1,63 +1,7 @@
-# ChatGPT Export
+# ChatGPT conversation transcript export
 
-ChatGPT's official data export (available via Settings → Data controls → Export data) includes a `conversations.json` file containing your full conversation history.
+Format `chatgpt` reads conversation JSON; it is not ChatGPT Saved Memory. The reader selects `current_node` and follows its parent chain to the active conversation branch. Without current_node it can infer only a unique valid leaf. Cycles, orphan parents, missing current nodes and ambiguous active paths produce deterministic invalid records.
 
-## Capabilities
+User/assistant readable text becomes transcript bodies with timestamps and canonical identity. Non-active branches and original graph fields are preserved in `chatgpt_transcript` transport extensions with warnings; they are not concatenated into the selected conversation. Tool/attachment/opaque content is preserved/reported as raw data, not interpreted or OCRed. Conversations with no supported human text are marked unsupported rather than converted into an empty green memory.
 
-| Feature | Status |
-|---------|--------|
-| Read | ✅ |
-| Write | — |
-| Emotion | — |
-| Importance | — |
-
-## Export Format
-
-The export is a ZIP file. Extract it and point memlink at the directory containing `conversations.json`.
-
-Each conversation in the JSON uses a tree-based `mapping` structure where nodes represent individual messages. memlink traverses this tree, extracts `user` and `assistant` messages in chronological order, and concatenates them into the memory body.
-
-## Field Mapping
-
-| ChatGPT | Canonical |
-|---------|-----------|
-| `id` | `id` |
-| `title` | `name` (truncated to 60 chars) |
-| `create_time` (unix timestamp) | `created_at` |
-| `update_time` (unix timestamp) | `updated_at` |
-| messages (user + assistant) | `body` — formatted as `role: text` pairs |
-| — | `kind = "dynamic"` |
-
-## Usage
-
-```bash
-# Unzip your ChatGPT export first, then:
-memlink convert --from chatgpt --to generic \
-  -s ./chatgpt-export/ \
-  -T ./conversations/
-
-# Or inspect what will be preserved before converting:
-memlink convert --from chatgpt --to ombre --dry-run \
-  -s ./chatgpt-export/ \
-  -T ./output/
-```
-
-## Body Format
-
-Each memory's body contains the full conversation as:
-
-```
-user: How do I use asyncio in Python?
-
-assistant: asyncio is Python's standard library for writing concurrent code...
-
-user: Can you show me an example?
-
-assistant: Sure, here's a basic example...
-```
-
-## Known Limitations
-
-- If you edited a message in ChatGPT, the conversation tree has branches. memlink collects all nodes by timestamp — edited and original versions may both appear in the body.
-- System and tool messages are skipped; only `user` and `assistant` turns are included.
-- Conversations with no user/assistant messages (e.g. empty or tool-only) are skipped with a warning.
+This is reader-only. Convert to a supported writer with best-effort receipt/archive, or strict mode to block unallowed adaptation. Returning to ChatGPT/Saved Memory and online upload are outside this file adapter.

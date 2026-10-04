@@ -57,7 +57,7 @@ class TestOmbreReader:
 
         # no-id.md and invalid-yaml both have frontmatter but no valid id
         warnings_text = "\n".join(result.warnings)
-        assert result.stats["skipped"] >= 1
+        assert result.stats["invalid"] >= 1
         assert "Missing bucket_id" in warnings_text
 
     def test_empty_directory(self):

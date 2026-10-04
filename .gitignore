@@ -36,16 +36,22 @@ Thumbs.db
 
 # Project
 *.lock
+/.planning/
+/demo-output/
+
+# Local client settings and memory
+/.claude/settings.local.json
+/CLAUDE.md
+/MEMORY.md
 
 # Internal review docs (not for public repo)
-docs/logo-ideas.md
-docs/logo-concepts/
-docs/manaul/
-CLAUDE.md
+/docs/logo-ideas.md
+/docs/logo-concepts/
+/docs/manaul/
+/docs/relaunch/
+/docs/superpowers/plans/
 
 # MkDocs build output
 site/
-MEMORY.md
 
-notebooks/
-docs/superpowers/plans/
+/notebooks/

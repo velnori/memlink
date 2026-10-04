@@ -1,40 +1,16 @@
-# memlink
+# MemLink
 
-**Pandoc for AI memories.**
+MemLink converts and safely migrates approved AI memory files through `Reader → Canonical Memory → Writer`. Full Migration is local, offline and automatic; no AI API, key or per-record review is required. This checkout is the unpublished 2.0.0 implementation; canonical-v1 is unchanged.
 
-Bridge AI memory formats through one canonical schema.
+| Format | Reader | Writer | Documented file variant |
+|---|---|---|---|
+| Ombre | yes | yes | [Bucket Markdown](formats/ombre.md) |
+| OpenClaw | yes | yes | [Plain workspace notes and framed daily output](formats/openclaw.md) |
+| Generic | yes | yes | [Markdown/frontmatter](formats/generic.md) |
+| Mem0 | yes | yes | [Offline JSON](formats/mem0.md) |
+| Zep | yes | yes | [Offline JSON](formats/zep.md) |
+| ChatGPT | yes | no | [Transcript export](formats/chatgpt.md) |
+| Claude | yes | no | [Transcript export](formats/claude_export.md) |
+| Stream summary | yes | no | [Versioned summary Markdown](formats/stream-summary.md) |
 
-Stop writing n² converters. Write one Reader + one Writer per format.
-
-```
-  Ombre ──┐
-  Mem0  ──┼──→ Canonical Memory ──┬──→ OpenClaw
-Generic ──┘                        └──→ Ombre
-```
-
-**n formats = 2n plugins.** Not n² converters.
-
----
-
-## Quick Links
-
-- [Quick Start](guide/quickstart.md) — convert your first memory in 60 seconds
-- [Formats](formats/ombre.md) — supported memory systems
-- [Plugin API](api/plugin.md) — add your own Reader/Writer
-
-## Install
-
-```bash
-pip install memlink-bridge
-```
-
-## Supported Formats
-
-| Format | Read | Write |
-|--------|------|-------|
-| Ombre Brain | ✅ | ✅ |
-| OpenClaw | ✅ | ✅ |
-| Generic Markdown | ✅ | — |
-| Mem0 | ✅ | — |
-
-[GitHub](https://github.com/velnori/memlink) · [PyPI](https://pypi.org/project/memlink-bridge/) · MIT License
+Start with [Quick Start](guide/quickstart.md). [CLI](guide/cli.md), [2.0 migration](guide/migration-2.0.md), [DESIGN](DESIGN.md) and [Plugin API](api/plugin.md) describe scope, identity, real readback receipts, safe apply and restore limits.

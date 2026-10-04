@@ -131,7 +131,11 @@ class TestBroadcast:
             assert len(r2.memories) == 1
             assert r1.memories[0].id == "z"
             # Ombre writer generates hex for non-hex ids from non-ombre sources
-            assert len(r2.memories[0].id) == 12
+            assert r2.memories[0].id == "z"
+            import json
+
+            receipt = json.loads((out2 / ".memlink/receipt.json").read_text(encoding="utf-8"))
+            assert receipt["records"][0]["target_id"] == "z"  # Library source is explicitly unknown.
 
     def test_broadcast_invalid_writer(self):
         from memlink.registry import PluginNotFoundError

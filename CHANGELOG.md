@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.0.0 — Unreleased
+
+### Added
+
+- Shared staged write transactions with source/target snapshot checks, readback verification, conflict handling, replacement backups and rollback reporting.
+- Versioned receipts and canonical recovery archives with output hashes, record accounting, field-impact reporting and detection of stale native output.
+- Strict conversion policies, explicit field exceptions and dry-run migration plans.
+
+### Changed
+
+- Package version is now 2.0.0 with a single version source. Canonical-v1 remains unchanged.
+- Reader results report parsing errors, unsupported inputs and valid-empty results. Canonical validation and serialization enforce resource limits and reject invalid values.
+- Default merge identity includes source namespace, scope and native ID.
+- Plugins retain their public method signatures and must declare valid capabilities; public writers use the shared transaction boundary.
+
+### Fixed
+
+- CLI stdout and stderr use explicit UTF-8 for Unicode, JSON, redirected output and pipes without requiring `PYTHONUTF8` or `PYTHONIOENCODING`.
+
+See the [2.0 migration guide](docs/guide/migration-2.0.md) and [CLI contract](docs/guide/cli.md) for compatibility changes and transaction limits. File commits are not globally atomic.
+
 ## [1.0.11] — 2026-07-02
 
 ### Fixed

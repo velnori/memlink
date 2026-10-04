@@ -1,65 +1,9 @@
-# Zep
+# Zep offline JSON
 
-[Zep](https://github.com/getzep/zep) is a long-term memory store for AI assistants (CE and Cloud).
+Format `zep` reads facts/results arrays, bare record arrays, or supported session objects with messages and summary. A supplied file is exact; directories prefer `facts.json`, otherwise require an unambiguous JSON file. Fact records use `uuid`/ID and `fact`/supported text aliases; timestamps are mapped to UTC.
 
-## Capabilities
+Session scope from records or the export root is retained as `zep_session_id` and identity scope. Unknown scope stays unknown. Original records and top-level unknown fields are transport data, not native semantic assertions.
 
-| Feature | Status |
-|---------|--------|
-| Read | ✅ |
-| Write | ✅ |
-| Emotion | — |
-| Importance | — |
+The writer creates `facts.json` with a `facts` array. ID, text and timestamps are checked by native readback. Summary/emotion/relationship/extensions and classification values that the file shape does not express require the canonical archive. Deterministic renamed segments are explicitly routed by its manifest.
 
-## Supported JSON Formats
-
-memlink auto-detects the Zep export format:
-
-- `{"facts": [...]}` — Zep CE facts export (primary)
-- `{"uuid": ..., "facts": [...]}` — session summary format
-- `[...]` — direct array of fact objects
-
-## Field Mapping
-
-### Read (Zep → Canonical)
-
-| Zep | Canonical |
-|-----|-----------|
-| `uuid` | `id` |
-| `fact` / `content` | `body` (+ `name` truncated to 60 chars) |
-| `created_at` | `created_at` |
-| `updated_at` | `updated_at` |
-| `metadata` | `extensions.zep_metadata` |
-| `session_id` | `extensions.zep_session_id` |
-
-### Write (Canonical → Zep)
-
-| Canonical | Zep |
-|-----------|-----|
-| `id` | `uuid` |
-| `body` \| `name` | `fact` |
-| `created_at` | `created_at` |
-| `updated_at` | `updated_at` |
-| `extensions.zep_metadata` | `metadata` |
-| `extensions.zep_session_id` | `session_id` |
-
-Output file: `facts.json`
-
-## Usage
-
-```bash
-# Export Zep memories to Ombre Brain format
-memlink convert --from zep --to ombre \
-  -s ./zep-export/ \
-  -T ./ombre-memories/
-
-# Import from Ombre back to Zep
-memlink convert --from ombre --to zep \
-  -s ./ombre-memories/ \
-  -T ./zep-export/
-```
-
-## Known Limitations
-
-- Emotion fields (`valence`/`arousal`) are not supported by Zep — stored in `extensions` on roundtrip
-- `kind` is always written as `dynamic`; Zep has no native kind field
+This adapter does not call a Zep API or assert current cloud import compatibility. Legal empty arrays may pass schema validation; malformed/unsupported-only sources and zero-record roundtrip fail. Accepted fixture shapes are documented file exports, not live-service end-to-end tests.

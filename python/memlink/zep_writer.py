@@ -1,89 +1,67 @@
-"""Canonical → Zep facts JSON writer.
-
-Outputs Zep-compatible facts.json.
-"""
+"""zep offline file writer; no online service/API import."""
 
 from __future__ import annotations
 
 import json
-from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING
 
+from .codec import parse_time
 from .plugin import Capabilities, FormatPlugin
-
-if TYPE_CHECKING:
-    from collections.abc import Iterable
-
-    from .models import Memory
+from .serialization import sanitize
 
 
 class ZepWriter(FormatPlugin):
     name = "zep"
     version_supported = ">=1,<3"
-    capabilities = Capabilities(
-        emotion=False,
-        importance_label=False,
-        supported_kinds={"dynamic"},
-    )
+    capabilities = Capabilities(supported_kinds={"dynamic"})
 
     def read(self, path):
-        raise NotImplementedError("Use ZepReader for reading")
+        raise NotImplementedError("Use the matching reader")
 
-    def write(self, memories: Iterable[Memory], path: Path) -> list[str]:
+    def write(self, memories, path: Path) -> list[str]:
+        records = []
         warnings: list[str] = []
-        records: list[dict] = []
-
         for mem in memories:
-            fact_text = mem.body or mem.name
-            if not fact_text:
-                warnings.append(f"Skipping {mem.id}: no body or name")
-                continue
-
-            record: dict = {
-                "uuid": mem.id,
-                "fact": str(fact_text),
+            text = mem.body if mem.body is not None else mem.name or ""
+            original = (mem.metadata.get("memlink") or {}).get("original") or {}
+            raw = mem.extensions.get("zep_metadata") or {}
+            metadata = dict(raw) if isinstance(raw, dict) else {}
+            if mem.name is not None:
+                metadata["_memlink_name"] = mem.name
+            record = {
+                "id" if self.name == "mem0" else "uuid": mem.id,
+                "memory" if self.name == "mem0" else "fact": text,
+                "metadata": metadata,
             }
-
-            if mem.created_at:
-                record["created_at"] = _format_dt(mem.created_at)
-            if mem.updated_at:
-                record["updated_at"] = _format_dt(mem.updated_at)
-
-            # Preserve name for roundtrip (Zep has no native name field)
-            record_metadata: dict = {}
-            if mem.name:
-                record_metadata["_memlink_name"] = mem.name
-
-            # Roundtrip: restore original Zep metadata from extensions
-            if mem.extensions:
-                raw = mem.extensions.get("zep_metadata")
-                if isinstance(raw, dict):
-                    record_metadata.update(raw)
-
-            if record_metadata:
-                record["metadata"] = record_metadata
-
-            # Restore session_id if present
-            if mem.extensions:
-                sid = mem.extensions.get("zep_session_id")
-                if sid:
-                    record["session_id"] = str(sid)
-
+            if self.name == "mem0":
+                record["categories"] = sorted(mem.tags)
+                for key in ("user_id", "agent_id", "run_id"):
+                    if original.get(key) is not None:
+                        record[key] = original[key]
+            else:
+                sid = mem.extensions.get("zep_session_id", original.get("session_id"))
+                if sid is not None:
+                    record["session_id"] = sid
+            for field in ("created_at", "updated_at"):
+                value = getattr(mem, field)
+                if value is not None:
+                    normalized = parse_time(value)
+                    assert normalized is not None
+                    record[field] = normalized.isoformat()
             records.append(record)
-
         path.mkdir(parents=True, exist_ok=True)
-        out = path / "facts.json"
-        out.write_text(
-            json.dumps({"facts": records}, ensure_ascii=False, indent=2, default=str),
-            encoding="utf-8",
+        data = {"results" if self.name == "mem0" else "facts": records}
+        (path / ("memories.json" if self.name == "mem0" else "facts.json")).write_text(
+            json.dumps(sanitize(data), ensure_ascii=False, indent=2, allow_nan=False), encoding="utf-8", newline=""
         )
-
         return warnings
 
     def validate(self, path):
-        return []
+        from .validators import validate_schema
+
+        return validate_schema(path, source_format=self.name)
 
 
-def _format_dt(dt: datetime) -> str:
-    return dt.isoformat()
+def _format_dt(value):
+    normalized = parse_time(value)
+    return normalized.isoformat() if normalized is not None else None

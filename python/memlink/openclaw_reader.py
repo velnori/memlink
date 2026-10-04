@@ -16,8 +16,11 @@ from pathlib import Path
 from urllib.parse import unquote
 
 from ._frontmatter import parse_frontmatter as _parse_frontmatter
+from .codec import memory_from_dict, parse_time
 from .models import Memory, Source
+from .openclaw_records import parse_records
 from .plugin import Capabilities, FormatPlugin, ReadResult
+from .read_support import markdown_files, relative
 
 
 class OpenClawReader(FormatPlugin):
@@ -30,10 +33,40 @@ class OpenClawReader(FormatPlugin):
         supported_kinds={"dynamic", "permanent", "emotion"},
     )
 
+    def __init__(self, include_user: bool = False, include_dreams: bool = False):
+        self.include_user = include_user
+        self.include_dreams = include_dreams
+
     def read(self, path: Path) -> ReadResult:
         memories: list[Memory] = []
         warnings: list[str] = []
         stats: dict[str, int] = {"parsed": 0, "skipped": 0, "invalid": 0}
+        all_files: set[Path] = set()
+        # MEMORY.md can be long-term plain Markdown, an index, or our framed notes.
+        roots = [path / "MEMORY.md"] if path.is_dir() else [path]
+        if self.include_user and path.is_dir():
+            roots.append(path / "USER.md")
+        for file in roots:
+            if not file.exists():
+                continue
+            text = file.read_bytes().decode("utf-8")
+            root_rel = relative(file, path)
+            framed = parse_records(text, root_rel)
+            if framed is not None:
+                memories.extend(framed)
+                stats["parsed"] += len(framed)
+            elif not _is_index_only(text):
+                from .generic_reader import GenericReader
+
+                result = GenericReader()._parse(file)
+                for memory in result.memories:
+                    memory.source = Source("openclaw", root_rel, f"openclaw://{root_rel}")
+                    memory.kind = "permanent"
+                    memory.id = root_rel
+                    memory.extensions["openclaw_role"] = "user-model" if file.name == "USER.md" else "long-term"
+                memories.extend(result.memories)
+                warnings.extend(result.warnings)
+                stats["parsed"] += len(result.memories)
 
         # Step 1: Discover files
         if (path / "MEMORY.md").exists():
@@ -50,7 +83,7 @@ class OpenClawReader(FormatPlugin):
         # Step 2-3: Parse + map each file
         memory_dir = path / "memory"
         if memory_dir.exists():
-            all_files: set[Path] = set(memory_dir.rglob("*.md"))
+            all_files = set(markdown_files(memory_dir))
             # Deduplicate by resolved path
             seen: set[Path] = set()
             for md_file in sorted(all_files):
@@ -61,13 +94,32 @@ class OpenClawReader(FormatPlugin):
 
                 rel = md_file.relative_to(path)
                 try:
-                    text = md_file.read_text(encoding="utf-8")
+                    text = md_file.read_bytes().decode("utf-8")
                 except Exception:
                     stats["skipped"] += 1
                     warnings.append(f"Cannot read {rel}")
                     continue
 
-                fm, body = _parse_frontmatter(text)
+                framed = parse_records(text, rel.as_posix())
+                if framed is not None:
+                    memories.extend(framed)
+                    stats["parsed"] += len(framed)
+                    continue
+                try:
+                    fm, body = _parse_frontmatter(text)
+                except ValueError as exc:
+                    stats["invalid"] += 1
+                    warnings.append(f"Invalid YAML in {rel}: {exc}")
+                    continue
+                if "_memlink_canonical" in fm:
+                    data = fm["_memlink_canonical"]
+                    length = fm.get("_memlink_body_length")
+                    data["body"] = None if length is None else body.removeprefix("\n\n")[:length]
+                    memory = memory_from_dict(data)
+                    memory.source = Source("openclaw", rel.as_posix(), f"openclaw://{rel.as_posix()}")
+                    memories.append(memory)
+                    stats["parsed"] += 1
+                    continue
                 if not isinstance(fm, dict):
                     stats["skipped"] += 1
                     warnings.append(f"No valid frontmatter in {rel}")
@@ -75,8 +127,18 @@ class OpenClawReader(FormatPlugin):
 
                 name = fm.get("name") or fm.get("title")
                 if not name:
-                    stats["skipped"] += 1
-                    warnings.append(f"Missing name in {rel}")
+                    memory = Memory(
+                        id=rel.as_posix(),
+                        name=md_file.stem,
+                        body=body.strip() or None,
+                        source=Source("openclaw", rel.as_posix(), f"openclaw://{rel.as_posix()}"),
+                        metadata={"memlink": {"original": fm}},
+                    )
+                    match = re.match(r"(\d{4}-\d{2}-\d{2})(?:-|$)", md_file.stem)
+                    if match:
+                        memory.created_at = parse_time(match.group(1))
+                    memories.append(memory)
+                    stats["parsed"] += 1
                     continue
 
                 # Step 3: Map to Canonical
@@ -97,7 +159,7 @@ class OpenClawReader(FormatPlugin):
                 imp_score, imp_label = _infer_importance(metadata, fm)
 
                 # Time
-                created_at = _parse_time(metadata.get("created_at") or fm.get("created_at"))
+                created_at = _parse_time(metadata.get("created_at", fm.get("created_at")))
 
                 # Step 4: Recover original from memlink metadata
                 original = metadata.get("memlink", {}).get("original", {})
@@ -151,7 +213,7 @@ class OpenClawReader(FormatPlugin):
                     pinned=bool(metadata.get("pinned", False)),
                     checksum=metadata.get("checksum"),
                     metadata={"memlink": metadata.get("memlink", {})} if metadata.get("memlink") else {},
-                    extensions=metadata.get("extensions", {}),
+                    extensions={**metadata.get("extensions", {}), "openclaw_frontmatter": fm},
                 )
 
                 # Recover daily-notes roundtrip comment
@@ -162,13 +224,33 @@ class OpenClawReader(FormatPlugin):
 
         # Parse DREAMS.md (feel entries not stored in memory/)
         dreams_path = path / "DREAMS.md"
-        if dreams_path.exists():
-            existing_ids = {m.id for m in memories}
-            dreams_memories = _parse_dreams_file(dreams_path, path, warnings, stats)
-            for dm in dreams_memories:
-                if dm.id not in existing_ids:
-                    memories.append(dm)
-                    existing_ids.add(dm.id)
+        if self.include_dreams and dreams_path.exists():
+            dreams_stats = {"parsed": 0, "skipped": 0}
+            dreams_memories = _parse_dreams_file(dreams_path, path, warnings, dreams_stats)
+            raw_dreams = dreams_path.read_bytes().decode("utf-8")
+            if not dreams_memories:
+                # Current upstream DREAMS.md is a human review surface, not an emotion store.
+                dreams_memories = [
+                    Memory(
+                        id="DREAMS.md",
+                        name="Dreaming review",
+                        body=raw_dreams or None,
+                        source=Source("openclaw", "DREAMS.md"),
+                        extensions={"openclaw_role": "dreaming-review"},
+                    )
+                ]
+            else:
+                for dm in dreams_memories:
+                    dm.extensions["openclaw_dreams_source"] = raw_dreams
+                    dm.extensions["openclaw_role"] = "legacy-dream-entry"
+            stats["parsed"] += len(dreams_memories)
+            shared_ids = {m.id for m in memories} & {m.id for m in dreams_memories}
+            if shared_ids:
+                warnings.append(
+                    "DREAMS.md shares IDs with notes; retaining both record occurrences: "
+                    + ", ".join(sorted(shared_ids))
+                )
+            memories.extend(dreams_memories)
 
         # Warn about unindexed files
         if indexed_files:
@@ -176,8 +258,26 @@ class OpenClawReader(FormatPlugin):
             unindexed = actual - indexed_files
             if unindexed:
                 warnings.append(f"{len(unindexed)} files not in MEMORY.md (will still be read)")
+            missing = indexed_files - actual
+            if missing:
+                warnings.append("Dangling MEMORY.md index: " + ", ".join(sorted(missing)))
 
-        return ReadResult(memories=memories, warnings=warnings, stats=stats)
+        result = ReadResult(
+            memories=memories, warnings=warnings, stats=stats, variant="openclaw-plain/legacy/framed-notes"
+        )
+        if path.is_dir():
+            for file in markdown_files(path):
+                scanned_rel = relative(file, path)
+                if (
+                    file.name == "DREAMS.md"
+                    and not self.include_dreams
+                    or file.name == "USER.md"
+                    and not self.include_user
+                    or not scanned_rel.startswith("memory/")
+                    and file.name not in {"MEMORY.md", "DREAMS.md", "USER.md"}
+                ):
+                    result.files.append({"path": scanned_rel, "outcome": "excluded"})
+        return result
 
     def write(self, memories, path):
         raise NotImplementedError("OpenClawReader is read-only")
@@ -185,7 +285,7 @@ class OpenClawReader(FormatPlugin):
     def validate(self, path):
         from .validators import validate_schema
 
-        return validate_schema(path)
+        return validate_schema(path, source_format=self.name)
 
 
 # ── Pipeline helpers ───────────────────────────────────────────────
@@ -194,7 +294,7 @@ class OpenClawReader(FormatPlugin):
 def _parse_memory_index(path: Path) -> dict[str, str]:
     """Parse MEMORY.md index, supporting multiple format variants."""
     try:
-        content = path.read_text(encoding="utf-8")
+        content = path.read_bytes().decode("utf-8")
     except Exception:
         return {}
     result: dict[str, str] = {}
@@ -246,7 +346,7 @@ def _infer_domains(metadata: dict) -> list[str]:
 
 def _infer_importance(metadata: dict, fm: dict) -> tuple[float | None, str | None]:
     """Extract importance score and/or label."""
-    imp = metadata.get("importance") or fm.get("importance")
+    imp = metadata.get("importance", fm.get("importance"))
     if imp is None:
         return None, None
     if isinstance(imp, (int, float)) and not isinstance(imp, bool):
@@ -258,10 +358,8 @@ def _parse_time(val) -> datetime | None:
     """Parse ISO datetime string to UTC datetime."""
     if val is None:
         return None
-    if isinstance(val, datetime):
-        return val
     try:
-        return datetime.fromisoformat(str(val))
+        return parse_time(val)
     except (ValueError, TypeError):
         return None
 
@@ -305,7 +403,7 @@ def _parse_dreams_file(
     Entries without a roundtrip block are skipped with a warning.
     """
     try:
-        text = dreams_path.read_text(encoding="utf-8")
+        text = dreams_path.read_bytes().decode("utf-8")
     except Exception as e:
         warnings.append(f"Cannot read DREAMS.md: {e}")
         return []
@@ -375,6 +473,7 @@ def _parse_dreams_file(
         # Dedup by canonical (JSON) id, not heading id
         canonical_id = str(data.get("id", entry_id))
         if canonical_id in seen_ids:
+            warnings.append(f"DREAMS.md duplicate entry {canonical_id}: full review source retained in extensions")
             continue
         seen_ids.add(canonical_id)
 
@@ -424,11 +523,11 @@ def _recover_roundtrip_comment(body: str | None, memory: Memory, warnings: list[
             data = json.loads(match.group(1))
             if isinstance(data, dict):
                 # Restore fields that weren't in frontmatter metadata
-                if data.get("importance_score") and memory.importance_score is None:
+                if data.get("importance_score") is not None and memory.importance_score is None:
                     memory.importance_score = data["importance_score"]
-                if data.get("valence") and memory.valence is None:
+                if data.get("valence") is not None and memory.valence is None:
                     memory.valence = data["valence"]
-                if data.get("arousal") and memory.arousal is None:
+                if data.get("arousal") is not None and memory.arousal is None:
                     memory.arousal = data["arousal"]
                 # Restore name from roundtrip if current name looks like a date (daily-notes artifact)
                 rt_name = data.get("name") or (data.get("memlink", {}).get("original", {}).get("name"))
@@ -459,3 +558,9 @@ def _recover_roundtrip_comment(body: str | None, memory: Memory, warnings: list[
                     memory.metadata["memlink"] = rt_memlink  # type: ignore[index]
         except (json.JSONDecodeError, KeyError, TypeError):
             warnings.append(f"Failed to parse roundtrip block for {memory.id}")
+
+
+def _is_index_only(text: str) -> bool:
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    entries = [line for line in lines if line.startswith("- memory/")]
+    return bool(entries) and all(line.startswith("#") or line.startswith("- memory/") for line in lines)

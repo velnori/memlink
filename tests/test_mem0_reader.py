@@ -13,7 +13,8 @@ class TestMem0Reader:
         reader = Mem0Reader()
         result = reader.read(FIXTURES / "mem0_samples")
         assert result.stats["parsed"] == 5
-        assert len(result.warnings) == 0
+        assert not result.errors
+        assert not result.valid_empty
 
     def test_read_array_format(self):
         reader = Mem0Reader()
@@ -78,7 +79,8 @@ class TestMem0Reader:
         )
         result = reader.read(d)
         # No id → skipped
-        assert result.stats["skipped"] >= 1
+        assert result.stats["invalid"] >= 1
+        assert any(r["outcome"] == "invalid" for r in result.records)
         assert any("id" in w.lower() for w in result.warnings)
 
     def test_missing_memory_skip(self):
@@ -91,7 +93,8 @@ class TestMem0Reader:
             encoding="utf-8",
         )
         result = reader.read(d)
-        assert result.stats["skipped"] >= 1
+        assert result.stats["invalid"] >= 1
+        assert any(r["outcome"] == "invalid" for r in result.records)
         assert any("memory" in w.lower() for w in result.warnings)
 
     def test_broken_json_no_crash(self):
@@ -116,7 +119,8 @@ class TestMem0Reader:
         (d / "memories.json").write_text("{}", encoding="utf-8")
         result = reader.read(d)
         assert result.stats["parsed"] == 0
-        assert len(result.warnings) == 0
+        assert result.errors
+        assert not result.valid_empty
 
     def test_plugin_contract(self):
         from memlink.testing import (

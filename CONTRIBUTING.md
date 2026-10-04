@@ -16,22 +16,22 @@ cd memlink
 pip install -e ".[dev]"
 ```
 
-You need Python 3.10 or later. We use zero runtime dependencies — only standard library.
+The declared CI matrix is Python 3.10–3.12. PyYAML ≥6.0.3 is the runtime dependency; no AI API or online service is required. Run the checks below before submitting changes; the CI workflow verifies its configured platform matrix.
 
 ## Development Workflow
 
 ```bash
 # Run tests
-pytest tests/ -v
+python -m pytest tests/ -v
 
 # Lint
-ruff check memlink/ tests/
+python -m ruff check python/memlink/ tests/
 
 # Format
-ruff format memlink/ tests/
+python -m ruff format --check python/memlink/ tests/
 
 # Type check
-mypy memlink/
+python -m mypy python/memlink/
 
 # Run the CLI locally
 python -m memlink.cli --help
@@ -54,12 +54,12 @@ Create a field mapping table — how does each source field map to the Canonical
 ### 3. Implement the plugin
 
 ```
-memlink/
+python/memlink/
   yourformat_reader.py    # YourFormat → Canonical
   yourformat_writer.py    # Canonical → YourFormat
 ```
 
-Your Reader implements `FormatPlugin.read()` and returns `ReadResult`. Your Writer implements `FormatPlugin.write()`.
+Your Reader implements `FormatPlugin.read()` and returns `ReadResult`. Your Writer implements `FormatPlugin.write()` on the supplied staging path. Public writes are transaction-wrapped; see [the plugin contract](docs/api/plugin.md) for registration, readback, archive semantics and failure behavior.
 
 Key rules:
 - Use `pathlib.Path` for all file paths — never string concatenation
@@ -99,7 +99,7 @@ memlink/
 │   ├── canonical-v1.schema.json
 │   └── source-uri.md
 ├── python/memlink/    # Python implementation
-│   ├── models.py      # CanonicalMemory, Source, Relationship
+│   ├── models.py      # Memory, Source, Relationship
 │   ├── plugin.py      # FormatPlugin ABC, Capabilities, ReadResult
 │   ├── converter.py   # Conversion pipeline
 │   ├── validators.py  # Schema/semantic/roundtrip validation

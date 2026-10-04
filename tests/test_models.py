@@ -73,19 +73,19 @@ class TestSanitizeId:
         assert sanitize_id("memory-😊") == "memory-😊"
 
     def test_windows_reserved_con(self):
-        assert sanitize_id("CON") == "_CON"
+        assert sanitize_id("CON") == "%43ON"
 
     def test_windows_reserved_prn(self):
-        assert sanitize_id("PRN") == "_PRN"
+        assert sanitize_id("PRN") == "%50RN"
 
     def test_windows_reserved_case_insensitive(self):
-        assert sanitize_id("com1") == "_com1"
+        assert sanitize_id("com1") == "%63om1"
 
     def test_strips_leading_dot_space(self):
-        assert sanitize_id("..test.") == "test"
+        assert sanitize_id("..test.") == "%2E%2Etest%2E"
 
     def test_empty_fallback(self):
-        assert sanitize_id("") == "unnamed"
+        assert sanitize_id("") == "%EMPTY"
 
     def test_only_special_chars(self):
         # All chars are percent-encoded, result is not empty string

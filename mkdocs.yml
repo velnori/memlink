@@ -4,6 +4,15 @@ site_url: https://velnori.github.io/memlink/
 repo_url: https://github.com/velnori/memlink
 repo_name: velnori/memlink
 docs_dir: docs
+
+exclude_docs: |
+  /manaul/
+  /relaunch/module-01-closeout.md
+  /relaunch/module-01-closure-patch-2026-10-03.md
+  /relaunch/evidence/
+  /superpowers/plans/
+  /logo-ideas.md
+  /logo-concepts/
 theme:
   name: material
   palette:
@@ -17,6 +26,9 @@ theme:
 nav:
   - Home: index.md
   - Quick Start: guide/quickstart.md
+  - CLI: guide/cli.md
+  - Migration to 2.0: guide/migration-2.0.md
+  - Design: DESIGN.md
   - Formats:
       - Ombre Brain: formats/ombre.md
       - OpenClaw: formats/openclaw.md
@@ -25,6 +37,7 @@ nav:
       - Generic Markdown: formats/generic.md
       - ChatGPT Export: formats/chatgpt.md
       - Claude Export: formats/claude_export.md
+      - Stream Summary: formats/stream-summary.md
   - Plugin API: api/plugin.md
 
 plugins:

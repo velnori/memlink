@@ -14,11 +14,12 @@ Breaking changes require a 2.0 version bump.
 """
 
 from abc import ABC, abstractmethod
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from enum import Enum
+from functools import wraps
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 from .models import Memory
 
@@ -49,6 +50,11 @@ class ReadResult:
     memories: list[Memory]
     warnings: list[str] = field(default_factory=list)
     stats: dict[str, int] = field(default_factory=dict)  # {"parsed": N, "skipped": N, "invalid": N}
+    files: list[dict] = field(default_factory=list)
+    records: list[dict] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
+    variant: str = "unknown"
+    valid_empty: bool = False
 
 
 @dataclass
@@ -79,7 +85,40 @@ class FormatPlugin(ABC):
 
     name: str  # "ombre" | "openclaw" | "mem0" | ...
     version_supported: str = ">=1,<3"  # semver range
-    capabilities: Capabilities = field(default_factory=Capabilities)
+    capabilities: Capabilities  # Required on concrete plugins; no dataclass Field class default.
+    _serialize: Callable[..., list[str]]
+    _parse: Callable[..., ReadResult]
+    native_only: bool = False
+    selection: str = "explicit"
+    last_receipt: dict[str, Any]
+
+    def __init_subclass__(cls, **kwargs):
+        """Keep v1 signatures while putting public writes behind one transaction."""
+        super().__init_subclass__(**kwargs)
+        raw_write = cls.__dict__.get("write")
+        if raw_write is not None:
+            cls._serialize = raw_write
+
+            @wraps(raw_write)
+            def write(self, memories, path):
+                from .transaction import execute_output
+
+                result = execute_output(list(memories), self, Path(path))
+                self.last_receipt = result
+                return result["warnings"]
+
+            cls.write = write
+        raw_read = cls.__dict__.get("read")
+        if raw_read is not None:
+            cls._parse = raw_read
+
+            @wraps(raw_read)
+            def read(self, path):
+                from .reading import guarded_read
+
+                return guarded_read(self, raw_read, Path(path), native_only=getattr(self, "native_only", False))
+
+            cls.read = read
 
     @abstractmethod
     def read(self, path: Path) -> ReadResult:

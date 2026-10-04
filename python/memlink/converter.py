@@ -1,75 +1,31 @@
-"""Conversion pipeline + Compatibility Analysis + Compare Engine.
-
-Coordinates the flow between a source Reader and target Writer.
-Provides structured ConversionAnalysis for CLI/GUI/API consumption.
-Compare Engine shared by diff, validate, and roundtrip.
-"""
+"""Shared offline conversion, scoped merge, broadcast and strict comparison."""
 
 from __future__ import annotations
 
+import tempfile
 import time
-import unicodedata
+from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import timedelta
 from pathlib import Path
 from typing import Literal
 
+from .codec import identity, identity_key, memory_dict, parse_time, stable_json
 from .models import Memory
 from .plugin import FormatPlugin, Severity, ValidationIssue
-
-# ── Capability registry ────────────────────────────────────────────
-
-_CAPABILITY_META: dict[str, dict] = {
-    "emotion": {
-        "label": "Emotion fields (valence/arousal)",
-        "lost_reason": "Target format has no valence/arousal fields",
-        "preserved_reason": "Stored in metadata.memlink.original for roundtrip recovery",
-    },
-    "relationships": {
-        "label": "Relationships",
-        "lost_reason": "Target format does not support relationships",
-        "preserved_reason": "Stored in metadata.memlink.relationships (v0 writer skip)",
-    },
-    "summary": {
-        "label": "Summary/Description",
-        "lost_reason": "Target format has no summary/description field",
-        "preserved_reason": "Stored in metadata.memlink.original",
-    },
-    "importance_label": {
-        "label": "Importance labels",
-        "lost_reason": "Target only supports numeric importance",
-        "preserved_reason": "Converted to importance_score",
-    },
-    "extensions": {
-        "label": "Extensions",
-        "lost_reason": "Target cannot preserve unknown extensions",
-        "preserved_reason": "Extensions preserved in memory file",
-    },
-    "unsupported_kind": {
-        "label": "Unsupported memory kinds",
-        "lost_reason": "Target has limited kind support",
-        "preserved_reason": "Falling back to dynamic",
-    },
-}
-
-
-def _cap_meta(key: str) -> dict:
-    return _CAPABILITY_META.get(key, {"label": key, "lost_reason": "Format limitation", "preserved_reason": ""})
-
-
-# ── Structured types ───────────────────────────────────────────────
+from .transaction import TransactionError, execute_output
 
 ImpactSeverity = Literal["lost", "degraded", "preserved"]
 
 
 @dataclass
 class FeatureImpact:
-    feature: str  # e.g. "emotion"
-    label: str  # Human label: "Emotion fields (valence/arousal)"
-    count: int  # Number of field instances affected
+    feature: str
+    label: str
+    count: int
     severity: ImpactSeverity
     reason: str
-    recoverable: bool  # Can roundtrip recover this?
+    recoverable: bool
 
 
 @dataclass
@@ -78,182 +34,267 @@ class ConversionAnalysis:
     warnings: list[str] = field(default_factory=list)
 
 
-# ── Public API ─────────────────────────────────────────────────────
+def analyze_conversion(memories: list[Memory], src: FormatPlugin, dst: FormatPlugin) -> ConversionAnalysis:
+    impacts = []
+    checks = {
+        "emotion": lambda m: m.valence is not None or m.arousal is not None,
+        "relationships": lambda m: bool(m.relationships),
+        "summary": lambda m: m.summary is not None,
+        "importance_label": lambda m: m.importance_label is not None,
+        "extensions": lambda m: bool(m.extensions),
+        "unsupported_kind": lambda m: (
+            dst.capabilities.supported_kinds is not None and m.kind not in dst.capabilities.supported_kinds
+        ),
+    }
+    for key, test in checks.items():
+        count = sum(bool(test(m)) for m in memories)
+        supported = getattr(dst.capabilities, "preserve_unknown_fields" if key == "extensions" else key, False)
+        if count and (key == "unsupported_kind" or not supported):
+            severity: ImpactSeverity = "lost" if key == "extensions" and not supported else "degraded"
+            impacts.append(
+                FeatureImpact(
+                    key, key, count, severity, "Preflight estimate only; serialization and readback are required", False
+                )
+            )
+    return ConversionAnalysis(impacts)
 
 
 def check_compatibility(source: FormatPlugin, target: FormatPlugin) -> list[str]:
-    """Return capability mismatch warnings (human-readable)."""
-    warnings: list[str] = []
-    sc, tc = source.capabilities, target.capabilities
-    if sc.relationships and not tc.relationships:
-        warnings.append("Target does not support relationships")
-    if sc.emotion and not tc.emotion:
-        warnings.append("Target does not support emotion fields (valence/arousal)")
-    if sc.importance_label and not tc.importance_label:
-        warnings.append("Target does not support importance labels")
-    if not tc.preserve_unknown_fields:
-        warnings.append("Target cannot preserve unknown extension fields")
-    return warnings
+    return [
+        f"Preflight: target native mapping lacks {f}"
+        for f in ("emotion", "relationships", "summary", "importance_label")
+        if getattr(source.capabilities, f) and not getattr(target.capabilities, f)
+    ]
 
 
-def analyze_conversion(
-    memories: list[Memory],
-    src: FormatPlugin,
-    dst: FormatPlugin,
-) -> ConversionAnalysis:
-    """Analyze what will happen before conversion — no side effects."""
-    sc, tc = src.capabilities, dst.capabilities
-    impacts: list[FeatureImpact] = []
-
-    # Emotion
-    emo_count = sum(1 for m in memories if m.valence is not None or m.arousal is not None)
-    if emo_count and not tc.emotion:
-        meta = _cap_meta("emotion")
-        impacts.append(
-            FeatureImpact(
-                feature="emotion",
-                label=meta["label"],
-                count=emo_count,
-                severity="preserved" if sc.emotion else "degraded",
-                reason=meta["preserved_reason"],
-                recoverable=True,
-            )
+def read_source(source: FormatPlugin, path: Path, **filters) -> tuple[list[Memory], dict, list[dict], list[str]]:
+    result = source.read(path)
+    if result.errors or not result.memories and not result.valid_empty:
+        raise TransactionError(
+            "Source is invalid/unsupported or has no parsed records: " + "; ".join(result.errors + result.warnings),
+            {
+                "schema": "memlink-receipt",
+                "version": "1",
+                "status": "failed",
+                "errors": result.errors or ["No parsed records"],
+                "warnings": result.warnings,
+                "source_stats": result.stats,
+                "sources": [
+                    {
+                        "format": source.name,
+                        "root": path.name,
+                        "variant": result.variant,
+                        "stats": result.stats,
+                        "files": result.files,
+                        "records": result.records,
+                        "valid_empty": result.valid_empty,
+                    }
+                ],
+            },
+            4 if any("changed during read" in e for e in result.errors) else 2,
         )
-
-    # Relationships
-    rel_count = sum(1 for m in memories if m.relationships)
-    if rel_count and not tc.relationships:
-        meta = _cap_meta("relationships")
-        impacts.append(
-            FeatureImpact(
-                feature="relationships",
-                label=meta["label"],
-                count=rel_count,
-                severity="preserved",
-                reason=meta["preserved_reason"],
-                recoverable=True,
-            )
+    selected = []
+    excluded = []
+    kinds = filters.get("kind")
+    domains = filters.get("domain")
+    status = filters.get("status")
+    kinds = {kinds} if isinstance(kinds, str) else set(kinds or [])
+    domains = {domains} if isinstance(domains, str) else set(domains or [])
+    include_archived = filters.get("all", False) or filters.get("include_archived", False) or status == "archived"
+    for memory in result.memories:
+        reason = None
+        if kinds and memory.kind not in kinds:
+            reason = "kind filter"
+        elif domains and not domains.intersection(memory.domains):
+            reason = "domain filter"
+        elif status and memory.status != status:
+            reason = "status filter"
+        elif not include_archived and memory.status == "archived":
+            reason = "archived excluded"
+        if reason:
+            excluded.append({"identity": identity(memory), "id": memory.id, "reason": reason, "outcome": "excluded"})
+        else:
+            selected.append(memory)
+    if not selected and result.memories and not filters.get("dry_run", False):
+        raise TransactionError(
+            "No records selected by filters",
+            {"status": "failed", "errors": ["No selected records"], "warnings": result.warnings, "excluded": excluded},
+            2,
         )
-
-    # Summary
-    sum_count = sum(1 for m in memories if m.summary)
-    if sum_count and not tc.summary:
-        meta = _cap_meta("summary")
-        impacts.append(
-            FeatureImpact(
-                feature="summary",
-                label=meta["label"],
-                count=sum_count,
-                severity="preserved",
-                reason=meta["preserved_reason"],
-                recoverable=True,
-            )
-        )
-
-    # Importance label → score
-    lbl_count = sum(1 for m in memories if m.importance_label)
-    if lbl_count and not tc.importance_label:
-        meta = _cap_meta("importance_label")
-        impacts.append(
-            FeatureImpact(
-                feature="importance_label",
-                label=meta["label"],
-                count=lbl_count,
-                severity="degraded",
-                reason=meta["preserved_reason"],
-                recoverable=False,
-            )
-        )
-
-    # Extensions
-    ext_count = sum(1 for m in memories if m.extensions)
-    if ext_count and not tc.preserve_unknown_fields:
-        meta = _cap_meta("extensions")
-        impacts.append(
-            FeatureImpact(
-                feature="extensions",
-                label=meta["label"],
-                count=ext_count,
-                severity="lost",
-                reason=meta["lost_reason"],
-                recoverable=False,
-            )
-        )
-
-    # Unsupported kinds
-    kind_count = sum(1 for m in memories if tc.supported_kinds and m.kind not in tc.supported_kinds)
-    if kind_count:
-        meta = _cap_meta("unsupported_kind")
-        supported = ", ".join(sorted(tc.supported_kinds)) if tc.supported_kinds else "none"
-        impacts.append(
-            FeatureImpact(
-                feature="unsupported_kind",
-                label=meta["label"],
-                count=kind_count,
-                severity="degraded",
-                reason=f"Target only supports kinds: {supported} (falling back to dynamic)",
-                recoverable=False,
-            )
-        )
-
-    return ConversionAnalysis(impacts=impacts)
+    context = {
+        "format": source.name,
+        "variant": result.variant,
+        "recognition": {
+            "selection": getattr(source, "selection", "explicit"),
+            "basis": "Adapter parsed and validated the reported native variant",
+        },
+        "root": path.name,
+        "approved_scope": "Only the supplied root/file; no home discovery",
+        "files": result.files,
+        "snapshot_sha256": __import__("hashlib").sha256(stable_json(result.files).encode("utf-8")).hexdigest(),
+        "stats": result.stats,
+        "records": result.records,
+        "selected": len(selected),
+        "excluded": len(excluded),
+        "valid_empty": result.valid_empty,
+        "warnings": result.warnings,
+    }
+    return selected, context, excluded, result.warnings
 
 
-def convert(
-    source: FormatPlugin,
-    target: FormatPlugin,
-    source_path: Path,
-    target_path: Path,
-    **filters,
-) -> dict:
-    """Run full conversion pipeline. Returns {memories, warnings, analysis}."""
-    result = source.read(source_path)
-    memories = result.memories
-
-    # Analyze before writing
-    analysis = analyze_conversion(memories, source, target)
-
-    compat = check_compatibility(source, target)
-    write_warnings = target.write(memories, target_path)
-
+def convert(source: FormatPlugin, target: FormatPlugin, source_path: Path, target_path: Path, **filters) -> dict:
+    memories, context, excluded, warnings = read_source(source, source_path, **filters)
+    receipt = _execute_selection(memories, context, excluded, target, source_path, target_path, filters)
     return {
         "memories": memories,
-        "warnings": result.warnings + compat + write_warnings,
-        "analysis": analysis,
+        "warnings": receipt["warnings"],
+        "analysis": analyze_conversion(memories, source, target),
+        "receipt": receipt,
     }
 
 
-# ═══════════════════════════════════════════════════════════════════
-# Compare Engine — shared by diff, validate, roundtrip
-# ═══════════════════════════════════════════════════════════════════
+def _execute_selection(memories, context, excluded, target, source_path, target_path, filters) -> dict:
+    transaction_keys = {"mode", "conflict", "strict", "dry_run", "allow_changes"}
+    options = {k: v for k, v in filters.items() if k in transaction_keys}
+    if filters.get("strict") and (context["stats"].get("invalid", 0) or context["stats"].get("unsupported", 0)):
+        raise TransactionError(
+            "Strict conversion blocks invalid source records",
+            {
+                "status": "failed",
+                "errors": ["Invalid source records"],
+                "warnings": context["warnings"],
+                "sources": [context],
+            },
+            5,
+        )
+    return execute_output(
+        memories,
+        target,
+        target_path,
+        sources=[source_path],
+        source_contexts=[context],
+        filters={k: v for k, v in filters.items() if k not in transaction_keys},
+        exclusions=excluded,
+        **options,
+    )
+
+
+def resolve_conflict(existing: Memory, incoming: Memory, strategy: str) -> bool:
+    if strategy == "first":
+        return True
+    if strategy == "last":
+        return False
+    e = existing.updated_at or existing.created_at
+    i = incoming.updated_at or incoming.created_at
+    if i is None:
+        return True
+    if e is None:
+        return False
+    e = parse_time(e)
+    i = parse_time(i)
+    assert e is not None and i is not None
+    return i <= e if strategy == "newest" else i >= e
+
+
+def merge(
+    sources: list[tuple[FormatPlugin, Path]],
+    target: FormatPlugin,
+    target_path: Path,
+    *,
+    on_conflict: str = "newest",
+    link_by_id: bool = False,
+    **options,
+) -> dict:
+    all_memories = []
+    contexts = []
+    excluded = []
+    warnings = []
+    for reader, path in sources:
+        memories, context, exclusions, notes = read_source(reader, path, **options)
+        all_memories.extend(memories)
+        contexts.append(context)
+        excluded.extend(exclusions)
+        warnings.extend(notes)
+    if options.get("strict") and any(
+        c["stats"].get("invalid", 0) or c["stats"].get("unsupported", 0) for c in contexts
+    ):
+        raise TransactionError(
+            "Strict merge blocks invalid/unsupported source records",
+            {"status": "failed", "sources": contexts, "warnings": warnings},
+            5,
+        )
+    merged: dict[str, Memory] = {}
+    conflicts = []
+    for memory in all_memories:
+        key = memory.id if link_by_id else identity_key(memory)
+        if key in merged:
+            previous = merged[key]
+            kept = previous if resolve_conflict(previous, memory, on_conflict) else memory
+            rejected = memory if kept is previous else previous
+            merged[key] = kept
+            conflicts.append(
+                {
+                    "identity": identity(rejected),
+                    "id": rejected.id,
+                    "outcome": "conflict",
+                    "reason": "merge " + on_conflict,
+                    "explicit_link_by_id": link_by_id,
+                }
+            )
+        else:
+            merged[key] = memory
+    receipt = execute_output(
+        list(merged.values()),
+        target,
+        target_path,
+        sources=[p for _, p in sources],
+        source_contexts=contexts,
+        exclusions=excluded + conflicts,
+        details={
+            "merge": {
+                "strategy": on_conflict,
+                "link_by_id": link_by_id,
+                "total": len(all_memories),
+                "unique": len(merged),
+                "conflicts": conflicts,
+            }
+        },
+        **{k: v for k, v in options.items() if k in {"strict", "dry_run", "mode", "conflict", "allow_changes"}},
+    )
+    return {"memories": list(merged.values()), "warnings": receipt["warnings"], "receipt": receipt}
+
+
+def broadcast(source: FormatPlugin, source_path: Path, targets: list[tuple[FormatPlugin, Path]], **options) -> dict:
+    results: list[dict] = []
+    memories, context, excluded, _ = read_source(source, source_path, **options)
+    for writer, path in targets:
+        try:
+            receipt = _execute_selection(memories, context, excluded, writer, source_path, path, options)
+            results.append({"target": writer.name, "path": path.name, "exit_code": 0, "receipt": receipt})
+        except TransactionError as exc:
+            results.append(
+                {"target": writer.name, "path": path.name, "exit_code": exc.exit_code, "receipt": exc.receipt}
+            )
+    return {
+        "status": "failed"
+        if any(r["exit_code"] for r in results)
+        else "partial"
+        if any(r["receipt"]["status"] == "partial" for r in results)
+        else "success",
+        "targets": results,
+    }
 
 
 @dataclass
 class CompareOptions:
-    """Configurable comparison rules for Memory fields."""
-
-    ignore: set[str] = field(
-        default_factory=lambda: {
-            "relationships",
-            "updated_at",
-            "source",
-            "checksum",
-            "metadata",
-            "extensions",
-            "schema_version",
-        }
-    )
-    normalize_unicode: bool = True  # NFC normalization
-    normalize_newlines: bool = True  # CRLF → LF
-    sort_lists: bool = True  # tags, domains
-    time_epsilon: timedelta = field(default_factory=lambda: timedelta(seconds=1))
-    casefold_tags: bool = True
-
-    # Fields compared as-is (no normalization)
-    exact_fields: set[str] = field(default_factory=lambda: {"id", "kind", "name"})
-
-    # Fields compared with strip()
-    strip_fields: set[str] = field(default_factory=lambda: {"body", "summary"})
+    ignore: set[str] = field(default_factory=set)
+    normalize_unicode: bool = False
+    normalize_newlines: bool = False
+    sort_lists: bool = False
+    time_epsilon: timedelta = field(default_factory=lambda: timedelta(0))
+    casefold_tags: bool = False
+    exact_fields: set[str] = field(default_factory=set)
+    strip_fields: set[str] = field(default_factory=set)
 
 
 def compare_memories(
@@ -261,183 +302,56 @@ def compare_memories(
     restored: list[Memory] | dict[str, Memory],
     options: CompareOptions | None = None,
 ) -> list[ValidationIssue]:
-    """Compare two sets of Memories — shared by diff, validate, roundtrip.
-
-    Uses automatic field iteration over dataclass fields.
-    One place to maintain — new Canonical fields covered automatically.
-    """
     opts = options or CompareOptions()
-
-    # Normalize to dict
-    if isinstance(original, list):
-        original = {m.id: m for m in original}
-    if isinstance(restored, list):
-        restored = {m.id: m for m in restored}
-
-    issues: list[ValidationIssue] = []
-    orig_ids = set(original)
-    rest_ids = set(restored)
-
-    # Lost memories
-    for mid in sorted(orig_ids - rest_ids):
-        issues.append(
-            ValidationIssue(
-                code="ML400",
-                severity=Severity.ERROR,
-                memory_id=mid,
-                field="id",
-                message="Memory lost in roundtrip",
-            )
-        )
-    # Unexpected memories
-    for mid in sorted(rest_ids - orig_ids):
-        issues.append(
-            ValidationIssue(
-                code="ML400",
-                severity=Severity.ERROR,
-                memory_id=mid,
-                field="id",
-                message="Unexpected memory in roundtrip",
-            )
-        )
-
-    # Compare common memories — iterate dataclass fields automatically
-    for mid in sorted(orig_ids & rest_ids):
-        o, r = original[mid], restored[mid]
-        for fld in Memory.__dataclass_fields__:
-            if fld in opts.ignore:
-                continue
-            ov = getattr(o, fld, None)
-            rv = getattr(r, fld, None)
-
-            # Checksum shortcut for body
-            if fld == "body" and o.checksum and r.checksum and o.checksum == r.checksum:
-                continue
-
-            diff = _compare_field(fld, ov, rv, opts)
-            if diff:
-                issues.append(
-                    ValidationIssue(
-                        code=_field_error_code(fld),
-                        severity=Severity.WARNING if fld in {"tags", "importance_score"} else Severity.ERROR,
-                        memory_id=mid,
-                        field=fld,
-                        message=diff,
-                    )
+    issues = []
+    original = list(original.values()) if isinstance(original, dict) else original
+    restored = list(restored.values()) if isinstance(restored, dict) else restored
+    groups1 = defaultdict(list)
+    groups2 = defaultdict(list)
+    for m in original:
+        groups1[identity_key(m)].append(m)
+    for m in restored:
+        groups2[identity_key(m)].append(m)
+    for key in sorted(set(groups1) | set(groups2)):
+        a, b = groups1[key], groups2[key]
+        if len(a) != len(b):
+            issues.append(
+                ValidationIssue(
+                    "ML400",
+                    Severity.ERROR,
+                    memory_id=(a or b)[0].id,
+                    field="identity",
+                    message=f"Record multiplicity differs: {len(a)} != {len(b)}",
                 )
-
+            )
+        for first, second in zip(a, b, strict=False):
+            da, db = memory_dict(first), memory_dict(second)
+            for fld in Memory.__dataclass_fields__:
+                if fld in opts.ignore:
+                    continue
+                ov, rv = da[fld], db[fld]
+                if opts.normalize_newlines and isinstance(ov, str) and isinstance(rv, str):
+                    ov = ov.replace("\r\n", "\n")
+                    rv = rv.replace("\r\n", "\n")
+                if stable_json(ov) != stable_json(rv):
+                    issues.append(
+                        ValidationIssue(
+                            "ML402" if fld == "body" else "ML401",
+                            Severity.ERROR,
+                            memory_id=first.id,
+                            field=fld,
+                            message=f"{fld}: values differ",
+                        )
+                    )
     return issues
-
-
-def _compare_field(name: str, ov, rv, opts: CompareOptions) -> str | None:
-    """Compare a single field value. Returns diff string or None if equal."""
-    # Exact match
-    if name in opts.exact_fields:
-        return f"{name}: {_fmt(ov)} != {_fmt(rv)}" if ov != rv else None
-
-    # Float comparison
-    if isinstance(ov, (int, float)) and isinstance(rv, (int, float)):
-        if name == "importance_score" and abs(ov - rv) <= 0.01:
-            return None
-        if ov != rv:
-            return f"{name}: {_fmt(ov)} != {_fmt(rv)}"
-
-    # Datetime comparison
-    from datetime import datetime
-    from datetime import timezone as tz
-
-    if isinstance(ov, datetime) and isinstance(rv, datetime):
-        dt_ov = ov.astimezone(tz.utc) if ov.tzinfo else ov.replace(tzinfo=tz.utc)
-        dt_rv = rv.astimezone(tz.utc) if rv.tzinfo else rv.replace(tzinfo=tz.utc)
-        if abs((dt_ov - dt_rv).total_seconds()) > opts.time_epsilon.total_seconds():
-            return f"{name}: {_fmt(ov)} != {_fmt(rv)}"
-        return None
-
-    # List comparison (tags, domains)
-    if isinstance(ov, list) and isinstance(rv, list):
-        ov_norm = _normalize_list(ov, opts)
-        rv_norm = _normalize_list(rv, opts)
-        if ov_norm != rv_norm:
-            return f"{name}: {ov_norm} != {rv_norm}"
-        return None
-
-    # String comparison
-    if isinstance(ov, str) and isinstance(rv, str):
-        s_ov = _normalize_str(ov, opts, strip=(name in opts.strip_fields))
-        s_rv = _normalize_str(rv, opts, strip=(name in opts.strip_fields))
-        if s_ov != s_rv:
-            # Show first differing position
-            for i, (a, b) in enumerate(zip(s_ov, s_rv, strict=False)):
-                if a != b:
-                    ctx = max(0, i - 20)
-                    return f"{name}: ...{s_ov[ctx : i + 30]}... != ...{s_rv[ctx : i + 30]}..."
-            return f"{name}: lengths {len(s_ov)} != {len(s_rv)}"
-        return None
-
-    # General
-    if ov != rv:
-        return f"{name}: {_fmt(ov)} != {_fmt(rv)}"
-    return None
-
-
-def _normalize_str(s: str, opts: CompareOptions, strip: bool = False) -> str:
-    if opts.normalize_unicode:
-        s = unicodedata.normalize("NFC", s)
-    if opts.normalize_newlines:
-        s = s.replace("\r\n", "\n").replace("\r", "\n")
-    if strip:
-        s = s.strip()
-    return s
-
-
-def _normalize_list(lst: list, opts: CompareOptions) -> list:
-    result = []
-    for item in lst:
-        if isinstance(item, str):
-            s = _normalize_str(item, opts)
-            if opts.casefold_tags:
-                s = s.casefold()
-            result.append(s)
-        else:
-            result.append(item)
-    if opts.sort_lists:
-        result = sorted(result, key=str)
-    return result
-
-
-def _field_error_code(field: str) -> str:
-    codes = {
-        "kind": "ML401",
-        "body": "ML402",
-        "importance_score": "ML403",
-        "importance_label": "ML403",
-        "created_at": "ML404",
-        "updated_at": "ML404",
-        "id": "ML400",
-        "name": "ML401",
-        "tags": "ML401",
-        "domains": "ML401",
-    }
-    return codes.get(field, "ML401")
-
-
-def _fmt(v) -> str:
-    if isinstance(v, str) and len(v) > 60:
-        return repr(v[:57] + "...")
-    return repr(v)
-
-
-# ═══════════════════════════════════════════════════════════════════
-# Roundtrip
-# ═══════════════════════════════════════════════════════════════════
 
 
 @dataclass
 class RoundtripReport:
     total: int
     matched: int
-    partial: int  # warnings only (degraded)
-    failed: int  # errors (lost / content mismatch)
+    partial: int
+    failed: int
     only_in_original: list[str]
     only_in_restored: list[str]
     issues: list[ValidationIssue]
@@ -446,27 +360,9 @@ class RoundtripReport:
     schema_version: str = "1"
 
     def to_dict(self) -> dict:
-        return {
-            "total": self.total,
-            "matched": self.matched,
-            "partial": self.partial,
-            "failed": self.failed,
-            "only_in_original": self.only_in_original,
-            "only_in_restored": self.only_in_restored,
-            "duration": self.duration,
-            "warnings": self.warnings,
-            "schema_version": self.schema_version,
-            "issues": [
-                {
-                    "code": i.code,
-                    "severity": i.severity,
-                    "memory_id": i.memory_id,
-                    "field": i.field,
-                    "message": i.message,
-                }
-                for i in self.issues
-            ],
-        }
+        from dataclasses import asdict
+
+        return asdict(self)
 
 
 def run_roundtrip(
@@ -474,130 +370,51 @@ def run_roundtrip(
     source_format: str,
     intermediate_format: str = "openclaw",
     keep_temp: Path | None = None,
+    *,
+    output_mode: str = "daily-notes",
 ) -> RoundtripReport:
-    """Run full roundtrip: source → intermediate → source, returning structured report.
-
-    Uses registry only — no hardcoded format classes.
-    """
     from .registry import get_reader, get_writer
 
     start = time.perf_counter()
-    all_warnings: list[str] = []
-
-    # Validate formats
+    original = []
+    warnings = []
     try:
         reader = get_reader(source_format)
-    except Exception as e:
-        return RoundtripReport(
-            total=0,
-            matched=0,
-            partial=0,
-            failed=1,
-            only_in_original=[],
-            only_in_restored=[],
-            issues=[ValidationIssue(code="ML301", severity=Severity.ERROR, message=str(e))],
-        )
-
-    # Read original
-    try:
-        result = reader.read(source_path)
-    except Exception as e:
-        return RoundtripReport(
-            total=0,
-            matched=0,
-            partial=0,
-            failed=1,
-            only_in_original=[],
-            only_in_restored=[],
-            issues=[ValidationIssue(code="ML200", severity=Severity.ERROR, message=f"Read failed: {e}")],
-        )
-
-    all_warnings.extend(result.warnings)
-    original = {m.id: m for m in result.memories}
-    if not original:
-        return RoundtripReport(
-            total=0, matched=0, partial=0, failed=0, only_in_original=[], only_in_restored=[], issues=[]
-        )
-
-    # Roundtrip
-    import shutil
-    import tempfile
-
-    tmp_dir = None
-    try:
-        tmp_dir = tempfile.mkdtemp()
-        tmp = Path(tmp_dir)
-
-        # source → intermediate
-        try:
-            iw = get_writer(intermediate_format)
-            if intermediate_format == "openclaw":
-                iw = get_writer(intermediate_format, output_mode="structured")
-        except Exception as e:
-            return RoundtripReport(
-                total=len(original),
-                matched=0,
-                partial=0,
-                failed=len(original),
-                only_in_original=[],
-                only_in_restored=[],
-                issues=[ValidationIssue(code="ML301", severity=Severity.ERROR, message=str(e))],
+        source_result = reader.read(source_path)
+        original = source_result.memories
+        warnings.extend(source_result.warnings)
+        if source_result.errors or source_result.stats.get("invalid", 0) or source_result.stats.get("unsupported", 0):
+            raise ValueError(
+                "Roundtrip source contains invalid/unsupported records: "
+                + "; ".join(source_result.errors + source_result.warnings)
             )
-
-        iw.write(result.memories, tmp / "intermediate")
-
-        # intermediate → Canonical
-        ir = get_reader(intermediate_format)
-        back_result = ir.read(tmp / "intermediate")
-        all_warnings.extend(back_result.warnings)
-        im = back_result.memories
-
-        # Canonical → source
-        sw = get_writer(source_format)
-        sw.write(im, tmp / "restored")
-
-        # Read back
-        restored_result = reader.read(tmp / "restored")
-        all_warnings.extend(restored_result.warnings)
-        restored = {m.id: m for m in restored_result.memories}
-
-        if keep_temp:
-            shutil.copytree(tmp, keep_temp, dirs_exist_ok=True)
-
-    finally:
-        if tmp_dir:
-            shutil.rmtree(tmp_dir, ignore_errors=True)
-
-    # Compare
-    issues = compare_memories(original, restored)
-
-    orig_ids = set(original)
-    rest_ids = set(restored)
-    common = orig_ids & rest_ids
-
-    matched = 0
-    partial = 0
-    failed = len(orig_ids - rest_ids) + len(rest_ids - orig_ids)
-
-    for mid in common:
-        mem_issues = [i for i in issues if i.memory_id == mid]
-        errors = [i for i in mem_issues if i.severity == Severity.ERROR]
-        if errors:
-            failed += 1
-        elif mem_issues:
-            partial += 1
-        else:
-            matched += 1
-
-    return RoundtripReport(
-        total=len(original),
-        matched=matched,
-        partial=partial,
-        failed=failed,
-        only_in_original=sorted(orig_ids - rest_ids),
-        only_in_restored=sorted(rest_ids - orig_ids),
-        issues=issues,
-        warnings=all_warnings,
-        duration=time.perf_counter() - start,
-        schema_version="1",
-    )
+        if not original:
+            raise ValueError("Roundtrip requires at least one parsed record")
+        writer = get_writer(
+            intermediate_format, **({"output_mode": output_mode} if intermediate_format == "openclaw" else {})
+        )
+        source_writer = get_writer(source_format)
+        with tempfile.TemporaryDirectory(prefix="memlink-roundtrip-") as td:
+            root = Path(td)
+            step1 = convert(reader, writer, source_path, root / "intermediate", all=True)
+            warnings.extend(step1["warnings"])
+            step2 = convert(
+                get_reader(intermediate_format), source_writer, root / "intermediate", root / "restored", all=True
+            )
+            warnings.extend(step2["warnings"])
+            restored = get_reader(source_format).read(root / "restored").memories
+            if keep_temp:
+                if keep_temp.exists() and any(keep_temp.iterdir()):
+                    raise ValueError("keep_temp destination must be empty")
+                __import__("shutil").copytree(root, keep_temp, dirs_exist_ok=True)
+        issues = compare_memories(original, restored)
+        failed_ids = {i.memory_id for i in issues}
+        matched = sum(m.id not in failed_ids for m in original)
+        return RoundtripReport(
+            len(original), matched, 0, len(original) - matched, [], [], issues, time.perf_counter() - start, warnings
+        )
+    except Exception as exc:
+        issues = [ValidationIssue("ML303", Severity.ERROR, message=str(exc))]
+        return RoundtripReport(
+            len(original), 0, 0, max(1, len(original)), [], [], issues, time.perf_counter() - start, warnings
+        )

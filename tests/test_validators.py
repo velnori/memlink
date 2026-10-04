@@ -21,9 +21,9 @@ class TestValidateSchema:
 
     def test_missing_id_detected(self):
         issues = validate_schema(FIXTURES / "ombre_samples" / "broken")
-        missing = [i for i in issues if i.code == ErrorCode.MISSING_ID]
-        # both invalid-yaml.md (YAML parsed but no id) and no-id.md (no id field)
-        assert len(missing) == 2
+        errors = [i for i in issues if i.severity == Severity.ERROR]
+        assert errors
+        assert any("records" in i.message.lower() for i in errors)
 
     def test_invalid_yaml_detected(self):
         # Truly broken file (no frontmatter at all) → reader skips, validator sees no .md files
@@ -32,13 +32,11 @@ class TestValidateSchema:
         assert isinstance(issues, list)  # No crash — gracefully handled
 
     def test_openclaw_files_valid(self):
-        # OpenClaw uses filename as id — frontmatter may lack explicit id.
-        # Schema validator reports MISSING_ID for these. That's accurate:
-        # OpenClaw Reader resolves id from filename later.
+        # The actual OpenClaw adapter obtains stable IDs from filenames.
         issues = validate_schema(FIXTURES / "openclaw_samples")
         missing = [i for i in issues if i.code == ErrorCode.MISSING_ID]
-        # All 3 .md files lack frontmatter id (resolved later by Reader)
-        assert len(missing) == 3
+        assert missing == []
+        assert not [i for i in issues if i.severity == Severity.ERROR]
 
 
 class TestValidateSemantic:

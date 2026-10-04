@@ -1,3 +1,5 @@
+> Historical 1.x implementation notes. Current behavior and contracts are in [DESIGN](DESIGN.md), [CLI](guide/cli.md), and [2.0 migration](guide/migration-2.0.md). Old verification counts, time handling and writer assumptions below are not current acceptance evidence.
+
 # memlink 执行计划 v2
 
 ## 总体策略

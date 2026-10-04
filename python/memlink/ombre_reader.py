@@ -11,8 +11,10 @@ from datetime import datetime
 from pathlib import Path
 
 from ._frontmatter import parse_frontmatter as _parse_ombre_frontmatter
+from .codec import parse_time
 from .models import Memory, Source
 from .plugin import Capabilities, FormatPlugin, ReadResult
+from .read_support import markdown_files, relative
 
 # ── Kind mapping ────────────────────────────────────────────────────
 
@@ -49,26 +51,32 @@ class OmbreReader(FormatPlugin):
         warnings: list[str] = []
         stats: dict[str, int] = {"parsed": 0, "skipped": 0, "invalid": 0}
 
-        md_files = sorted(path.rglob("*.md"))
+        md_files = markdown_files(path)
         for md_file in md_files:
-            rel = md_file.relative_to(path)
+            rel = Path(relative(md_file, path))
             try:
-                text = md_file.read_text(encoding="utf-8")
+                text = md_file.read_bytes().decode("utf-8")
             except Exception:
                 stats["skipped"] += 1
                 warnings.append(f"Cannot read {rel}")
                 continue
 
             # Parse frontmatter
-            fm, body = _parse_ombre_frontmatter(text)
+            try:
+                fm, body = _parse_ombre_frontmatter(text)
+                created_at = parse_time(fm.get("created"))
+            except (ValueError, TypeError) as exc:
+                stats["invalid"] += 1
+                warnings.append(f"Invalid Ombre record in {rel}: {exc}")
+                continue
             if not isinstance(fm, dict) or not fm:
-                stats["skipped"] += 1
+                stats["invalid"] += 1
                 warnings.append(f"No frontmatter in {rel}")
                 continue
 
             mem_id = fm.get("bucket_id") or fm.get("id")
             if not mem_id:
-                stats["skipped"] += 1
+                stats["invalid"] += 1
                 warnings.append(f"Missing bucket_id in {rel}")
                 continue
             mem_id = str(mem_id)
@@ -84,10 +92,10 @@ class OmbreReader(FormatPlugin):
                 ),
                 body=body or fm.get("content"),
                 kind=_map_kind(str(fm.get("type", "dynamic"))),
-                status="active",
+                status=fm.get("status", "active"),
                 tags=_parse_ombre_tags(fm),
                 domains=_parse_ombre_domains(fm),
-                created_at=None,  # Converter sets this from metadata
+                created_at=created_at,
                 valence=_to_float_or_none(fm.get("valence")),
                 arousal=_to_float_or_none(fm.get("arousal")),
                 importance_score=_to_float_or_none(fm.get("importance")),
@@ -98,8 +106,9 @@ class OmbreReader(FormatPlugin):
                         "source": {"format": "ombre", "version": "1.0"},
                         "schema_version": "1",
                         "original": {
-                            **{k: _serialize_original_value(v) for k, v in fm.items() if k != "content"},
+                            **{k: _serialize_original_value(v) for k, v in fm.items()},
                             "file": str(rel),
+                            "created_tz": _serialize_original_value(fm.get("created")),
                         },
                     },
                 },
@@ -113,7 +122,7 @@ class OmbreReader(FormatPlugin):
             memories.append(memory)
             stats["parsed"] += 1
 
-        return ReadResult(memories=memories, warnings=warnings, stats=stats)
+        return ReadResult(memories=memories, warnings=warnings, stats=stats, variant="ombre-buckets+yaml-v1")
 
     def write(self, memories, path):
         raise NotImplementedError("OmbreReader is read-only")
@@ -121,7 +130,7 @@ class OmbreReader(FormatPlugin):
     def validate(self, path):
         from .validators import validate_schema
 
-        return validate_schema(path)
+        return validate_schema(path, source_format=self.name)
 
 
 # ── Helpers ─────────────────────────────────────────────────────────

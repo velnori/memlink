@@ -1,38 +1,9 @@
-# Mem0
+# Mem0 offline JSON
 
-[Mem0](https://github.com/mem0ai/mem0) is a memory layer for AI agents (24k+ GitHub stars).
+Format `mem0` reads a record array or `{ "results": [...] }` from a supplied file, preferred `memories.json`, or one unambiguous JSON candidate. Records use `id`, `memory`, metadata and optional created/updated timestamps. Empty arrays are defined valid empty sets for schema validation; an empty roundtrip is an error.
 
-## Capabilities
+`user_id`, `agent_id`, `run_id` and optional session scope are retained. Unknown scope stays unknown; the writer never invents a default user. Same IDs from different users/sources remain separate under scoped identity. Unknown record and top-level export fields remain in transport extensions/metadata.
 
-| Feature | Status |
-|---------|--------|
-| Read | ✅ |
-| Write | ✅ |
-| Emotion | — |
-| Importance | — |
+The writer creates `memories.json` with a `results` array. ID/body/tags/time can be native when actual readback agrees; emotion, summary, relationship, multiple-domain/classification and unsupported values are honestly archive-only or transformed. Generated renamed JSON segments are located by the versioned archive manifest.
 
-## Supported JSON Formats
-
-- `{"results": [...], "relations": [...]}` — `get_all()` export
-- `[...]` — direct array
-
-## Field Mapping
-
-| Mem0 | Canonical |
-|------|-----------|
-| `id` | `id` |
-| `memory` | `body` + `name` (truncated) |
-| `categories` | `tags` |
-| `hash` | `checksum` |
-| `created_at` | `created_at` |
-| `updated_at` | `updated_at` |
-| `metadata` | `extensions.mem0_metadata` |
-| `user_id` | `metadata.memlink.original` |
-
-## Usage
-
-```bash
-memlink convert --from mem0 --to openclaw \
-  -s ./mem0-export/ \
-  -T ./memories/
-```
+This is a local file adapter. No live Mem0 API or service ingestion has been tested or promised. Unsupported records and malformed/top-level-wrong JSON have explicit ledgers and cannot make an entirely unreadable source green.

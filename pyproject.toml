@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "memlink-bridge"
-version = "1.0.11"
+dynamic = ["version"]
 description = "AI Memory Interchange Layer — language-neutral bridge for AI memory systems"
 readme = "README.md"
 license = {text = "MIT"}
@@ -21,7 +21,6 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Utilities",
@@ -113,3 +112,9 @@ exclude_lines = [
 
 [tool.setuptools.packages.find]
 where = ["python"]
+
+[tool.setuptools.dynamic]
+version = {attr = "memlink._version.__version__"}
+
+[tool.setuptools.package-data]
+memlink = ["py.typed", "resources/*.json"]

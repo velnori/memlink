@@ -1,15 +1,25 @@
-"""CLI entry point — argparse-based command routing.
-
-Minimal v0.1 CLI: convert / validate / inspect.
-"""
+"""MemLink CLI: offline Full Migration, verified output and scoped workflows."""
 
 from __future__ import annotations
 
 import argparse
+import json
 import sys
-import time
 from enum import IntEnum
 from pathlib import Path
+
+from ._version import __version__
+from .codec import memory_dict, parse_time
+from .detection import detect_format as _detect_format
+from .registry import PluginNotFoundError, get_reader, get_writer, list_formats
+from .transaction import TransactionError
+
+
+def _resolve_conflict(existing, incoming, strategy):
+    """Compatibility entry point for the original CLI helper."""
+    from .converter import resolve_conflict
+
+    return resolve_conflict(existing, incoming, strategy)
 
 
 class ExitCode(IntEnum):
@@ -22,680 +32,375 @@ class ExitCode(IntEnum):
     USER_ABORT = 130
 
 
-def main(argv: list[str] | None = None) -> None:
-    parser = _build_parser()
-    args = parser.parse_args(argv)
-
-    if not args.command:
-        parser.print_help()
-        sys.exit(ExitCode.SUCCESS)
-
-    try:
-        _dispatch(args)
-    except KeyboardInterrupt:
-        print("\nAborted.", file=sys.stderr)
-        sys.exit(ExitCode.USER_ABORT)
-    except FileNotFoundError as e:
-        print(f"Error: {e}", file=sys.stderr)
-        sys.exit(ExitCode.IO_ERROR)
-    except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
-        sys.exit(ExitCode.IO_ERROR)
+class _Specs(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        previous = getattr(namespace, self.dest, None) or []
+        setattr(namespace, self.dest, previous + values)
 
 
-# ── Parser ─────────────────────────────────────────────────────────
+def _output_args(p):
+    p.add_argument("--output-mode", choices=["daily-notes", "structured"], default="daily-notes")
+    p.add_argument(
+        "--all",
+        action="store_true",
+        help="Include every record inside the supplied approved input root, including archived",
+    )
+    p.add_argument("--include-archived", action="store_true")
+    p.add_argument("--kind", "-k", nargs="+")
+    p.add_argument("--domain", "-d", nargs="+")
+    p.add_argument("--status", choices=["active", "archived"])
+    p.add_argument("--include-user", action="store_true", help="Read OpenClaw USER.md explicitly")
+    p.add_argument("--include-dreams", action="store_true", help="Read legacy OpenClaw DREAMS.md explicitly")
+    p.add_argument("--dry-run", action="store_true")
+    p.add_argument(
+        "--strict",
+        "--fail-on-loss",
+        dest="strict",
+        action="store_true",
+        help="Exit 5 before committing any unallowed archive/semantic change",
+    )
+    p.add_argument(
+        "--allow-change",
+        action="append",
+        default=[],
+        metavar="FIELD",
+        help="Explicit strict-mode field exception, recorded in receipt",
+    )
+    p.add_argument("--format", choices=["pretty", "json"], default="pretty")
+    p.add_argument("--verbose", "-v", action="count", default=0)
 
 
 def _build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        prog="memlink",
-        description="AI Memory Interchange Layer — bridge AI memory formats",
+    p = argparse.ArgumentParser(prog="memlink", description="Offline AI Memory Interchange Layer")
+    p.add_argument("--version", action="version", version=f"memlink {__version__}")
+    sub = p.add_subparsers(dest="command")
+    for name in ("convert", "migrate", "ombre2claw", "claw2ombre"):
+        q = sub.add_parser(name)
+        if name in ("convert", "migrate"):
+            q.add_argument("--from", "-f", dest="from_fmt", default="auto")
+            q.add_argument("--to", "-t", dest="to_fmt", required=True)
+        q.add_argument("--source", "-s", type=Path, required=True)
+        q.add_argument("--target", "-T", type=Path, required=True)
+        if name == "migrate":
+            q.add_argument("--on-conflict", choices=["skip", "replace", "rename"], default="skip")
+        _output_args(q)
+    q = sub.add_parser("merge")
+    q.add_argument("--sources", "-s", action=_Specs, nargs="+", required=True, metavar="FORMAT:PATH")
+    q.add_argument("--to", "-T", required=True, metavar="FORMAT:PATH")
+    q.add_argument("--on-conflict", choices=["newest", "oldest", "first", "last"], default="newest")
+    q.add_argument(
+        "--link-by-id", action="store_true", help="Explicitly link otherwise distinct identities by native ID"
     )
-    from . import __version__
-
-    parser.add_argument("--version", action="version", version=f"memlink {__version__}")
-    sub = parser.add_subparsers(dest="command")
-
-    # convert
-    p = sub.add_parser("convert", help="Convert between memory formats")
-    p.add_argument("--from", "-f", dest="from_fmt", required=True, help="Source format (ombre, openclaw)")
-    p.add_argument("--to", "-t", dest="to_fmt", required=True, help="Target format (ombre, openclaw)")
-    p.add_argument("--source", "-s", type=Path, required=True, help="Source directory")
-    p.add_argument("--target", "-T", type=Path, required=True, help="Target directory")
-    p.add_argument(
-        "--output-mode",
-        choices=["daily-notes", "structured"],
-        default="daily-notes",
-        help="OpenClaw output mode (default: daily-notes)",
-    )
-    p.add_argument("--kind", "-k", nargs="+", help="Only convert specific kind(s)")
-    p.add_argument("--dry-run", action="store_true", help="Parse only, don't write")
-    p.add_argument("--include-archived", action="store_true")
-    p.add_argument(
-        "--fail-on-loss",
-        action="store_true",
-        help="Exit with code 5 if any fields will be lost during conversion",
-    )
-    p.add_argument("--verbose", "-v", action="count", default=0)
-
-    # shortcuts
-    p = sub.add_parser("ombre2claw", help="Ombre → OpenClaw (shortcut)")
-    p.add_argument("--source", "-s", type=Path, required=True)
-    p.add_argument("--target", "-T", type=Path, required=True)
-    p.add_argument("--output-mode", choices=["daily-notes", "structured"], default="daily-notes")
-    p.add_argument("--dry-run", action="store_true")
-    p.add_argument("--verbose", "-v", action="count", default=0)
-
-    p = sub.add_parser("claw2ombre", help="OpenClaw → Ombre (shortcut)")
-    p.add_argument("--source", "-s", type=Path, required=True)
-    p.add_argument("--target", "-T", type=Path, required=True)
-    p.add_argument("--dry-run", action="store_true")
-    p.add_argument("--verbose", "-v", action="count", default=0)
-
-    # validate
-    p = sub.add_parser("validate", help="Validate memory files")
-    p.add_argument("--level", choices=["schema", "semantic", "roundtrip"], default="schema")
-    p.add_argument("--source", "-s", type=Path, required=True, help="Directory or file to validate")
-    p.add_argument("--format", choices=["pretty", "json"], default="pretty")
-
-    # diff
-    p = sub.add_parser("diff", help="Compare two memory directories")
-    p.add_argument("--source", "-s", type=Path, nargs=2, required=True, metavar=("DIR1", "DIR2"))
-    p.add_argument("--ignore", help="Ignore field groups: timestamps,tags,importance")
-    p.add_argument("--format", choices=["pretty", "json"], default="pretty")
-
-    # stats
-    p = sub.add_parser("stats", help="Show memory statistics")
-    p.add_argument("--source", "-s", type=Path, required=True)
-
-    # inspect
-    p = sub.add_parser("inspect", help="Inspect a single memory file")
-    p.add_argument("file", type=Path, help="File to inspect")
-    p.add_argument("--format", "-f", choices=["ombre", "openclaw"], help="Force format detection")
-
-    # formats
-    sub.add_parser("formats", help="List installed format plugins")
-
-    # merge
-    p = sub.add_parser("merge", help="Merge memories from multiple sources into one target")
-    p.add_argument(
-        "--sources",
-        "-s",
-        action="append",
-        required=True,
-        metavar="FORMAT:PATH",
-        help="Source as format:path (repeat for multiple), e.g. -s ombre:/data -s mem0:/data",
-    )
-    p.add_argument(
-        "--to",
-        "-T",
-        required=True,
-        metavar="FORMAT:PATH",
-        help="Target as format:path, e.g. openclaw:/data/output",
-    )
-    p.add_argument(
-        "--on-conflict",
-        choices=["newest", "oldest", "first", "last"],
-        default="newest",
-        help="Conflict resolution when same id exists in multiple sources (default: newest)",
-    )
-    p.add_argument(
-        "--output-mode", choices=["daily-notes", "structured"], default="daily-notes", help="OpenClaw output mode"
-    )
-    p.add_argument("--dry-run", action="store_true")
-    p.add_argument("--verbose", "-v", action="count", default=0)
-
-    # broadcast
-    p = sub.add_parser("broadcast", help="Write memories from one source to multiple targets")
-    p.add_argument(
-        "--from",
-        "-f",
-        dest="from_spec",
-        required=True,
-        metavar="FORMAT:PATH",
-        help="Source as format:path, e.g. ombre:/data/ombre",
-    )
-    p.add_argument(
-        "--to",
-        "-T",
-        action="append",
-        required=True,
-        metavar="FORMAT:PATH",
-        help="Target as format:path (repeat for multiple), e.g. -T mem0:/out -T openclaw:/out2",
-    )
-    p.add_argument(
-        "--output-mode", choices=["daily-notes", "structured"], default="daily-notes", help="OpenClaw output mode"
-    )
-    p.add_argument("--dry-run", action="store_true")
-    p.add_argument("--verbose", "-v", action="count", default=0)
-
-    return parser
+    _output_args(q)
+    q = sub.add_parser("broadcast")
+    q.add_argument("--from", "-f", dest="from_spec", required=True, metavar="FORMAT:PATH")
+    q.add_argument("--to", "-T", action=_Specs, nargs="+", required=True, metavar="FORMAT:PATH")
+    _output_args(q)
+    q = sub.add_parser("validate")
+    q.add_argument("--level", choices=["schema", "semantic", "roundtrip"], default="schema")
+    q.add_argument("--source", "-s", type=Path, required=True)
+    q.add_argument("--from", dest="from_fmt", default="auto")
+    q.add_argument("--intermediate", default="openclaw")
+    q.add_argument("--output-mode", choices=["daily-notes", "structured"], default="daily-notes")
+    q.add_argument("--format", choices=["pretty", "json"], default="pretty")
+    q = sub.add_parser("diff")
+    q.add_argument("--source", "-s", nargs=2, type=Path, required=True)
+    q.add_argument("--from-1", default="auto")
+    q.add_argument("--from-2", default="auto")
+    q.add_argument("--ignore", default="")
+    q.add_argument("--format", choices=["pretty", "json"], default="pretty")
+    q = sub.add_parser("stats")
+    q.add_argument("--source", "-s", type=Path, required=True)
+    q.add_argument("--from", dest="from_fmt", default="auto")
+    q = sub.add_parser("inspect")
+    q.add_argument("file", type=Path)
+    q.add_argument("--format", "-f", default="auto")
+    q.add_argument("--id", dest="memory_id")
+    sub.add_parser("formats")
+    return p
 
 
-# ── Dispatch ───────────────────────────────────────────────────────
+def _parse_source(s: str) -> tuple[str, Path]:
+    if ":" not in s:
+        raise ValueError("Expected FORMAT:PATH")
+    fmt, path = s.split(":", 1)
+    if not fmt or not path:
+        raise ValueError("Expected nonempty FORMAT:PATH")
+    return fmt, Path(path)
 
 
-def _dispatch(args) -> None:
-    if args.command == "formats":
-        _cmd_formats()
-    elif args.command == "merge":
-        _cmd_merge(args)
-    elif args.command == "broadcast":
-        _cmd_broadcast(args)
-    elif args.command == "convert":
-        _cmd_convert(args)
-    elif args.command == "validate":
-        _cmd_validate(args)
-    elif args.command == "inspect":
-        _cmd_inspect(args)
-    elif args.command == "diff":
-        _cmd_diff(args)
-    elif args.command == "stats":
-        _cmd_stats(args)
-    elif args.command == "ombre2claw":
+def _reader(fmt, path, args=None):
+    selection = "auto" if fmt == "auto" else "explicit"
+    fmt = _detect_format(path) if fmt == "auto" else fmt
+    kwargs = {}
+    if fmt == "openclaw" and args:
+        kwargs = {
+            "include_user": getattr(args, "include_user", False),
+            "include_dreams": getattr(args, "include_dreams", False),
+        }
+    reader = get_reader(fmt, **kwargs)
+    reader.selection = selection
+    return reader
+
+
+def _writer(fmt, args):
+    return get_writer(fmt, **({"output_mode": args.output_mode} if fmt == "openclaw" else {}))
+
+
+def _options(args):
+    return {
+        "all": args.all,
+        "include_archived": args.include_archived,
+        "kind": args.kind,
+        "domain": args.domain,
+        "status": args.status,
+        "strict": args.strict,
+        "dry_run": args.dry_run,
+        "allow_changes": set(args.allow_change),
+    }
+
+
+def _display(receipt, args):
+    if args.format == "json":
+        print(json.dumps(receipt, ensure_ascii=False, indent=2, allow_nan=False))
+        return
+    print("Status:   " + receipt["status"])
+    print("Records:  " + str(len(receipt.get("records", []))))
+    for plan in receipt.get("plan", []):
+        print(f"  {plan['action']}: {plan['path']}")
+    if args.verbose:
+        for source in receipt.get("sources", []):
+            print(f"Source:   {source['format']} ({source.get('variant', 'unknown')}) {source.get('stats', {})}")
+        for record in receipt.get("records", []):
+            print(f"Record:   {record['id']} -> {record['target_id']} ({record['outcome']})")
+            if args.verbose > 1:
+                for field, impact in record["fields"].items():
+                    print(f"    {field}: {impact['status']}")
+    for warning in receipt.get("warnings", []):
+        print("Warning:  " + warning)
+    for error in receipt.get("errors", []):
+        print("Error:    " + error, file=sys.stderr)
+    if receipt.get("status") != "planned":
+        print("Receipt:  .memlink/receipt.json")
+
+
+def _cmd_convert(args):
+    from .converter import convert
+
+    if args.command == "ombre2claw":
         args.from_fmt, args.to_fmt = "ombre", "openclaw"
-        _cmd_convert(args)
     elif args.command == "claw2ombre":
         args.from_fmt, args.to_fmt = "openclaw", "ombre"
-        _cmd_convert(args)
-    else:
-        sys.exit(0)
+    result = convert(
+        _reader(args.from_fmt, args.source, args),
+        _writer(args.to_fmt, args),
+        args.source,
+        args.target,
+        mode="migrate" if args.command == "migrate" else "export",
+        conflict=getattr(args, "on_conflict", "skip"),
+        **_options(args),
+    )
+    _display(result["receipt"], args)
 
 
-# ── Commands ───────────────────────────────────────────────────────
+def _cmd_merge(args):
+    from .converter import merge
+
+    sources = [(_reader(f, p, args), p) for f, p in map(_parse_source, args.sources)]
+    fmt, path = _parse_source(args.to)
+    result = merge(
+        sources, _writer(fmt, args), path, on_conflict=args.on_conflict, link_by_id=args.link_by_id, **_options(args)
+    )
+    _display(result["receipt"], args)
 
 
-def _cmd_formats() -> None:
-    from .registry import list_formats
+def _cmd_broadcast(args):
+    from .converter import _execute_selection, read_source
 
-    fmts = list_formats()
-    if not fmts:
-        print("No format plugins installed.")
-        return
-    print(f"{'Format':<15} {'Reader':<10} {'Writer':<10}")
-    print("-" * 35)
-    for name, caps in fmts.items():
-        print(f"{name:<15} {'yes' if caps['reader'] else 'no':<10} {'yes' if caps['writer'] else 'no':<10}")
-
-
-def _cmd_convert(args) -> None:
-    from .converter import analyze_conversion
-    from .registry import get_reader, get_writer
-
-    src_plugin = get_reader(args.from_fmt)
-    writer_kwargs = {}
-    if args.to_fmt == "openclaw":
-        writer_kwargs["output_mode"] = args.output_mode
-    dst_plugin = get_writer(args.to_fmt, **writer_kwargs)
-
-    # Read first to compute analysis
-    result = src_plugin.read(args.source)
-    memories = result.memories
-    total = len(memories)
-    print(f"Read:     {total} memories from {args.from_fmt}")
-
-    # Analyze before writing
-    analysis = analyze_conversion(memories, src_plugin, dst_plugin)
-    _print_compatibility(analysis, total, args.verbose)
-
-    if getattr(args, "fail_on_loss", False):
-        lost = [i for i in analysis.impacts if i.severity == "lost"]
-        if lost:
-            labels = ", ".join(i.label for i in lost)
-            print(
-                f"--fail-on-loss: {len(lost)} field type(s) will be lost: {labels}",
-                file=sys.stderr,
+    fmt, path = _parse_source(args.from_spec)
+    reader = _reader(fmt, path, args)
+    memories, context, excluded, _ = read_source(reader, path, **_options(args))
+    results = []
+    for spec in args.to:
+        try:
+            target_fmt, target_path = _parse_source(spec)
+            receipt = _execute_selection(
+                memories, context, excluded, _writer(target_fmt, args), path, target_path, _options(args)
             )
-            sys.exit(ExitCode.FORMAT_INCOMPATIBLE)
-
-    # Dry run
-    if args.dry_run:
-        print(f"\nDry run: would convert {total} memories")
-        return
-
-    # Write
-    start = time.perf_counter()
-    write_warnings = dst_plugin.write(memories, args.target)
-    elapsed = time.perf_counter() - start
-
-    if write_warnings and args.verbose:
-        for w in write_warnings[:10]:
-            print(f"  [write] {w}")
-
-    all_warnings = result.warnings + write_warnings
-    print(f"Warnings: {len(all_warnings)}" if all_warnings else "Warnings: 0")
-    print(f"Time:     {elapsed:.2f}s")
-
-
-def _print_compatibility(analysis, total: int, verbosity: int) -> None:
-    """Print structured Compatibility Report."""
-    if not analysis.impacts:
-        if verbosity >= 1:
-            print("Compatibility: fully supported")
-        return
-
-    icons = {"lost": "[!]", "degraded": "[~]", "preserved": "[ok]"}
-    titles = {"lost": "Not supported", "degraded": "Degraded", "preserved": "Preserved via metadata"}
-
-    # Group by severity
-    by_sev: dict[str, list] = {}
-    for imp in analysis.impacts:
-        by_sev.setdefault(imp.severity, []).append(imp)
-
-    print("\nCompatibility Report:")
-
-    for sev in ("lost", "preserved", "degraded"):
-        items = by_sev.get(sev, [])
-        if not items:
-            continue
-        title = titles.get(sev, sev)
-        print(f"  {icons.get(sev, '?')} {title}:")
-        for imp in items:
-            pct = f" ({imp.count * 100 // total}%)" if verbosity >= 1 else ""
-            print(f"    {imp.label}: {imp.count} field values{pct}")
-            if verbosity >= 2:
-                print(f"      → {imp.reason}")
-            if verbosity >= 2 and imp.recoverable:
-                print("      → Recoverable via roundtrip")
+            results.append({"target": spec, "exit_code": 0, "receipt": receipt})
+        except TransactionError as exc:
+            results.append({"target": spec, "exit_code": exc.exit_code, "receipt": exc.receipt})
+        except Exception as exc:
+            results.append(
+                {
+                    "target": spec,
+                    "exit_code": 5 if isinstance(exc, PluginNotFoundError) else 3,
+                    "receipt": {"status": "failed", "errors": [str(exc)], "warnings": []},
+                }
+            )
+    status = (
+        "failed"
+        if any(r["exit_code"] for r in results)
+        else "planned"
+        if args.dry_run
+        else "partial"
+        if any(r["receipt"]["status"] == "partial" for r in results)
+        else "success"
+    )
+    if args.format == "json":
+        print(json.dumps({"status": status, "targets": results}, ensure_ascii=False, indent=2))
+    else:
+        print("Status:   " + status)
+        for r in results:
+            print(f"  {r['target']}: {r['receipt']['status']} (exit {r['exit_code']})")
+            for message in r["receipt"].get("errors", []) + r["receipt"].get("warnings", []):
+                print("    " + message)
+    if any(r["exit_code"] for r in results):
+        raise SystemExit(3)
 
 
-def _cmd_validate(args) -> None:
+def _cmd_validate(args):
     from .validators import validate_roundtrip, validate_schema, validate_semantic
 
-    if args.level == "schema":
-        issues = validate_schema(args.source)
-    elif args.level == "semantic":
-        issues = validate_semantic(args.source)
-    elif args.level == "roundtrip":
-        issues = validate_roundtrip(args.source)
+    fmt = None if args.from_fmt == "auto" else args.from_fmt
+    if args.level == "roundtrip":
+        issues = validate_roundtrip(args.source, fmt, args.intermediate, args.output_mode)
     else:
-        issues = []
-
+        issues = (validate_schema if args.level == "schema" else validate_semantic)(args.source, fmt)
     errors = [i for i in issues if i.severity == "error"]
-    warnings = [i for i in issues if i.severity == "warning"]
-
     if args.format == "json":
-        import json
+        from dataclasses import asdict
 
-        out = {
-            "total": len(errors) + len(warnings),
-            "errors": [{"code": e.code, "path": e.path, "message": e.message} for e in errors],
-            "warnings": [{"code": w.code, "path": w.path, "message": w.message} for w in warnings],
-        }
-        print(json.dumps(out, indent=2))
-    else:
-        if errors:
-            print(f"Errors: {len(errors)}")
-            for e in errors:
-                print(f"  {e.code.value if hasattr(e.code, 'value') else e.code} {e.path}: {e.message}")
-        if warnings:
-            print(f"Warnings: {len(warnings)}")
-            for w in warnings[:10]:
-                print(f"  {w.code} {w.path}: {w.message}")
-        if not errors and not warnings:
-            print(f"All files valid ({args.level})")
-
-    sys.exit(ExitCode.VALIDATION_ERROR if errors else ExitCode.SUCCESS)
-
-
-def _cmd_diff(args) -> None:
-    from .converter import CompareOptions, compare_memories
-    from .registry import get_reader
-
-    dir1, dir2 = args.source
-    ignore_fields = set((args.ignore or "").split(",")) if args.ignore else set()
-
-    r1 = get_reader(_detect_format(dir1))
-    r2 = get_reader(_detect_format(dir2))
-
-    m1 = r1.read(dir1).memories
-    m2 = r2.read(dir2).memories
-
-    ids1 = {m.id for m in m1}
-    ids2 = {m.id for m in m2}
-
-    only_in_1 = sorted(ids1 - ids2)
-    only_in_2 = sorted(ids2 - ids1)
-
-    # Field-level diff with --ignore support
-    opts = CompareOptions(
-        ignore=ignore_fields
-        | {"relationships", "updated_at", "source", "checksum", "metadata", "extensions", "schema_version"},
-    )
-    issues = compare_memories(m1, m2, options=opts)
-
-    if args.format == "json":
-        import json
-
-        field_errs = sum(1 for i in issues if i.severity == "error")
         print(
             json.dumps(
-                {
-                    "only_in_source": len(only_in_1),
-                    "only_in_target": len(only_in_2),
-                    "field_differs": field_errs,
-                    "details": [
-                        {"memory_id": i.memory_id, "field": i.field, "message": i.message} for i in issues[:20]
-                    ],
-                },
+                {"errors": [asdict(i) for i in errors], "issues": [asdict(i) for i in issues]},
+                ensure_ascii=False,
                 indent=2,
             )
         )
     else:
-        print(f"Only in source: {len(only_in_1)}")
-        print(f"Only in target: {len(only_in_2)}")
-        errors = [i for i in issues if i.severity == "error"]
-        warnings = [i for i in issues if i.severity == "warning"]
-        print(f"Field differs: {len(errors)} errors, {len(warnings)} warnings")
-
-        if only_in_1:
-            print(f"\n  Added ({len(only_in_1)}):")
-            for i in only_in_1[:10]:
-                print(f"    + {i}")
-        if only_in_2:
-            print(f"\n  Removed ({len(only_in_2)}):")
-            for i in only_in_2[:10]:
-                print(f"    - {i}")
-        if errors[:5]:
-            print("\n  Content diffs:")
-            for e in errors[:5]:
-                print(f"    [{e.memory_id}] {e.field}: {e.message[:80]}")
-
-    has_diff = bool(only_in_1 or only_in_2 or [i for i in issues if i.severity == "error"])
-    sys.exit(ExitCode.DIFF_FOUND if has_diff else ExitCode.SUCCESS)
+        for issue in issues:
+            print(f"{issue.code}: {issue.message}")
+        if not errors:
+            print("Validated " + args.level + " using the source adapter")
+    if errors:
+        raise SystemExit(2)
 
 
-def _cmd_stats(args) -> None:
-    from .registry import get_reader
-
-    fmt = _detect_format(args.source)
-    reader = get_reader(fmt)
-    result = reader.read(args.source)
-    mems = result.memories
-
-    kinds: dict[str, int] = {}
-    domains: dict[str, int] = {}
-    total_tags = 0
-    total_body = 0
-    oldest = None
-    newest = None
-
-    for m in mems:
-        kinds[m.kind] = kinds.get(m.kind, 0) + 1
-        for d in m.domains:
-            if d:
-                domains[d] = domains.get(d, 0) + 1
-        total_tags += len(m.tags)
-        body_len = len(m.body or "")
-        total_body += body_len
-        if m.created_at:
-            if not oldest or m.created_at < oldest:
-                oldest = m.created_at
-            if not newest or m.created_at > newest:
-                newest = m.created_at
-
-    n = len(mems)
-    print(f"Total:     {n} memories ({fmt})")
-    if n:
-        for k, v in sorted(kinds.items()):
-            bar = "█" * (v * 20 // n)
-            print(f"  {k:<12} {v:>4} ({v * 100 // n:>2}%) {bar}")
-    print(f"Domains:   {len(domains)} unique")
-    if domains:
-        top = sorted(domains.items(), key=lambda x: x[1], reverse=True)[:5]
-        for d, c in top:
-            print(f"  {d:<20} {c}")
-    print(f"Tags:      {total_tags / n:.1f} avg per memory" if n else "Tags: 0")
-    print(f"Body:      {total_body // n} chars avg" if n else "Body: 0")
-    if oldest:
-        print(f"Oldest:    {oldest.date()}")
-    if newest:
-        print(f"Newest:    {newest.date()}")
+def _cmd_inspect(args):
+    if not args.file.is_file():
+        raise ValueError("Inspect requires an existing single file")
+    reader = _reader(args.format, args.file)
+    result = reader.read(args.file)
+    matches = [m for m in result.memories if args.memory_id is None or m.id == args.memory_id]
+    if not matches:
+        raise ValueError("Requested ID/file has no parsed memory; no fallback record")
+    if args.memory_id and len(matches) != 1:
+        raise ValueError("Requested ID is ambiguous")
+    print(
+        json.dumps(
+            {"format": reader.name, "memories": [memory_dict(m) for m in matches], "warnings": result.warnings},
+            ensure_ascii=False,
+            indent=2,
+        )
+    )
 
 
-def _detect_format(path: Path) -> str:
-    """Auto-detect format from directory structure."""
-    if (path / "MEMORY.md").exists() or (path / "memory").exists():
-        return "openclaw"
-    # Check for ombre-buckets structure
-    for subdir in ["dynamic", "permanent", "feel"]:
-        if (path / subdir).exists():
-            return "ombre"
-    return "ombre"  # default
+def _cmd_stats(args):
+    from .converter import read_source
+
+    memories, context, _, warnings = read_source(_reader(args.from_fmt, args.source), args.source, all=True)
+    dates = [parse_time(m.created_at) for m in memories if m.created_at is not None]
+    print(f"Total: {len(memories)} memories")
+    print("Accounting: " + json.dumps(context["stats"]))
+    if dates:
+        print(f"Oldest: {min(dates).isoformat()}\nNewest: {max(dates).isoformat()}")
+    for warning in warnings:
+        print("Warning: " + warning)
 
 
-def _cmd_inspect(args) -> None:
-    from .registry import get_reader, list_formats
+def _cmd_diff(args):
+    from .converter import CompareOptions, compare_memories, read_source
 
-    try:
-        args.file.read_text(encoding="utf-8")
-    except IsADirectoryError:
-        print(f"Error: '{args.file}' is a directory. Inspect requires a file path.", file=sys.stderr)
-        sys.exit(ExitCode.IO_ERROR)
-    fmt = args.format
+    a, b = args.source
+    first, _, _, _ = read_source(_reader(args.from_1, a), a, all=True)
+    second, _, _, _ = read_source(_reader(args.from_2, b), b, all=True)
+    ignored = set(args.ignore.split(",")) if args.ignore else set()
+    for group, fields in {
+        "timestamps": {"created_at", "updated_at"},
+        "importance": {"importance_label", "importance_score"},
+    }.items():
+        if group in ignored:
+            ignored.update(fields)
+            ignored.remove(group)
+    issues = compare_memories(first, second, CompareOptions(ignore=ignored))
+    from dataclasses import asdict
 
-    # Auto-detect format
-    if not fmt:
-        for name in list_formats():
-            try:
-                plugin = get_reader(name)
-                result = plugin.read(args.file.parent)
-                if result.memories:
-                    fmt = name
-                    break
-            except (NotImplementedError, KeyError):
-                continue
-        if not fmt:
-            print("Could not detect format. Use --format to specify.")
-            sys.exit(ExitCode.IO_ERROR)
-
-    plugin = get_reader(fmt)
-    try:
-        result = plugin.read(args.file.parent)
-    except NotImplementedError:
-        print(f"'{fmt}' plugin does not support reading.")
-        sys.exit(ExitCode.IO_ERROR)
-
-    # Match by filename stem or bucket_id
-    stem = args.file.stem
-    mem = next((m for m in result.memories if stem == m.id or stem in str(m.id)), None)
-    if not mem and result.memories:
-        mem = result.memories[0]
-        print(f"  (showing first memory — id mismatch: filename stem '{stem}' matches no id)", file=sys.stderr)
-    if not mem:
-        print("No memory parsed from file.")
-        sys.exit(ExitCode.SUCCESS)
-
-    print(f"Format:   {fmt}")
-    print(f"Source:   {mem.source.uri if mem.source else 'N/A'}")
-    print()
-    print("Canonical:")
-    print(f"  id:              {mem.id}")
-    print(f"  name:            {mem.name}")
-    print(f"  kind:            {mem.kind}")
-    print(f"  status:          {mem.status}")
-    print(f"  domains:         {mem.domains}")
-    print(f"  tags:            {mem.tags}")
-    print(f"  importance:      {mem.importance_score} ({mem.importance_label or 'N/A'})")
-    print(f"  valence/arousal: {mem.valence}/{mem.arousal}")
-    print(f"  pinned:          {mem.pinned}")
-    if mem.body:
-        body_preview = mem.body[:200].replace("\n", " ")
-        print(f"  body:            {body_preview}{'...' if len(mem.body or '') > 200 else ''}")
-    if result.warnings:
-        print(f"\nWarnings: {len(result.warnings)}")
-        for w in result.warnings[:5]:
-            print(f"  - {w}")
+    print(
+        json.dumps({"issues": [asdict(i) for i in issues]}, ensure_ascii=False, indent=2)
+    ) if args.format == "json" else print(f"Differences: {len(issues)}")
+    if issues:
+        raise SystemExit(1)
 
 
-def _cmd_merge(args) -> None:
-    from .registry import get_reader, get_writer
+def _cmd_formats():
+    for fmt, caps in list_formats().items():
+        print(f"{fmt:<15} reader={'yes' if caps['reader'] else 'no'} writer={'yes' if caps['writer'] else 'no'}")
 
-    # Parse sources
-    parsed_sources: list[tuple[str, Path]] = []
-    for spec in args.sources:
-        parsed_sources.append(_parse_source(spec))
 
-    # Parse target
-    target_fmt, target_path = _parse_source(args.to)
+def _dispatch(args):
+    commands = {
+        "convert": _cmd_convert,
+        "migrate": _cmd_convert,
+        "ombre2claw": _cmd_convert,
+        "claw2ombre": _cmd_convert,
+        "merge": _cmd_merge,
+        "broadcast": _cmd_broadcast,
+        "validate": _cmd_validate,
+        "inspect": _cmd_inspect,
+        "stats": _cmd_stats,
+        "diff": _cmd_diff,
+    }
+    if args.command == "formats":
+        _cmd_formats()
+    elif args.command in commands:
+        commands[args.command](args)
 
-    # Read all sources
-    all_memories: list = []
-    source_stats: list[tuple[str, int]] = []
-    for fmt, path in parsed_sources:
-        reader = get_reader(fmt)
-        try:
-            result = reader.read(path)
-            n = len(result.memories)
-            all_memories.append((fmt, path, result.memories))
-            source_stats.append((fmt, n))
-            if args.verbose:
-                print(f"Source {fmt}: {n} memories from {path}")
-        except Exception as e:
-            print(f"Error reading {fmt}:{path}: {e}", file=sys.stderr)
-            sys.exit(ExitCode.IO_ERROR)
 
-    # Merge with conflict resolution
-    merged: dict[str, tuple] = {}  # id -> (memory, source_fmt, source_path, source_idx)
-    duplicates_resolved = 0
-
-    for src_idx, (fmt, path, memories) in enumerate(all_memories):
-        for mem in memories:
-            if mem.id in merged:
-                existing_mem, existing_fmt, existing_path, existing_idx = merged[mem.id]
-                keep_existing = _resolve_conflict(existing_mem, mem, args.on_conflict)
-                if not keep_existing:
-                    merged[mem.id] = (mem, fmt, path, src_idx)
-                duplicates_resolved += 1
-            else:
-                merged[mem.id] = (mem, fmt, path, src_idx)
-
-    unique_memories = [t[0] for t in merged.values()]
-    total = sum(n for _, n in source_stats)
-    unique = len(unique_memories)
-    dupes = total - unique
-
-    print(f"Sources:  {len(parsed_sources)} ({', '.join(f'{f}({n})' for f, n in source_stats)})")
-    print(f"Total:    {total} memories")
-    print(f"Unique:   {unique}")
-    if dupes:
-        print(f"Resolved: {dupes} conflicts (strategy: {args.on_conflict})")
-
-    if args.dry_run:
-        print(f"\nDry run: would write {unique} memories to {target_fmt}:{target_path}")
+def main():
+    # The CLI owns its text streams: redirected JSON and diagnostics are UTF-8
+    # regardless of the locale or Python UTF-8 mode. Keep embedded text sinks usable.
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if callable(reconfigure):
+            reconfigure(encoding="utf-8", errors="backslashreplace")
+    parser = _build_parser()
+    args = parser.parse_args()
+    if not args.command:
+        parser.print_help()
         return
-
-    writer_kwargs: dict = {}
-    if target_fmt == "openclaw":
-        writer_kwargs["output_mode"] = args.output_mode
-    writer = get_writer(target_fmt, **writer_kwargs)
-    start = time.perf_counter()
     try:
-        warnings = writer.write(unique_memories, target_path)
-    except Exception as e:
-        print(f"Error writing to {target_fmt}:{target_path}: {e}", file=sys.stderr)
-        sys.exit(ExitCode.IO_ERROR)
-    elapsed = time.perf_counter() - start
-
-    if warnings and args.verbose:
-        for w in warnings[:10]:
-            print(f"  [write] {w}")
-    print(f"Warnings: {len(warnings)}" if warnings else "Warnings: 0")
-    print(f"Time:     {elapsed:.2f}s")
-
-
-def _cmd_broadcast(args) -> None:
-    from .registry import get_reader, get_writer
-
-    src_fmt, src_path = _parse_source(args.from_spec)
-    reader = get_reader(src_fmt)
-    try:
-        result = reader.read(src_path)
-    except Exception as e:
-        print(f"Error reading {src_fmt}:{src_path}: {e}", file=sys.stderr)
-        sys.exit(ExitCode.IO_ERROR)
-
-    memories = result.memories
-    print(f"Read:     {len(memories)} memories from {src_fmt}")
-
-    if args.dry_run:
-        print(f"\nDry run: would broadcast to {len(args.to)} target(s)")
-        for spec in args.to:
-            fmt, path = _parse_source(spec)
-            print(f"  → {fmt}:{path}")
-        return
-
-    parsed_targets = [_parse_source(spec) for spec in args.to]
-    total_warnings = 0
-    succeeded = 0
-    start = time.perf_counter()
-    for fmt, path in parsed_targets:
-        writer_kwargs: dict = {}
-        if fmt == "openclaw":
-            writer_kwargs["output_mode"] = args.output_mode
-        try:
-            writer = get_writer(fmt, **writer_kwargs)
-            warnings = writer.write(memories, path)
-            total_warnings += len(warnings)
-            succeeded += 1
-            status = f"{len(memories)} written"
-            if warnings:
-                status += f", {len(warnings)} warnings"
-            print(f"  → {fmt}:{path}: {status}")
-            if args.verbose and warnings:
-                for w in warnings[:5]:
-                    print(f"    [warn] {w}")
-        except Exception as e:
-            print(f"  ✗ {fmt}:{path}: {e}", file=sys.stderr)
-    elapsed = time.perf_counter() - start
-    print(f"Targets:  {succeeded}/{len(parsed_targets)}")
-    print(f"Warnings: {total_warnings}" if total_warnings else "Warnings: 0")
-    print(f"Time:     {elapsed:.2f}s")
-
-
-def _resolve_conflict(existing, incoming, strategy: str) -> bool:
-    """Return True if existing should be kept, False if incoming should replace."""
-    if strategy == "first":
-        return True
-    if strategy == "last":
-        return False
-
-    # Compare by datetime — use actual datetimes, not timestamp ints,
-    # to avoid epoch (1970-01-01) colliding with the None sentinel.
-
-    e_dt = existing.updated_at or existing.created_at
-    i_dt = incoming.updated_at or incoming.created_at
-
-    # Undated records never displace dated ones
-    if strategy == "newest":
-        if i_dt is None:
-            return True  # undated incoming never wins
-        if e_dt is None:
-            return False  # undated existing loses to dated incoming
-        return i_dt <= e_dt
-    elif strategy == "oldest":
-        if i_dt is None:
-            return True  # undated incoming never wins
-        if e_dt is None:
-            return False  # undated existing loses to dated incoming
-        return i_dt >= e_dt
-
-    return True  # fallback: keep existing
-
-
-def _parse_source(s: str) -> tuple[str, Path]:
-    """Parse 'format:path' - splits on first colon only (Windows-safe)."""
-    try:
-        idx = s.index(":")
-    except ValueError:
-        raise ValueError(f"Invalid source spec: '{s}'. Expected FORMAT:PATH, e.g. ombre:/data/ombre") from None
-    fmt = s[:idx]
-    path = Path(s[idx + 1 :])
-    return fmt, path
+        _dispatch(args)
+    except TransactionError as exc:
+        if getattr(args, "format", None) == "json":
+            print(json.dumps(exc.receipt, ensure_ascii=False, indent=2))
+        else:
+            print("Error: " + str(exc), file=sys.stderr)
+            for warning in exc.receipt.get("warnings", []):
+                print("Warning: " + warning, file=sys.stderr)
+        raise SystemExit(exc.exit_code) from exc
+    except KeyboardInterrupt:
+        raise SystemExit(130) from None
+    except PluginNotFoundError as exc:
+        print(str(exc), file=sys.stderr)
+        raise SystemExit(5) from exc
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
+        raise SystemExit(2) from exc
+    except OSError as exc:
+        print(str(exc), file=sys.stderr)
+        raise SystemExit(3) from exc
 
 
 if __name__ == "__main__":
     main()
-
-
-# ── Helpers ────────────────────────────────────────────────────────

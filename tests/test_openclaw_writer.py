@@ -7,7 +7,9 @@ import pytest
 import yaml
 
 from memlink.models import Memory, Source
+from memlink.openclaw_reader import OpenClawReader
 from memlink.openclaw_writer import OpenClawWriter
+from memlink.transaction import TransactionError, execute_output
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -65,10 +67,11 @@ class TestStructuredMode:
         writer.write(sample_memories, tmp_path)
         assert (tmp_path / "memory" / "feels" / "feel-sunset.md").exists()
 
-    def test_skips_archived(self, tmp_path, sample_memories):
+    def test_keeps_explicit_archived(self, tmp_path, sample_memories):
         writer = OpenClawWriter(output_mode="structured")
         writer.write(sample_memories, tmp_path)
-        assert not (tmp_path / "memory" / "archived-mem.md").exists()
+        assert (tmp_path / "memory" / "archived-mem.md").exists()
+        assert any(m.status == "archived" for m in OpenClawReader().read(tmp_path).memories)
 
     def test_creates_memory_index(self, tmp_path, sample_memories):
         writer = OpenClawWriter(output_mode="structured")
@@ -85,7 +88,10 @@ class TestStructuredMode:
         assert "memory/a.md" in (tmp_path / "MEMORY.md").read_text()
         # second write — no duplicate
         mem2 = [Memory(id="a", name="Updated", kind="dynamic", body="new")]
-        writer.write(mem2, tmp_path)
+        with pytest.raises(TransactionError):
+            writer.write(mem2, tmp_path)
+        receipt = execute_output(mem2, writer, tmp_path, mode="migrate", conflict="replace")
+        assert receipt["backup"]["files"]
         assert (tmp_path / "MEMORY.md").read_text().count("memory/a.md") == 1
 
     def test_preserves_memlink_metadata(self, tmp_path, sample_memories):
@@ -110,26 +116,25 @@ class TestDailyNotesMode:
         assert (tmp_path / "memory" / "2024-07-15.md").exists()
 
     def test_writes_curated_memory_md(self, tmp_path, sample_memories):
+        sample_memories.append(Memory(id="fact", name="Durable fact", body="Long-term fact", kind="permanent"))
         writer = OpenClawWriter(output_mode="daily-notes")
         writer.write(sample_memories, tmp_path)
         curated = (tmp_path / "MEMORY.md").read_text(encoding="utf-8")
-        assert "Curated Memory" in curated
-        assert "Durable facts" in curated
+        assert "Durable fact" in curated
+        assert "Long-term fact" in curated
 
-    def test_writes_dreams_md_for_emotion(self, tmp_path, sample_memories):
+    def test_writes_emotion_in_daily_notes(self, tmp_path, sample_memories):
         writer = OpenClawWriter(output_mode="daily-notes")
         writer.write(sample_memories, tmp_path)
-        dreams = (tmp_path / "DREAMS.md").read_text(encoding="utf-8")
-        assert "Dream Diary" in dreams
-        assert "夏夜日落" in dreams
+        daily = (tmp_path / "memory/2024-07-15.md").read_text(encoding="utf-8")
+        assert "夏夜日落" in daily
+        assert not (tmp_path / "DREAMS.md").exists()
 
-    def test_skips_archived_in_daily(self, tmp_path, sample_memories):
+    def test_keeps_explicit_archived_in_daily(self, tmp_path, sample_memories):
         writer = OpenClawWriter(output_mode="daily-notes")
         writer.write(sample_memories, tmp_path)
-        # archived memory shouldn't appear anywhere
-        for f in tmp_path.rglob("*.md"):
-            content = f.read_text(encoding="utf-8")
-            assert "Archived Memory" not in content
+        content = (tmp_path / "memory/undated.md").read_text(encoding="utf-8")
+        assert "Archived Memory" in content
 
     def test_embeds_roundtrip_comment(self, tmp_path, sample_memories):
         writer = OpenClawWriter(output_mode="daily-notes")
@@ -137,7 +142,7 @@ class TestDailyNotesMode:
         day_file = tmp_path / "memory" / "2024-06-28.md"
         content = day_file.read_text(encoding="utf-8")
         # Roundtrip data embedded as HTML comment
-        assert "<!-- memlink-roundtrip" in content
+        assert "<!-- memlink-record-v1:" in content
 
     def test_no_dreams_md_without_emotion(self, tmp_path):
         writer = OpenClawWriter(output_mode="daily-notes")
@@ -150,5 +155,6 @@ class TestDailyNotesMode:
         writer = OpenClawWriter(output_mode="daily-notes")
         writer.write(sample_memories, tmp_path)
 
-        # Read back via OpenClaw reader
-        # (Phase 2 — will verify roundtrip then)
+        result = OpenClawReader().read(tmp_path)
+        assert len(result.memories) == len(sample_memories)
+        assert [m.body for m in result.memories] == [m.body for m in sample_memories]

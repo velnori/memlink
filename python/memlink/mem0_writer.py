@@ -1,92 +1,67 @@
-"""Canonical → Mem0 JSON writer.
-
-Outputs Mem0 get_all() compatible JSON (memories.json).
-"""
+"""mem0 offline file writer; no online service/API import."""
 
 from __future__ import annotations
 
 import json
-from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING
 
+from .codec import parse_time
 from .plugin import Capabilities, FormatPlugin
-
-if TYPE_CHECKING:
-    from collections.abc import Iterable
-
-    from .models import Memory
+from .serialization import sanitize
 
 
 class Mem0Writer(FormatPlugin):
     name = "mem0"
     version_supported = ">=1,<3"
-    capabilities = Capabilities(
-        emotion=False,
-        importance_label=False,
-        supported_kinds={"dynamic"},
-    )
+    capabilities = Capabilities(supported_kinds={"dynamic"})
 
     def read(self, path):
-        raise NotImplementedError("Use Mem0Reader for reading")
+        raise NotImplementedError("Use the matching reader")
 
-    def write(self, memories: Iterable[Memory], path: Path) -> list[str]:
+    def write(self, memories, path: Path) -> list[str]:
+        records = []
         warnings: list[str] = []
-        records: list[dict] = []
-
         for mem in memories:
-            memory_text = mem.body or mem.name
-            if not memory_text:
-                warnings.append(f"Skipping {mem.id}: no body or name")
-                continue
-
-            user_id = "default"
-            if mem.metadata:
-                memlink_data = mem.metadata.get("memlink", {})
-                original = memlink_data.get("original", {}) if isinstance(memlink_data, dict) else {}
-                if isinstance(original, dict):
-                    uid = original.get("user_id")
-                    if uid:
-                        user_id = str(uid)
-
-            # Preserve name for roundtrip (Mem0 has no native name field)
-            record_metadata: dict = {}
-            if mem.name:
-                record_metadata["_memlink_name"] = mem.name
-
-            # Roundtrip: restore original Mem0 metadata from extensions
-            if mem.extensions:
-                raw = mem.extensions.get("mem0_metadata")
-                if isinstance(raw, dict):
-                    record_metadata.update(raw)
-
-            record: dict = {
-                "id": mem.id,
-                "memory": str(memory_text),
-                "user_id": user_id,
-                "categories": sorted(mem.tags),
-                "metadata": record_metadata,
+            text = mem.body if mem.body is not None else mem.name or ""
+            original = (mem.metadata.get("memlink") or {}).get("original") or {}
+            raw = mem.extensions.get("mem0_metadata") or {}
+            metadata = dict(raw) if isinstance(raw, dict) else {}
+            if mem.name is not None:
+                metadata["_memlink_name"] = mem.name
+            record = {
+                "id" if self.name == "mem0" else "uuid": mem.id,
+                "memory" if self.name == "mem0" else "fact": text,
+                "metadata": metadata,
             }
-
-            if mem.created_at:
-                record["created_at"] = _format_dt(mem.created_at)
-            if mem.updated_at:
-                record["updated_at"] = _format_dt(mem.updated_at)
-
+            if self.name == "mem0":
+                record["categories"] = sorted(mem.tags)
+                for key in ("user_id", "agent_id", "run_id"):
+                    if original.get(key) is not None:
+                        record[key] = original[key]
+            else:
+                sid = mem.extensions.get("zep_session_id", original.get("session_id"))
+                if sid is not None:
+                    record["session_id"] = sid
+            for field in ("created_at", "updated_at"):
+                value = getattr(mem, field)
+                if value is not None:
+                    normalized = parse_time(value)
+                    assert normalized is not None
+                    record[field] = normalized.isoformat()
             records.append(record)
-
         path.mkdir(parents=True, exist_ok=True)
-        out = path / "memories.json"
-        out.write_text(
-            json.dumps({"results": records}, ensure_ascii=False, indent=2, default=str),
-            encoding="utf-8",
+        data = {"results" if self.name == "mem0" else "facts": records}
+        (path / ("memories.json" if self.name == "mem0" else "facts.json")).write_text(
+            json.dumps(sanitize(data), ensure_ascii=False, indent=2, allow_nan=False), encoding="utf-8", newline=""
         )
-
         return warnings
 
     def validate(self, path):
-        return []
+        from .validators import validate_schema
+
+        return validate_schema(path, source_format=self.name)
 
 
-def _format_dt(dt: datetime) -> str:
-    return dt.isoformat()
+def _format_dt(value):
+    normalized = parse_time(value)
+    return normalized.isoformat() if normalized is not None else None

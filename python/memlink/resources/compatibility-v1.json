@@ -1,0 +1,113 @@
+{
+  "schema": "memlink-compatibility",
+  "version": "1",
+  "canonical_schema": "1",
+  "scope": "Offline file variants only; candidate mappings must be measured in every receipt",
+  "identity": "approved source namespace + scope + native id; verified archive carries origin",
+  "formats": {
+    "chatgpt": {
+      "reader": true,
+      "writer": false,
+      "native_field_candidates": []
+    },
+    "claude_export": {
+      "reader": true,
+      "writer": false,
+      "native_field_candidates": []
+    },
+    "generic": {
+      "reader": true,
+      "writer": true,
+      "native_field_candidates": [
+        "arousal",
+        "body",
+        "checksum",
+        "created_at",
+        "domains",
+        "extensions",
+        "id",
+        "importance_label",
+        "importance_score",
+        "kind",
+        "metadata",
+        "name",
+        "pinned",
+        "relationships",
+        "schema_version",
+        "source",
+        "status",
+        "summary",
+        "tags",
+        "updated_at",
+        "valence"
+      ]
+    },
+    "mem0": {
+      "reader": true,
+      "writer": true,
+      "native_field_candidates": [
+        "body",
+        "created_at",
+        "id",
+        "tags",
+        "updated_at"
+      ]
+    },
+    "ombre": {
+      "reader": true,
+      "writer": true,
+      "native_field_candidates": [
+        "arousal",
+        "body",
+        "created_at",
+        "domains",
+        "id",
+        "importance_score",
+        "kind",
+        "name",
+        "pinned",
+        "tags",
+        "valence"
+      ]
+    },
+    "openclaw": {
+      "reader": true,
+      "writer": true,
+      "native_field_candidates": [
+        "body",
+        "name"
+      ]
+    },
+    "stream-summary": {
+      "reader": true,
+      "writer": false,
+      "native_field_candidates": []
+    },
+    "zep": {
+      "reader": true,
+      "writer": true,
+      "native_field_candidates": [
+        "body",
+        "created_at",
+        "id",
+        "updated_at"
+      ]
+    }
+  },
+  "limits": {
+    "file_bytes": 16777216,
+    "total_bytes": 268435456,
+    "files": 10000,
+    "records": 100000,
+    "nesting": 100,
+    "serialization_nodes": 100000
+  },
+  "field_statuses": [
+    "native-preserved",
+    "archive-only",
+    "transformed",
+    "dropped",
+    "unsupported",
+    "unknown"
+  ]
+}
