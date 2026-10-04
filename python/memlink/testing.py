@@ -38,7 +38,7 @@ def test_plugin_contract(reader, writer) -> None:
 def test_reader_minimal(reader) -> None:
     """Reader must parse at least one memory from a minimal valid directory."""
     with tempfile.TemporaryDirectory() as td:
-        root = Path(td)
+        root = Path(td).resolve(strict=True)
         _create_minimal_format_dir(root, reader.name)
         result = reader.read(root)
         assert len(result.memories) >= 1, f"Reader '{reader.name}' returned zero memories from minimal fixture"
@@ -49,7 +49,7 @@ def test_reader_minimal(reader) -> None:
 def test_reader_unknown_fields(reader) -> None:
     """Reader must handle frontmatter with unknown fields without crashing."""
     with tempfile.TemporaryDirectory() as td:
-        root = Path(td)
+        root = Path(td).resolve(strict=True)
         _create_unknown_fields_dir(root, reader.name)
         result = reader.read(root)
         # Should not raise — unknown fields are tolerated
@@ -59,7 +59,7 @@ def test_reader_unknown_fields(reader) -> None:
 def test_reader_invalid_input(reader) -> None:
     """Reader must handle malformed input without raising exceptions."""
     with tempfile.TemporaryDirectory() as td:
-        root = Path(td)
+        root = Path(td).resolve(strict=True)
         _create_broken_dir(root, reader.name)
         try:
             result = reader.read(root)
@@ -73,7 +73,7 @@ def test_reader_invalid_input(reader) -> None:
 def test_writer_produces_output(writer) -> None:
     """Writer must produce at least one file from minimal Canonical data."""
     with tempfile.TemporaryDirectory() as td:
-        root = Path(td)
+        root = Path(td).resolve(strict=True)
         warnings = writer.write([MINIMAL_MEMORY], root)
         assert isinstance(warnings, list), "write() must return list of warnings"
         files = [f for f in root.rglob("*") if f.is_file()]
@@ -83,7 +83,7 @@ def test_writer_produces_output(writer) -> None:
 def test_roundtrip_preserves_identity(reader, writer) -> None:
     """Roundtrip must preserve id, name, and kind (within declared capabilities)."""
     with tempfile.TemporaryDirectory() as td:
-        root = Path(td)
+        root = Path(td).resolve(strict=True)
         # Write
         writer.write([MINIMAL_MEMORY], root)
         # Read back
@@ -97,7 +97,7 @@ def test_roundtrip_preserves_identity(reader, writer) -> None:
 def test_reader_deterministic(reader) -> None:
     """Reader must return identical results on two reads of the same data."""
     with tempfile.TemporaryDirectory() as td:
-        root = Path(td)
+        root = Path(td).resolve(strict=True)
         _create_minimal_format_dir(root, reader.name)
         r1 = reader.read(root)
         r2 = reader.read(root)

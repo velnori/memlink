@@ -1,3 +1,4 @@
 include LICENSE README.md CONTRIBUTING.md
+include tests/conftest.py
 recursive-include spec *.md *.json
 recursive-include tests/fixtures *.md *.json *.txt

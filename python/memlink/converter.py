@@ -395,7 +395,8 @@ def run_roundtrip(
         )
         source_writer = get_writer(source_format)
         with tempfile.TemporaryDirectory(prefix="memlink-roundtrip-") as td:
-            root = Path(td)
+            # Resolve only our freshly created temp root (e.g. macOS /var).
+            root = Path(td).resolve(strict=True)
             step1 = convert(reader, writer, source_path, root / "intermediate", all=True)
             warnings.extend(step1["warnings"])
             step2 = convert(
