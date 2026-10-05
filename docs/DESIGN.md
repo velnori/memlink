@@ -1,6 +1,6 @@
 # MemLink 设计合同（2.0）
 
-本文件描述当前代码。历史 v0/v1 执行计划保存在 `IMPLEMENTATION.md`；其中未实现的 CLI 设想和 Reader 不解析时间的旧决定已被本合同取代。当前范围是本地文件的 Trusted Conversion / Full Migration，不包含同步或在线 API 导入。
+本文件描述当前代码。历史 v0/v1 执行计划保存在 `IMPLEMENTATION.md`；其中未实现的 CLI 设想和 Reader 不解析时间的旧决定已被本合同取代。当前范围是本地文件的 Trusted Conversion / Full Migration，以及独立可选的 Context Handoff，不包含同步或在线 API 导入。
 
 ## 保留的架构与 schema
 
@@ -9,6 +9,18 @@
 `spec/canonical-v1.schema.json` 与规范字段语义保持不变。必需项仍是 `schema_version="1"` 和 `id`；name/body/time 可以为空，kind 保持开放词汇，valence/arousal 的范围仍为 0–1，importance 保留原生尺度。不得为了迁移方便修改 v1 的 required/type/默认值。运行资源原样打入 wheel/sdist，验证器缺资源或遇到未知版本时失败。
 
 包版本、canonical 版本和 transport 版本分别管理：`_version.py` 是包/CLI 版本唯一来源；canonical 固定 v1；receipt/archive/compatibility 使用独立 v1 JSON 资源。
+
+## Context Handoff
+
+Handoff 复用现有 OpenClaw Reader → Canonical，新增受控文本 Writer 和 bundle 验证，不成为 Full Migration 的前置步骤，也不改其默认迁移行为。
+
+- `handoff --from openclaw --input WORKSPACE --all` 自动创建临时 private pack，直接生成全部批准记录的交接文本；默认没有人工 select/review，收据如实标记 `human_reviewed=false`。
+- `pack → select → handoff → verify` 将原始 sources、完整 Canonical 与 unknown fields 留在私有档案。selection 绑定 pack manifest 和记录摘要。公开交接只包含获选记录投影、必要来源/scope、策略、预算及 receipt；不复制私有档案目录。
+- 批准 scope 是显式目录中的 `MEMORY.md` 与 `memory/**/*.md`；`USER.md`、`DREAMS.md` 单独显式批准。范围外配置、凭据、会话库、skills/plugins 不扫描或归档。private pack 可以记录批准根绝对路径，公开 handoff 不包含该路径。
+- Secret policy 为确定性 `warn|redact|fail`，不是完整 DLP。UTF-8 byte/record budget 默认超限失败，只有显式选项才按完整记录边界裁剪。TTY review 显示最终真实文本，输入 `APPROVE` 后才记录 human review。
+- Bundle 使用既有独占写入、竞争检查及 owned rollback 原语；staging 和最终输出均离线读回验证。`verify --pack` 对照原私有记录重建投影；保留外部可信 manifest 摘要可增强篡改检测。hash 不是签名。
+
+正式字段和验证规则见 `spec/context-handoff-v1.md`；用户流程、消费者教程和边界见 [Context Handoff](guide/context-handoff.md) 与 [隐私/威胁模型](guide/context-privacy.md)。它不会修改客户端长期记忆、AGENTS.md/CLAUDE.md/MEMORY.md、hooks 或客户端设置，也不保证 LLM 理解和抗 prompt injection。
 
 ## 输入与身份
 

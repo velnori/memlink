@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://memlink.dev/memlink-context-selection-v1.schema.json",
+  "title": "MemLink Context selection v1",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "memlink-context-selection"
+    },
+    "version": {
+      "const": "1"
+    },
+    "pack_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "mode": {
+      "enum": [
+        "all",
+        "selection"
+      ]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "records": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "record_id": {
+            "type": "string",
+            "pattern": "^r-[0-9a-f]{64}$"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "required": [
+          "record_id",
+          "sha256"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 1,
+      "maxItems": 100000,
+      "uniqueItems": false
+    }
+  },
+  "required": [
+    "schema",
+    "version",
+    "pack_sha256",
+    "mode",
+    "created_at",
+    "records"
+  ],
+  "additionalProperties": false
+}

@@ -15,3 +15,7 @@ The demonstration target must be new/empty. If you already ran it, use a differe
 Existing approved memory workspaces use `migrate`, with default `skip` and explicit `replace`/`rename` policies. They do not require manual per-record classification or copying. Backups and per-file rollback limits are explained in the [CLI contract](cli.md).
 
 Supported source variants and roles appear in [Formats](../index.md). Mem0/Zep output is offline JSON; chat exports are transcripts. The [CLI contract](cli.md) documents options, exit codes and restore limits; [2.0 migration](migration-2.0.md) explains behavior changes.
+
+For explicit full or selective reference sharing, use [Context Handoff](context-handoff.md).
+`handoff --all` needs no manual selection/review; `pack/select/handoff` can limit disclosure
+to a project. Both workflows verify locally and leave Full Migration available independently.

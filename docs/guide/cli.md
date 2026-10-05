@@ -16,6 +16,10 @@ This document describes the current checkout, not a published release. Run `pyth
 | `stats` | `--source/-s PATH`, `--from FORMAT`; counts and UTC date range |
 | `inspect` | One file/path, `--format/-f FORMAT`, optional exact `--id ID`; missing IDs/files fail |
 | `formats` | Actual registered reader/writer roles; eight built-in readers, five writers |
+| `pack` | `--from openclaw --input WORKSPACE --out NEW_DIRECTORY`; complete private approved memory archive; optional `--include-user` / `--include-dreams` |
+| `select` | `PRIVATE_PACK --out NEW_JSON`; explicit `--all`, repeatable source/ID/tag/project/scope/state selectors, or optional TTY `--interactive` |
+| `handoff` | `PRIVATE_PACK --selection JSON` / explicit selectors / `--all`, or `--from openclaw --input WORKSPACE --all`; `--out NEW_DIRECTORY`, optional exact-text TTY `--review` |
+| `verify` | `BUNDLE`, optional `--expected-sha256 DIGEST`, `--pack PRIVATE_PACK`, `--redact-file PRIVATE_RULES`, `--format pretty\|json`; offline bundle consistency/provenance checks |
 
 `--version`, command `--help/-h` are available. Format auto-detection must be unambiguous. Multiple unrelated JSON candidates fail; explicit format does not mean “pick the first arbitrary JSON”. `inspect --format` selects the input adapter, unlike the output-format switch on conversion commands.
 
@@ -24,6 +28,17 @@ The CLI configures stdout and stderr as UTF-8 before parsing arguments. Redirect
 A JSON directory represents one preferred/unique top-level export, not a recursive collection of independent exports. Its other files are listed as excluded/unsupported in the file ledger. `--all` selects every record in that declared input variant. To combine independent exports, pass their exact files as separate merge sources. Markdown workspace adapters discover their documented notes recursively.
 
 ## Conversion options
+
+Context commands have a separate additive contract in the [Handoff guide](context-handoff.md).
+They do not change migration defaults. Handoff `--secrets warn|redact|fail` defaults to warn,
+which retains detected values without an interactive prompt. UTF-8 context budgets default
+to 1 MiB/1,000 complete records; overflow fails unless `--truncate-at-record-boundary` is
+explicit. Source/include flags cannot expand an existing pack's approved scope. Context
+`--all` cannot be combined with selectors, and missing explicit approval never silently
+selects everything. Bundle exports require new directories; selective and all-record outputs
+are independently verified. Review decline exits 130; no-review stays `human_reviewed=false`.
+
+The remaining options in this section apply to Full Migration only.
 
 These apply to convert, migrate, aliases, merge and broadcast:
 

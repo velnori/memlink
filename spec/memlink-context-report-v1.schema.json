@@ -1,0 +1,315 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://memlink.dev/memlink-receipt-v1.schema.json",
+  "title": "MemLink conversion receipt v1",
+  "type": "object",
+  "required": [
+    "schema",
+    "version",
+    "tool_version",
+    "transaction_id",
+    "operation",
+    "sources",
+    "target",
+    "filters",
+    "excluded",
+    "records",
+    "plan",
+    "outputs",
+    "readback",
+    "backup",
+    "warnings",
+    "errors",
+    "status",
+    "bundle_kind",
+    "human_reviewed",
+    "review",
+    "policy",
+    "accounting"
+  ],
+  "properties": {
+    "schema": {
+      "const": "memlink-receipt"
+    },
+    "version": {
+      "const": "1"
+    },
+    "tool_version": {
+      "type": "string"
+    },
+    "transaction_id": {
+      "type": "string"
+    },
+    "operation": {
+      "const": "export"
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "target": {
+      "type": "object"
+    },
+    "filters": {
+      "type": "object"
+    },
+    "excluded": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "records": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "identity",
+          "id",
+          "target_id",
+          "outcome",
+          "fields"
+        ],
+        "properties": {
+          "identity": {
+            "type": "object"
+          },
+          "id": {
+            "type": "string"
+          },
+          "target_id": {
+            "type": "string"
+          },
+          "outcome": {
+            "enum": [
+              "planned",
+              "output",
+              "conflict"
+            ]
+          },
+          "fields": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "plan": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "path",
+          "action"
+        ],
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "action": {
+            "enum": [
+              "create",
+              "unchanged",
+              "skip",
+              "update"
+            ]
+          }
+        }
+      }
+    },
+    "outputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "path",
+          "sha256"
+        ],
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      }
+    },
+    "readback": {
+      "type": "object"
+    },
+    "backup": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "status": {
+      "const": "success"
+    },
+    "bundle_kind": {
+      "enum": [
+        "private-pack",
+        "handoff"
+      ]
+    },
+    "human_reviewed": {
+      "type": "boolean"
+    },
+    "review": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "method": {
+          "const": "tty-confirmation"
+        },
+        "context_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "decision": {
+          "const": "approved"
+        }
+      },
+      "required": [
+        "method",
+        "context_sha256",
+        "decision"
+      ],
+      "additionalProperties": false
+    },
+    "policy": {
+      "type": "object",
+      "properties": {
+        "secrets": {
+          "enum": [
+            "private",
+            "warn",
+            "redact",
+            "fail"
+          ]
+        },
+        "literal_rules": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "pattern_rules": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "secrets",
+        "literal_rules",
+        "pattern_rules"
+      ],
+      "additionalProperties": false
+    },
+    "accounting": {
+      "type": "object",
+      "properties": {
+        "approved": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "output": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "excluded": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "approved",
+        "output",
+        "excluded"
+      ],
+      "additionalProperties": false
+    },
+    "safety": {
+      "type": "object",
+      "properties": {
+        "detected": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "redacted": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "path_scrubbed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "text_escaped": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "detected",
+        "redacted",
+        "path_scrubbed",
+        "text_escaped"
+      ],
+      "additionalProperties": false
+    },
+    "budget": {
+      "type": "object",
+      "properties": {
+        "max_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16777216
+        },
+        "max_records": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000
+        },
+        "actual_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "actual_records": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "truncate_at_record_boundary": {
+          "type": "boolean"
+        },
+        "truncated": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "max_bytes",
+        "max_records",
+        "actual_bytes",
+        "actual_records",
+        "truncate_at_record_boundary",
+        "truncated"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

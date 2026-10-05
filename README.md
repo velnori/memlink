@@ -2,7 +2,7 @@
 
 **Pandoc for AI memories.**
 
-Offline migration between AI memory file formats.
+Offline migration and context handoff between AI memory file formats.
 
 [![CI](https://github.com/velnori/memlink/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/velnori/memlink/actions/workflows/test.yml?query=branch%3Amain)
 [![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue?logo=python&logoColor=white)](https://www.python.org/)
@@ -72,6 +72,35 @@ python -m memlink.cli migrate --from generic --to openclaw --source tests/fixtur
 ```
 
 Backups remain in `.memlink/backups/<transaction-id>/` with a restore manifest. Failures roll back owned changes. Files changed by an outside writer are retained and incomplete recovery is reported. Commits are per file; multiple files or broadcast destinations are not globally atomic. OpenClaw configuration files are not migration targets.
+
+## Context Handoff
+
+Handoff is an optional second workflow. Explicit `--all` shares every record in the
+approved OpenClaw memory scope without selection/review prompts; selective mode can
+share only a project. Both paths perform offline integrity, scope, secret-policy and
+budget checks. They generate reference material, not hidden Saved Memory.
+
+```powershell
+python -m memlink.cli handoff --from openclaw --input tests/fixtures/module02/openclaw --all --secrets redact --out demo-output/context-all
+python -m memlink.cli verify demo-output/context-all
+python -m memlink.cli pack --from openclaw --input tests/fixtures/module02/openclaw --include-user --include-dreams --out demo-output/context-private
+python -m memlink.cli select demo-output/context-private --project A --out demo-output/selection-a.json
+python -m memlink.cli handoff demo-output/context-private --selection demo-output/selection-a.json --secrets redact --out demo-output/context-a
+python -m memlink.cli verify demo-output/context-a --pack demo-output/context-private
+```
+
+Use new bundle paths. The private pack preserves full approved sources and metadata;
+keep it private. Shareable output contains only `context.md`, manifest and receipt.
+The A demo excludes B/profile/private metadata and preserves archived/unresolved A notes.
+No-review receipts record `human_reviewed=false`. Review is optional via `--review` with
+exact-text TTY confirmation. Default `--secrets warn` retains detected values; the demo
+explicitly chooses `redact`. Checks are advisory, not complete DLP.
+
+See the [Handoff guide](docs/guide/context-handoff.md), [privacy/threat model](docs/guide/context-privacy.md),
+[bundle/selection/report spec](spec/context-handoff-v1.md), and explicit file-reading tutorials
+for [Codex](docs/guide/handoff-codex.md) / [Claude Code](docs/guide/handoff-claude-code.md).
+Client reading and model-answer tests are separately recorded as `NOT_RUN`; long-term
+saved memory is outside this feature. Hashes establish consistency, not signed authorship.
 
 ## Other workflows
 

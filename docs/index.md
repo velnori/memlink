@@ -14,3 +14,8 @@ MemLink converts and safely migrates approved AI memory files through `Reader â†
 | Stream summary | yes | no | [Versioned summary Markdown](formats/stream-summary.md) |
 
 Start with [Quick Start](guide/quickstart.md). [CLI](guide/cli.md), [2.0 migration](guide/migration-2.0.md), [DESIGN](DESIGN.md) and [Plugin API](api/plugin.md) describe scope, identity, real readback receipts, safe apply and restore limits.
+
+[Context Handoff](guide/context-handoff.md) provides explicit all-record sharing without
+human review, or digest-bound selective sharing from a private pack. Both paths are
+offline and independently verified. See [privacy](guide/context-privacy.md) and the
+[Codex](guide/handoff-codex.md) / [Claude Code](guide/handoff-claude-code.md) consumer guides.
