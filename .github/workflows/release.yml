@@ -2,30 +2,72 @@ name: Release
 
 on:
   push:
-    tags:
-      - "v*"
+    tags: ["v*"]
+
+permissions:
+  contents: read
 
 jobs:
+  candidate:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python: ["3.10", "3.11", "3.12"]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Tag and main ancestry
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          git merge-base --is-ancestor HEAD origin/main
+          python -c "import os,sys; sys.path.insert(0,'python'); from memlink._version import __version__; assert os.environ['RELEASE_TAG'] == 'v' + __version__"
+      - name: Install fixed release tools
+        run: python -m pip install -r requirements/release.txt
+      - name: Build and verify local candidate
+        run: python scripts/release_readiness.py --output .planning/release --allow-index --audit-online
+      - name: Upload verified candidate
+        if: matrix.os == 'ubuntu-latest' && matrix.python == '3.12'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: verified-candidate
+          path: |
+            dist/
+            .planning/release/readiness.json
+          include-hidden-files: true
+          if-no-files-found: error
+
   pypi:
+    needs: candidate
     runs-on: ubuntu-latest
     environment:
       name: pypi
       url: https://pypi.org/project/memlink-bridge/
     permissions:
+      contents: read
       id-token: write
-
     steps:
-      - uses: actions/checkout@v7
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
+      # No checkout, build backend, tests or contributed Python in this job.
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          python-version: "3.12"
-
-      - name: Build
-        run: |
-          python -m pip install --upgrade pip build
-          python -m build
-
+          name: verified-candidate
+          path: candidate
+      - name: Verify artifact hashes
+        run: >-
+          python -c "import hashlib,json,pathlib;
+          root=pathlib.Path('candidate'); r=json.loads((root/'.planning/release/readiness.json').read_text());
+          assert r['local_status']=='PASS' and not any(c['status']=='FAIL' for c in r['checks']);
+          assert all(hashlib.sha256((root/'dist'/b['name']).read_bytes()).hexdigest()==b['sha256'] for b in r['builds']);
+          assert {p.name for p in (root/'dist').iterdir()}=={b['name'] for b in r['builds']}"
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # release/v1
+        with:
+          packages-dir: candidate/dist/

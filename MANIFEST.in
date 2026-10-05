@@ -1,4 +1,17 @@
 include LICENSE README.md CONTRIBUTING.md
+include SECURITY.md CHANGELOG.md CODE_OF_CONDUCT.md mkdocs.yml
 include tests/conftest.py
 recursive-include spec *.md *.json
 recursive-include tests/fixtures *.md *.json *.txt
+recursive-include tests *.py
+recursive-include scripts *.py *.sh *.ps1
+recursive-include requirements *.txt
+recursive-include .github *.yml *.md
+include docs/index.md docs/DESIGN.md
+recursive-include docs/guide *.md
+recursive-include docs/api *.md
+recursive-include docs/formats *.md
+recursive-include docs/community *.md
+prune docs/manaul
+prune docs/relaunch
+prune .planning

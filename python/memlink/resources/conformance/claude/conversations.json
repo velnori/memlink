@@ -1,0 +1,29 @@
+[
+  {
+    "uuid": "claude-a",
+    "name": "Synthetic transcript",
+    "chat_messages": [
+      {
+        "sender": "human",
+        "text": "Synthetic question."
+      },
+      {
+        "sender": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "Synthetic answer."
+          },
+          {
+            "type": "tool_use",
+            "id": "opaque-synthetic",
+            "name": "fixture",
+            "input": {
+              "synthetic": true
+            }
+          }
+        ]
+      }
+    ]
+  }
+]

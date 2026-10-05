@@ -88,3 +88,15 @@ The transaction rejects overlapping roots, links/reparse points/hardlinks, colli
 | 130 | User interrupted |
 
 Reader-only transcript/stream formats have no writer and cannot perform a return trip to themselves. All core commands are local and require no AI API keys or network access.
+
+## Installed conformance and manifest
+
+`memlink formats --manifest` prints the exact-variant packaged manifest; plain `formats` keeps its previous output.
+
+```sh
+memlink conformance --adapter openclaw --report conformance.json
+memlink conformance --export-fixtures fixtures
+memlink conformance --adapter openclaw --fixtures fixtures --report contributed.json
+```
+
+Report/export paths must be new. Checks use independent suite.json goldens, accounting/identity, native readback and archive equality, deterministic output, transactions/rollback, policy/exit codes, paths/links, schemas, bundle integrity, network canary and installed version. FAIL returns 2; PASS still lists unavailable layers as NOT_RUN. Invalid fixture versions/arguments fail. Goldens are never regenerated from the writer.

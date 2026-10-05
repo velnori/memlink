@@ -1,5 +1,9 @@
 # Migrating to the local 2.0.0 implementation
 
+This is the upgrade from **1.0.11 to 2.0**. AI Memory Interchange and language-neutral Canonical remain intact. Full Migration remains a first-class automatic workflow; Context Handoff adds both `--all` and optional selective/review paths. Per-record human review is not mandatory.
+
+Default remains **best effort + honest report**: supported work completes with exit 0 and `partial` when necessary. Only explicit `--strict` / `--fail-on-loss` blocks unallowed changes before commit. Existing workspaces have a complete safe-migrate transaction rather than mandatory copying. These are corrections, not withdrawal of v1 promises.
+
 The 1.x plugin API stability promise was real. This local major-version change keeps `FormatPlugin.read(path)`, `write(memories, path)` and `validate(path)` signatures, but intentionally changes unsafe or misleading behavior. Canonical-v1 remains unchanged; package 2.0.0, receipt-v1 and archive-v1 are distinct versions. Nothing in this checkout implies that 2.0.0 has been published.
 
 | 1.x behavior | 2.0 behavior and required adjustment |
@@ -23,3 +27,7 @@ For a legacy plugin, keep the three public methods, declare capabilities and ret
 `convert`, `merge`, `broadcast`, library conversion and direct public writers use the same transaction boundary. Strict-mode archive exceptions must be named fields; capabilities are not final truth. Keep `.memlink/archive.json` with outputs if canonical restoration is required. Copying only native notes loses transport-only values, even when those values were preserved in the archive.
 
 The wheel now contains canonical schema, receipt/archive schemas, compatibility contract and `py.typed`. Fresh install uses the checkout's wheel and PyYAML ≥6.0.3. No AI service or new runtime dependency was introduced. The [CLI contract](cli.md) documents output encoding, exit codes, receipt semantics and transaction limits; [Quick Start](quickstart.md) provides reproducible fixture commands.
+
+The candidate also ships exact fixture-backed manifests and installed conformance. OpenClaw native plain notes and historical structured variants have separate evidence. ChatGPT/Claude adapters are **transcript/chat export**, not Saved Memory. Mem0/Zep writers are offline files, not verified online connectors. Package 2.0 and canonical schema version 1 remain independent.
+
+Core conversion, Handoff and verification remain no-network/no-API/key/token. Future Online Connectors must be optional with separate privacy/cost disclosure. See [Architecture](architecture.md), [Full Migration](full-migration.md), [Compatibility](compatibility.md) and [no-network/no-API](no-network.md).

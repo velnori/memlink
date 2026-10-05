@@ -1,149 +1,104 @@
-# memlink
+# MemLink
 
-**Pandoc for AI memories.**
+**Move AI memory between tools — locally, with verifiable loss reports.**
 
-Offline migration and context handoff between AI memory file formats.
+Migrate everything automatically, or hand off only the context you choose. No AI API required.
 
 [![CI](https://github.com/velnori/memlink/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/velnori/memlink/actions/workflows/test.yml?query=branch%3Amain)
-[![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue?logo=python&logoColor=white)](https://www.python.org/)
-[![PyPI published version](https://img.shields.io/pypi/v/memlink-bridge?label=PyPI%20published&logo=pypi&logoColor=white)](https://pypi.org/project/memlink-bridge/)
+[![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue)](https://www.python.org/)
+[![Published version](https://img.shields.io/pypi/v/memlink-bridge?label=PyPI%20published)](https://pypi.org/project/memlink-bridge/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-261230?logo=ruff&logoColor=white)](https://github.com/astral-sh/ruff)
 
-Each format uses `Reader → Canonical Memory → Writer`. Canonical-v1 remains frozen. This checkout is the local **2.0.0** implementation; it has not been published.
+This checkout is the **local 2.0.0 release candidate**, not a published release. Install its wheel in a clean Python environment: `python -m pip install /path/to/dist/memlink_bridge-2.0.0-py3-none-any.whl`. The only runtime dependency is PyYAML ≥6.0.3. For installation without an index, supply both wheels with `--no-index --find-links /path/to/wheelhouse`. Installation may access the package index; core workflows run offline.
 
-MemLink converts all records inside a supplied source root automatically. It requires no AI service, API key, per-record review, or manual classification. `--all` includes archived records inside that approved scope. Readers report invalid and unsupported inputs instead of silently counting them as successful conversions.
+Run these examples in a new working directory. The fixtures are invented, MIT-licensed data. Release readiness executes these command blocks in shell and PowerShell.
 
-## Why MemLink? n² → 2n
+## Quickstart A — Full Migration
 
-Different tools store memories in different formats. Connecting every format directly to every other format creates a growing web of converters.
+Convert the entire approved source, including archived records, in one command. No per-record selection or manual classification is required.
 
-For **n formats with both reading and writing support**, separate one-way converters need **n(n − 1)** routes: **O(n²)**. A shared canonical model needs **n Readers + n Writers = 2n adapters**: **O(n)**. With 10 such formats, that is 90 one-way converters versus 20 adapters.
-
-MemLink's goal is **any memory format ↔ any memory format**, through one shared model. Each format contributes its own Reader and Writer. When both formats have these adapters, either can be the source or the destination:
-
-![Ombre, OpenClaw, Mem0, Zep and Generic Markdown connect both ways through Canonical Memory. ChatGPT Export, Claude Export and Stream Summary currently connect through Readers only. A new format joins through its own Reader and Writer plugins.](docs/assets/canonical-bridge.svg)
-
-Two-headed arrows show existing Reader + Writer pairs. One-way arrows show current Readers only. The dashed route is the extension point for [your own format](docs/api/plugin.md). Adding a format means contributing its adapters to this bridge, rather than implementing every pairwise converter. The supported variants below show the actual available roles.
-
-The bridge handles conversion routes. Field differences are measured and reported in receipts, with recoverable canonical values kept in the archive; a shared schema does not make every field a native feature of every destination.
-
-## Run this checkout
-
-Python 3.10–3.12 and PyYAML ≥6.0.3 are the declared environment. Install this checkout with `python -m pip install .`, or use the source package with the declared dependency installed.
-
-From the repository root in PowerShell, expose the source package for these reproducible examples:
-
-```powershell
-$env:PYTHONPATH = (Resolve-Path python).Path
-python -m memlink.cli --version
-python -m memlink.cli formats
+<!-- release-example -->
+```sh
+memlink conformance --export-fixtures fixtures
+memlink convert --from generic --to openclaw --source fixtures/generic --target migration --all --format json
+memlink validate --from openclaw --source migration --level schema --format json
+memlink validate --from generic --source fixtures/generic --level roundtrip --intermediate openclaw --format json
 ```
 
-After installing the local wheel, `memlink` is the equivalent command. Use a new/empty destination for `convert`.
+The target contains native notes, `.memlink/archive.json` and `.memlink/receipt.json`. The receipt reports actual native readback and field differences. Default **best effort** completes supported conversion; `partial` with exit 0 honestly reports archive-only or transformed values. Keep the archive to restore those canonical values. `--strict` / `--fail-on-loss` stops unallowed changes before committing and exits 5.
 
-## Full migration
+For an existing approved workspace, use `migrate --on-conflict skip|replace|rename`; default is `skip`. A dry run shows conflicts without writes. Apply stages output, verifies readback, checks source/target competition, backs up replacements and commits per file. See the [Full Migration tutorial](docs/guide/full-migration.md) for conflicts, backups, verification and restore limits.
 
-The included synthetic workspace contains five records: three on the same UTC day, several kinds/domains, an archived record, zero-valued emotion, a relationship, and unknown fields.
+## Quickstart B — Context Handoff
 
-```powershell
-python -m memlink.cli convert --from generic --to openclaw --source tests/fixtures/module01/full-workspace --target demo-output/openclaw --all --format json
-python -m memlink.cli validate --from openclaw --source demo-output/openclaw --level schema
-python -m memlink.cli validate --from generic --source tests/fixtures/module01/full-workspace --level roundtrip
+`--all` creates reference context from the entire approved OpenClaw memory scope, without a selection or review prompt. Machine verification remains active.
+
+<!-- release-example -->
+```sh
+memlink handoff --from openclaw --input fixtures/openclaw --all --secrets redact --out context-all --format json
+memlink verify context-all --format json
+memlink pack --from openclaw --input fixtures/openclaw --out private-pack --format json
+memlink select private-pack --project A --out selection-a.json --format json
+memlink handoff private-pack --selection selection-a.json --secrets redact --out project-a --format json
+memlink verify project-a --pack private-pack --format json
 ```
 
-The output contains readable Markdown, `.memlink/archive.json`, and `.memlink/receipt.json`. Keep the archive with the native files to recover canonical fields the destination cannot express. Recovery validates the native file hashes and record bodies; edited native files are read as current data with a stale-archive warning.
+The selective example excludes project B, profile, configuration and skills. Share `project-a/context.md` or its verified bundle; keep the full pack and selection private. Default `--secrets warn` retains detected values; these examples explicitly choose `redact`. Review is optional with `--review` and exact-text TTY confirmation. No-review receipts record `human_reviewed=false`. See [Handoff](docs/guide/context-handoff.md) and [privacy/threat model](docs/guide/privacy.md).
 
-Default best effort finishes with visible warnings and `partial` when differences need an archive or transformation. This does not mean those fields became native destination features. Strict mode stops before committing unallowed changes and exits **5**:
+## Exact file compatibility
 
-```powershell
-python -m memlink.cli convert --from generic --to mem0 --source tests/fixtures/module01/full-workspace --target demo-output/strict-blocked --all --strict --format json
-```
-
-The expected exit code is 5 and `strict-blocked` is not created. `--fail-on-loss` is an alias. `--allow-change FIELD` is an explicit, recorded strict-mode field exception.
-
-## An existing destination
-
-`migrate` plans conflicts, stages and reads back the output, detects changes to source/target snapshots, backs up replacements, then commits files. The default conflict policy is `skip`. Select `replace` or `rename` explicitly. `--dry-run` changes no files and marks field results `unknown`; it is an estimate without serialization/readback.
-
-```powershell
-python -m memlink.cli migrate --from generic --to openclaw --source tests/fixtures/module01/full-workspace --target demo-output/openclaw --all --on-conflict replace --dry-run --format json
-python -m memlink.cli migrate --from generic --to openclaw --source tests/fixtures/module01/full-workspace --target demo-output/openclaw --all --on-conflict replace --format json
-```
-
-Backups remain in `.memlink/backups/<transaction-id>/` with a restore manifest. Failures roll back owned changes. Files changed by an outside writer are retained and incomplete recovery is reported. Commits are per file; multiple files or broadcast destinations are not globally atomic. OpenClaw configuration files are not migration targets.
-
-## Context Handoff
-
-Handoff is an optional second workflow. Explicit `--all` shares every record in the
-approved OpenClaw memory scope without selection/review prompts; selective mode can
-share only a project. Both paths perform offline integrity, scope, secret-policy and
-budget checks. They generate reference material, not hidden Saved Memory.
-
-```powershell
-python -m memlink.cli handoff --from openclaw --input tests/fixtures/module02/openclaw --all --secrets redact --out demo-output/context-all
-python -m memlink.cli verify demo-output/context-all
-python -m memlink.cli pack --from openclaw --input tests/fixtures/module02/openclaw --include-user --include-dreams --out demo-output/context-private
-python -m memlink.cli select demo-output/context-private --project A --out demo-output/selection-a.json
-python -m memlink.cli handoff demo-output/context-private --selection demo-output/selection-a.json --secrets redact --out demo-output/context-a
-python -m memlink.cli verify demo-output/context-a --pack demo-output/context-private
-```
-
-Use new bundle paths. The private pack preserves full approved sources and metadata;
-keep it private. Shareable output contains only `context.md`, manifest and receipt.
-The A demo excludes B/profile/private metadata and preserves archived/unresolved A notes.
-No-review receipts record `human_reviewed=false`. Review is optional via `--review` with
-exact-text TTY confirmation. Default `--secrets warn` retains detected values; the demo
-explicitly chooses `redact`. Checks are advisory, not complete DLP.
-
-See the [Handoff guide](docs/guide/context-handoff.md), [privacy/threat model](docs/guide/context-privacy.md),
-[bundle/selection/report spec](spec/context-handoff-v1.md), and explicit file-reading tutorials
-for [Codex](docs/guide/handoff-codex.md) / [Claude Code](docs/guide/handoff-claude-code.md).
-Client reading and model-answer tests are separately recorded as `NOT_RUN`; long-term
-saved memory is outside this feature. Hashes establish consistency, not signed authorship.
-
-## Other workflows
-
-Default merge identity is **source namespace + scope + native id**. Equal IDs from different sources/users remain separate. Explicit `--link-by-id` overrides this and is recorded. Broadcast uses independent transactions and exits nonzero if any target fails.
-
-```powershell
-python -m memlink.cli merge --sources generic:tests/fixtures/module01/full-workspace mem0:tests/fixtures/mem0_samples --to generic:demo-output/merged --all --format json
-python -m memlink.cli broadcast --from generic:tests/fixtures/module01/full-workspace --to mem0:demo-output/mem0 zep:demo-output/zep --all --format json
-python -m memlink.cli inspect tests/fixtures/module01/full-workspace/daily-a.md --format generic --id daily-a
-python -m memlink.cli stats --from generic --source tests/fixtures/module01/full-workspace
-python -m memlink.cli diff --from-1 generic --from-2 generic --source tests/fixtures/module01/full-workspace tests/fixtures/module01/full-workspace --format json
-```
-
-## Supported file variants
-
-| CLI format | Read | Write | Actual scope |
+| Adapter | Reader | Writer / safe migrate | Scope |
 |---|---|---|---|
-| `ombre` | yes | yes | YAML bucket Markdown; UTC time plus original timezone; deterministic target IDs |
-| `openclaw` | yes | yes | Plain `MEMORY.md`, recursive `memory/*.md` including daily/slug/imported notes; framed daily output by default; separate legacy `structured` mode |
-| `generic` | yes | yes | Plain Markdown and documented optional frontmatter; generated `notes/*.md` preserves canonical fields |
-| `mem0` | yes | yes | Offline `results`/array JSON; user/agent/run scope retained; `memories.json` output |
-| `zep` | yes | yes | Offline facts/results/array/session-summary JSON; session scope retained; `facts.json` output |
-| `chatgpt` | yes | no | Conversation transcript JSON; active branch selected; raw graph retained/reported |
-| `claude_export` | yes | no | Conversation transcript JSON; text/content blocks selected; opaque tools/attachment data retained/reported |
-| `stream-summary` | yes | no | `memlink-stream-summary-v1` Markdown, dates/status/collection fields |
+| `generic` | yes | yes | Plain Markdown / YAML frontmatter; generated canonical notes |
+| `openclaw` | yes | yes | Plain MEMORY + recursive memory notes; framed daily output; separate legacy structured variant |
+| `ombre` | yes | yes | Bucket Markdown under dynamic/permanent/feel |
+| `mem0` | yes | yes, offline files | Results/array JSON; scoped user/agent/run records |
+| `zep` | yes | yes, offline files | Facts/results/array/session-summary JSON |
+| `chatgpt` | yes | no | Conversation transcript export; active text branch |
+| `claude_export` | yes | no | Conversation transcript export; supported text blocks |
+| `stream-summary` | yes | no | `memlink-stream-summary-v1` Markdown |
 
-OpenClaw `USER.md` is an optional user model; `DREAMS.md` is a dreaming review surface. Read them only with `--include-user` / `--include-dreams`. MemLink does not automatically turn emotion records into DREAMS entries. [Official memory semantics](https://docs.openclaw.ai/concepts/memory).
+The [machine-readable manifest](python/memlink/resources/compatibility-manifest-v1.json), also available as `memlink formats --manifest`, records exact structures, source review dates, synthetic fixture authorization, field rules, verification layers and limitations. **Verified refers to those fixture/file layers**, not every brand version or model memory semantics. [Compatibility and loss classification](docs/guide/compatibility.md) explains the scope.
 
-Mem0/Zep writers create local files; no online API import is claimed. Chat exports are transcripts, not Saved Memory. Generic Markdown support does not imply complete Obsidian/Logseq/Bear application semantics.
+Handoff pack currently accepts **OpenClaw only**. OpenClaw `USER.md` and `DREAMS.md` need explicit flags even with `--all`; configuration, credentials, sessions, skills and plugins are excluded. Mem0/Zep writers create offline JSON, with no online import or connector claim. ChatGPT/Claude exports are transcripts, not Saved Memory. Markdown support does not promise complete Obsidian/Logseq/Bear semantics.
 
-## Evidence and boundaries
+## Verify an adapter or bundle
 
-Receipts version actual file/record accounting, filters, identity, native/archive/transformed/dropped field results, conflict policy, output hashes, readback and backup status. Capabilities are preflight hints. See [DESIGN](docs/DESIGN.md), [CLI contract](docs/guide/cli.md), [2.0 migration](docs/guide/migration-2.0.md), and [plugin contract](docs/api/plugin.md).
+```sh
+memlink conformance --adapter openclaw --report openclaw-conformance.json
+memlink conformance --adapter openclaw --fixtures fixtures --report contributed-conformance.json
+memlink verify project-a --pack private-pack --format json
+```
 
-Limits are enforced: 16 MiB per file, 256 MiB per scanned root, 10,000 files, 100,000 records, nesting depth 100 and 100,000 serialization nodes. Generated archives must also fit the file limits. Symlinks, junctions and hardlinks are rejected; sources/targets may not overlap. Third-party plugins are trusted Python code, not sandboxed executables. No claims are made about power-loss recovery, arbitrarily large inputs, live service ingestion, or AI retrieval quality.
+Conformance is installed with the wheel and needs no test framework. It checks independent goldens, accounting, identity/scope, native readback, canonical archive roundtrip, deterministic output, paths/collisions/links, existing-target transactions, policy/exit codes, rollback, schemas, bundle integrity, network canaries and package version. Results distinguish `PASS`, `FAIL`, and `NOT_RUN`; unavailable OS layers stay unverified. Golden updates need a reviewed diff and reason. See [Contributing](CONTRIBUTING.md).
+
+## Architecture / Developer
+
+```text
+                 Reader → Canonical → Writer
+                          /         \
+                Full Migration   Context Handoff
+```
+
+MemLink remains an **AI Memory Interchange Layer**. Canonical is the language-neutral intermediate representation, independent of adapters. Canonical-v1 is frozen; package 2.0.0, canonical-v1, receipt-v1 and bundle-v1 are separate version dimensions. Capabilities are advisory; final preservation comes from actual output and target readback. Default identity is source namespace + scope + native ID. [Architecture](docs/guide/architecture.md), [Plugin API](docs/api/plugin.md), [DESIGN](docs/DESIGN.md), and [1.0.11 → 2.0 upgrade](docs/guide/migration-2.0.md) retain the original interchange and plugin direction.
+
+## Privacy, limits and release evidence
+
+Full Migration, Handoff, receipts and verification use no AI API, key/token, upload or telemetry. They are deterministic local file operations. Future Online Connectors must be optional with separate cost/privacy/authorization contracts. See [no-network/no-API](docs/guide/no-network.md) and [security reporting](SECURITY.md).
+
+Limits are enforced: 16 MiB/file, 256 MiB/scanned root, 10,000 files, 100,000 records, depth 100 and 100,000 serialization nodes. Archives must also fit these limits, so record count alone does not predict success. Handoff defaults to 1,000 records / 1 MiB of UTF-8 context. See [synthetic benchmark and failure modes](docs/guide/benchmark.md); no unlimited claim is made.
+
+Transactions provide per-file commits and owned rollback, not global multi-file atomicity or power-loss recovery. Symlinks, junctions, hardlinks and overlapping storage roots are rejected. Third-party plugins are trusted Python code. Hashes prove consistency, not authorship. Redaction is advisory, not complete DLP; reference text cannot guarantee a consumer model's prompt-injection resistance or future recall.
+
+The [release guide](docs/guide/releasing.md) provides one-command readiness, wheel/sdist hashes, fresh installation outside the checkout, executable examples, demonstrations and security-check scope. Remote CI, untested OS/Python and real consumers are recorded as `NOT_RUN` until actually run. [Synthetic recordings](docs/guide/demos.md), the [feedback template](docs/community/feedback.md) and the [empty real-case template](docs/community/real-case.md) distinguish engineering evidence from real adoption. No feedback or telemetry is collected automatically.
 
 ## Development
 
-```powershell
+```sh
 python -m pytest tests/ -q
-python -m ruff check python/memlink/ tests/
-python -m ruff format --check python/memlink/ tests/
-python -m mypy python/memlink/
+python -m ruff check python/memlink/ tests/ scripts/
+python -m ruff format --check python/memlink/ tests/ scripts/
+python -m mypy python/memlink/ scripts/
 ```
 
-MIT — see [LICENSE](LICENSE).
+MIT — [LICENSE](LICENSE).

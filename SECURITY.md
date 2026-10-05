@@ -1,45 +1,21 @@
-# Security Policy
+# Security policy
 
-## Reporting a Vulnerability
+Report vulnerabilities privately through [GitHub private security advisories](https://github.com/velnori/memlink/security/advisories/new). Do not post personal memories, tokens, private packs or full receipts in a public issue. Include affected package/Python/OS versions, a synthetic reproducer, impact and the relevant exact file variant. Response and fix timing depend on maintainer availability; no response SLA is promised.
 
-If you discover a security vulnerability in memlink, please report it privately to
-the maintainers rather than opening a public issue.
+| Version | Scope |
+|---|---|
+| 2.0.0 local candidate | Current local engineering verification; not yet a published or independently finalized release |
+| 1.0.11 | Legacy behavior; migration guidance supplied; findings should identify the affected version |
+| Earlier releases | Not actively verified by this candidate |
 
-**Contact**: Open a private security advisory on GitHub:
-https://github.com/velnori/memlink/security/advisories/new
+MemLink processes explicitly approved local Markdown/JSON. Core migration/handoff/verify requires no network, AI API or key/token, and adds no telemetry. See [privacy/threat model](docs/guide/privacy.md) and [no-network evidence](docs/guide/no-network.md).
 
-Please include:
-- Description of the vulnerability
-- Steps to reproduce
-- Affected versions
-- Potential impact
+Known implemented boundaries include unique/bounded YAML/JSON parsing with a SafeLoader-derived YAML loader; finite typed canonical data; file/record/byte/depth/node limits; approved roots and overlap/link/reparse/hardlink rejection; escaped deterministic IDs/collision allocation; staging and actual native readback; content snapshots/competition checks; backups; verified per-file commit; and rollback of owned unchanged writes. These are behavioral contracts with synthetic regressions, not guarantees from using pathlib or safe_load alone.
 
-We aim to respond within 48 hours and publish a fix within 7 days.
+Remaining limits: cooperative locks do not isolate hostile same-user code; per-file commits are not globally atomic or power-loss recovery; a wholly self-consistent bundle rewrite needs a trusted external digest/original pack to detect; hashes are not signatures; third-party plugins execute trusted Python; redaction is advisory and can miss encoded secrets/private facts; consumer models have independent prompt-injection/network/memory behavior.
 
-## Supported Versions
+The sole runtime dependency is **PyYAML ≥6.0.3**. Exact local build/check tools are pinned in requirements/release.txt; workflow actions are pinned to official commit hashes. Dependency advisory checks query the installed runtime version against public PyPI advisory metadata and record date/source/PASS/FAIL/NOT_RUN. Bounded static AST/workflow checks state their scope. Build/dev tools are outside the runtime advisory scope. Unknown vulnerabilities, a comprehensive third-party audit and remote publishing protection settings are **NOT_RUN**, never implied by this file.
 
-| Version | Supported |
-|---------|-----------|
-| 0.1.x   | ✅ Yes |
-| < 0.1   | ❌ No |
+Release build/test jobs use read-only permissions without publishing credentials. The separate pypi environment job uses trusted publishing only after candidate validation/artifact hashes; it does not run contributed build/test code. Protected tag/environment reviewers and trusted-publisher identity must be verified separately before an authorized release. PR workflows do not receive release credentials.
 
-## Scope
-
-memlink processes local markdown files. Security concerns include:
-
-- **Path traversal**: Malicious frontmatter could attempt to read/write outside the target directory
-- **YAML bombs**: Excessively nested or large YAML could cause resource exhaustion
-- **Concurrency**: Concurrent writes to the same target without file locking
-
-### Known mitigations
-
-- All file paths use `pathlib.Path`, preventing string-based path injection
-- YAML parsing uses `yaml.safe_load()` (no arbitrary code execution)
-- `serialization.py` limits nesting depth and detects circular references
-- `MEMORY.md` concurrent modification is detected via mtime+size
-
-## Dependencies
-
-memlink has one runtime dependency: `pyyaml>=6.0`. We monitor PyYAML security advisories and upgrade promptly.
-
-Dependabot is configured to automatically open PRs for dependency updates monthly.
+Dependabot opens reviewed dependency updates. Reports, scans and a security policy do not themselves constitute independent security certification.

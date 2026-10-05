@@ -116,7 +116,14 @@ def _build_parser() -> argparse.ArgumentParser:
     q.add_argument("file", type=Path)
     q.add_argument("--format", "-f", default="auto")
     q.add_argument("--id", dest="memory_id")
-    sub.add_parser("formats")
+    sub.add_parser("formats").add_argument(
+        "--manifest", action="store_true", help="Print exact fixture-backed compatibility manifest"
+    )
+    q = sub.add_parser("conformance", help="Offline adapter/core checks using independent synthetic goldens")
+    q.add_argument("--adapter", default="all")
+    q.add_argument("--fixtures", type=Path, help="Fixture root containing an independent suite.json")
+    q.add_argument("--report", type=Path, help="New JSON report file; existing files are not overwritten")
+    q.add_argument("--export-fixtures", type=Path, help="Copy packaged synthetic fixtures to a new directory")
     from .context_cli import add_commands
 
     add_commands(sub)
@@ -369,8 +376,18 @@ def _dispatch(args):
         "stats": _cmd_stats,
         "diff": _cmd_diff,
     }
+    if args.command == "conformance":
+        from .conformance import cli_command
+
+        cli_command(args)
+        return
     if args.command == "formats":
-        _cmd_formats()
+        if args.manifest:
+            from .conformance import compatibility_manifest
+
+            print(json.dumps(compatibility_manifest(), ensure_ascii=False, indent=2))
+        else:
+            _cmd_formats()
     elif args.command in commands:
         commands[args.command](args)
 

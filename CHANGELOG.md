@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.0.0 local candidate — public distribution checks
+
+- Keep Full Migration and Context Handoff as equal first-class workflows, with default best effort and optional strict/review.
+- Ship exact offline compatibility manifest, independent synthetic golden fixtures and installed adapter/core conformance.
+- Verify wheel/sdist assets, sdist rebuild and fresh installation outside the checkout; record readiness PASS/FAIL/NOT_RUN and build/source hashes.
+- Add executable synthetic recordings, measured scale/failure reports, privacy/no-API/security/upgrade/contribution guides and opt-in empty feedback/case templates.
+- Fix repeated scoped-ID rename allocation without changing first-export IDs; retain native hex target IDs for foreign Ombre records.
+- Pin workflow/tool dependencies and isolate publishing credentials from build/test jobs. No 2.0 publication is implied.
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),

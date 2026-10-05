@@ -1,0 +1,12 @@
+{
+  "results": [
+    {
+      "id": "good-a",
+      "memory": "Synthetic valid note."
+    },
+    {
+      "id": "invalid-a",
+      "memory": 123
+    }
+  ]
+}
