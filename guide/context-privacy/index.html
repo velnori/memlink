@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://velnori.github.io/memlink/formats/mem0/">
+        <link rel="canonical" href="https://velnori.github.io/memlink/guide/context-privacy/">
       
       
-        <link rel="prev" href="../openclaw/">
+        <link rel="prev" href="../context-handoff/">
       
       
-        <link rel="next" href="../zep/">
+        <link rel="next" href="../handoff-codex/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Mem0 - memlink</title>
+        <title>Privacy - memlink</title>
       
     
     
@@ -76,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#mem0-offline-json" class="md-skip">
+        <a href="#context-handoff-privacy-and-threat-model" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Mem0
+              Privacy
             
           </span>
         </div>
@@ -259,7 +259,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guide/quickstart/" class="md-nav__link">
+      <a href="../quickstart/" class="md-nav__link">
         
   
   
@@ -286,7 +286,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guide/cli/" class="md-nav__link">
+      <a href="../cli/" class="md-nav__link">
         
   
   
@@ -310,18 +310,20 @@
       
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
           <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
@@ -342,7 +344,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
@@ -360,7 +362,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guide/context-handoff/" class="md-nav__link">
+      <a href="../context-handoff/" class="md-nav__link">
         
   
   
@@ -385,10 +387,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../guide/context-privacy/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Privacy
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -404,6 +433,59 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#private-and-shareable-assets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Private and shareable assets
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#untrusted-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Untrusted notes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trust-and-concurrent-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trust and concurrent files
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -416,7 +498,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guide/handoff-codex/" class="md-nav__link">
+      <a href="../handoff-codex/" class="md-nav__link">
         
   
   
@@ -444,7 +526,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guide/handoff-claude-code/" class="md-nav__link">
+      <a href="../handoff-claude-code/" class="md-nav__link">
         
   
   
@@ -479,7 +561,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guide/migration-2.0/" class="md-nav__link">
+      <a href="../migration-2.0/" class="md-nav__link">
         
   
   
@@ -530,20 +612,18 @@
       
   
   
-    
   
   
-  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
         
           
           <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
@@ -564,7 +644,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_7">
             <span class="md-nav__icon md-icon"></span>
             
@@ -582,7 +662,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ombre/" class="md-nav__link">
+      <a href="../../formats/ombre/" class="md-nav__link">
         
   
   
@@ -610,7 +690,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../openclaw/" class="md-nav__link">
+      <a href="../../formats/openclaw/" class="md-nav__link">
         
   
   
@@ -635,19 +715,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../formats/mem0/" class="md-nav__link">
         
   
   
@@ -663,7 +734,6 @@
   
 
       </a>
-      
     </li>
   
 
@@ -676,7 +746,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../zep/" class="md-nav__link">
+      <a href="../../formats/zep/" class="md-nav__link">
         
   
   
@@ -704,7 +774,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../generic/" class="md-nav__link">
+      <a href="../../formats/generic/" class="md-nav__link">
         
   
   
@@ -732,7 +802,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../chatgpt/" class="md-nav__link">
+      <a href="../../formats/chatgpt/" class="md-nav__link">
         
   
   
@@ -760,7 +830,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../claude_export/" class="md-nav__link">
+      <a href="../../formats/claude_export/" class="md-nav__link">
         
   
   
@@ -788,7 +858,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../stream-summary/" class="md-nav__link">
+      <a href="../../formats/stream-summary/" class="md-nav__link">
         
   
   
@@ -863,6 +933,47 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#private-and-shareable-assets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Private and shareable assets
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#untrusted-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Untrusted notes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trust-and-concurrent-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trust and concurrent files
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -881,11 +992,78 @@
   
 
 
-<h1 id="mem0-offline-json">Mem0 offline JSON</h1>
-<p>Format <code>mem0</code> reads a record array or <code>{ "results": [...] }</code> from a supplied file, preferred <code>memories.json</code>, or one unambiguous JSON candidate. Records use <code>id</code>, <code>memory</code>, metadata and optional created/updated timestamps. Empty arrays are defined valid empty sets for schema validation; an empty roundtrip is an error.</p>
-<p><code>user_id</code>, <code>agent_id</code>, <code>run_id</code> and optional session scope are retained. Unknown scope stays unknown; the writer never invents a default user. Same IDs from different users/sources remain separate under scoped identity. Unknown record and top-level export fields remain in transport extensions/metadata.</p>
-<p>The writer creates <code>memories.json</code> with a <code>results</code> array. ID/body/tags/time can be native when actual readback agrees; emotion, summary, relationship, multiple-domain/classification and unsupported values are honestly archive-only or transformed. Generated renamed JSON segments are located by the versioned archive manifest.</p>
-<p>This is a local file adapter. No live Mem0 API or service ingestion has been tested or promised. Unsupported records and malformed/top-level-wrong JSON have explicit ledgers and cannot make an entirely unreadable source green.</p>
+<h1 id="context-handoff-privacy-and-threat-model">Context Handoff privacy and threat model</h1>
+<p>MemLink operates on local files provided by the caller. It makes no AI API calls, does
+not upload files or fetch links, and requires no API keys. Core acceptance uses a network
+sentinel with a working DNS canary, then exercises pack/select/handoff/verify and direct
+<code>handoff --all</code> with key variables removed. This is a Python network-call boundary test,
+not a claim about an OS firewall or unrelated running applications.</p>
+<h2 id="private-and-shareable-assets">Private and shareable assets</h2>
+<table>
+<thead>
+<tr>
+<th>Asset</th>
+<th>Intended boundary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Private pack</td>
+<td>Full approved raw sources, Canonical values, unknown fields, inventory, namespace and local approved root; keep private</td>
+</tr>
+<tr>
+<td>Selection and custom rules</td>
+<td>Local approval digests and private disclosure policy; keep private</td>
+</tr>
+<tr>
+<td>Handoff</td>
+<td>Only approved record text and necessary source-relative/scope metadata, aggregate policy/budget information and opaque digests</td>
+</tr>
+<tr>
+<td>Verification output</td>
+<td>Integrity result, manifest digest and count-only warnings; does not sign or authenticate a bundle</td>
+</tr>
+</tbody>
+</table>
+<p>Selecting A never copies B's raw files or unknown extension payloads into output.
+No archival sidecar or alternate hidden copy of a redacted value is emitted. Reports have
+strict known fields and no raw original values. A selected record's prose may itself mention
+other people/projects or contain sensitive facts: selectors do not perform semantic DLP.
+Structured user/agent/session/run scope values remain shareable metadata unless redacted.
+Complex scope objects stay private and appear as explicitly unknown scope values in the handoff.</p>
+<p>Default <code>warn</code> intentionally retains detected credentials. Use <code>redact</code>/<code>fail</code> or remove
+affected records. Deterministic patterns miss unknown/encoded keys, personal facts and
+unusual paths and can have false positives. User redaction regexes are trusted local policy;
+source notes cannot define them. Path scrubbing also changes matching slash-style text.
+No exact native/semantic preservation claim is made for this context projection.</p>
+<h2 id="untrusted-notes">Untrusted notes</h2>
+<p>Body, summary and metadata are literal reference text inside dynamically sized fences.
+HTML and links stay quoted; control and bidi characters become visible escapes. No text
+is executed, no URL is fetched, and original prompts are not relabelled as system messages.
+Overlong files/serialization graphs are bounded; budgets preserve whole records.</p>
+<p>Fencing is a file-rendering defense, not an LLM sandbox. A target model may still follow
+malicious instructions or misunderstand contradictions. Check its permissions and results.
+<code>unknown</code> values remain unknown; unresolved and archived states are retained as such.</p>
+<h2 id="trust-and-concurrent-files">Trust and concurrent files</h2>
+<p>Selections are bound to both the private manifest and record versions. The source root
+namespace follows the existing identity/scope contract; moving a source root changes it.
+Symlinks, junction/reparse paths, hardlinks, unsafe path components, overlaps and collisions
+are rejected for approved memory and bundle artifacts. Files outside memory scope are
+neither archived nor hashed. Snapshot checks detect observed modifications/additions/deletions.</p>
+<p>The filesystem is not frozen. No protection is claimed against privileged attackers changing
+path objects between checks, exact change-and-revert races, OS compromise, power loss or
+uncooperative writers defeating final per-file checks. Failed operations remove only their
+owned unchanged files; external modifications are preserved and rollback problems reported.
+Third-party plugin Python code remains trusted under the existing plugin contract.</p>
+<p>SHA256 is not a signature. Without a trusted external manifest digest/private pack, a
+self-consistent rewrite is indistinguishable from a new internally valid bundle. Review
+evidence is a local explicit-confirmation receipt, not identity authentication or independent
+proof that a particular person read every word. <code>--all</code>/selectors without TTY confirmation
+always report <code>human_reviewed=false</code>; positive TTY regression tests simulate confirmation
+and are not evidence of a live user review.</p>
+<p>MemLink does not modify <code>AGENTS.md</code>, <code>CLAUDE.md</code>, <code>MEMORY.md</code>, client settings, hooks,
+saved memory, accounts or retrieval databases. Client consumption can involve a network
+service under that client's own rules; the MemLink offline boundary ends at its files.</p>
 
 
 
