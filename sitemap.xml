@@ -2,78 +2,118 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://velnori.github.io/memlink/</loc>
-         <lastmod>2026-10-05</lastmod>
+         <lastmod>2026-10-08</lastmod>
     </url>
     <url>
          <loc>https://velnori.github.io/memlink/DESIGN/</loc>
-         <lastmod>2026-10-05</lastmod>
+         <lastmod>2026-10-08</lastmod>
     </url>
     <url>
          <loc>https://velnori.github.io/memlink/IMPLEMENTATION/</loc>
-         <lastmod>2026-10-05</lastmod>
+         <lastmod>2026-10-08</lastmod>
     </url>
     <url>
          <loc>https://velnori.github.io/memlink/api/plugin/</loc>
-         <lastmod>2026-10-05</lastmod>
+         <lastmod>2026-10-08</lastmod>
+    </url>
+    <url>
+         <loc>https://velnori.github.io/memlink/community/feedback/</loc>
+         <lastmod>2026-10-08</lastmod>
+    </url>
+    <url>
+         <loc>https://velnori.github.io/memlink/community/real-case/</loc>
+         <lastmod>2026-10-08</lastmod>
     </url>
     <url>
          <loc>https://velnori.github.io/memlink/formats/chatgpt/</loc>
-         <lastmod>2026-10-05</lastmod>
+         <lastmod>2026-10-08</lastmod>
     </url>
     <url>
          <loc>https://velnori.github.io/memlink/formats/claude_export/</loc>
-         <lastmod>2026-10-05</lastmod>
+         <lastmod>2026-10-08</lastmod>
     </url>
     <url>
          <loc>https://velnori.github.io/memlink/formats/generic/</loc>
-         <lastmod>2026-10-05</lastmod>
+         <lastmod>2026-10-08</lastmod>
     </url>
     <url>
          <loc>https://velnori.github.io/memlink/formats/mem0/</loc>
-         <lastmod>2026-10-05</lastmod>
+         <lastmod>2026-10-08</lastmod>
     </url>
     <url>
          <loc>https://velnori.github.io/memlink/formats/ombre/</loc>
-         <lastmod>2026-10-05</lastmod>
+         <lastmod>2026-10-08</lastmod>
     </url>
     <url>
          <loc>https://velnori.github.io/memlink/formats/openclaw/</loc>
-         <lastmod>2026-10-05</lastmod>
+         <lastmod>2026-10-08</lastmod>
     </url>
     <url>
          <loc>https://velnori.github.io/memlink/formats/stream-summary/</loc>
-         <lastmod>2026-10-05</lastmod>
+         <lastmod>2026-10-08</lastmod>
     </url>
     <url>
          <loc>https://velnori.github.io/memlink/formats/zep/</loc>
-         <lastmod>2026-10-05</lastmod>
+         <lastmod>2026-10-08</lastmod>
+    </url>
+    <url>
+         <loc>https://velnori.github.io/memlink/guide/architecture/</loc>
+         <lastmod>2026-10-08</lastmod>
+    </url>
+    <url>
+         <loc>https://velnori.github.io/memlink/guide/benchmark/</loc>
+         <lastmod>2026-10-08</lastmod>
     </url>
     <url>
          <loc>https://velnori.github.io/memlink/guide/cli/</loc>
-         <lastmod>2026-10-05</lastmod>
+         <lastmod>2026-10-08</lastmod>
+    </url>
+    <url>
+         <loc>https://velnori.github.io/memlink/guide/compatibility/</loc>
+         <lastmod>2026-10-08</lastmod>
     </url>
     <url>
          <loc>https://velnori.github.io/memlink/guide/context-handoff/</loc>
-         <lastmod>2026-10-05</lastmod>
+         <lastmod>2026-10-08</lastmod>
     </url>
     <url>
          <loc>https://velnori.github.io/memlink/guide/context-privacy/</loc>
-         <lastmod>2026-10-05</lastmod>
+         <lastmod>2026-10-08</lastmod>
+    </url>
+    <url>
+         <loc>https://velnori.github.io/memlink/guide/demos/</loc>
+         <lastmod>2026-10-08</lastmod>
+    </url>
+    <url>
+         <loc>https://velnori.github.io/memlink/guide/full-migration/</loc>
+         <lastmod>2026-10-08</lastmod>
     </url>
     <url>
          <loc>https://velnori.github.io/memlink/guide/handoff-claude-code/</loc>
-         <lastmod>2026-10-05</lastmod>
+         <lastmod>2026-10-08</lastmod>
     </url>
     <url>
          <loc>https://velnori.github.io/memlink/guide/handoff-codex/</loc>
-         <lastmod>2026-10-05</lastmod>
+         <lastmod>2026-10-08</lastmod>
     </url>
     <url>
          <loc>https://velnori.github.io/memlink/guide/migration-2.0/</loc>
-         <lastmod>2026-10-05</lastmod>
+         <lastmod>2026-10-08</lastmod>
+    </url>
+    <url>
+         <loc>https://velnori.github.io/memlink/guide/no-network/</loc>
+         <lastmod>2026-10-08</lastmod>
+    </url>
+    <url>
+         <loc>https://velnori.github.io/memlink/guide/privacy/</loc>
+         <lastmod>2026-10-08</lastmod>
     </url>
     <url>
          <loc>https://velnori.github.io/memlink/guide/quickstart/</loc>
-         <lastmod>2026-10-05</lastmod>
+         <lastmod>2026-10-08</lastmod>
+    </url>
+    <url>
+         <loc>https://velnori.github.io/memlink/guide/releasing/</loc>
+         <lastmod>2026-10-08</lastmod>
     </url>
 </urlset>
