@@ -1,0 +1,2 @@
+# Independent conformance goldens require identical fixture bytes on every OS.
+python/memlink/resources/conformance/** text eol=lf

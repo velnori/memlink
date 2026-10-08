@@ -1,4 +1,4 @@
-include LICENSE README.md CONTRIBUTING.md
+include .gitattributes LICENSE README.md CONTRIBUTING.md
 include SECURITY.md CHANGELOG.md CODE_OF_CONDUCT.md mkdocs.yml
 include tests/conftest.py
 recursive-include spec *.md *.json
