@@ -1,0 +1,262 @@
+{
+  "schema": "memlink-conformance-fixtures",
+  "version": "1",
+  "license": "MIT",
+  "provenance": "Hand-authored synthetic fixtures and independent canonical subsets; no real personal data; no writer-generated expectations.",
+  "cases": [
+    {
+      "id": "generic-markdown",
+      "adapter": "generic",
+      "path": "generic",
+      "variant": "plain-markdown+yaml-frontmatter",
+      "expected": [
+        {
+          "id": "generic-a",
+          "name": "Blueprint",
+          "body": "Synthetic canonical note.",
+          "status": "archived",
+          "tags": [
+            "project-a",
+            "synthetic"
+          ],
+          "created_at": "2026-10-02T00:00:00+00:00",
+          "summary": "Short summary",
+          "extensions": {
+            "custom_flag": "synthetic-only"
+          }
+        },
+        {
+          "id": "plain",
+          "name": "plain",
+          "body": "Synthetic plain note."
+        }
+      ]
+    },
+    {
+      "id": "ombre-buckets",
+      "adapter": "ombre",
+      "path": "ombre",
+      "variant": "ombre-buckets+yaml-v1",
+      "expected": [
+        {
+          "id": "ombre-a",
+          "name": "Blueprint",
+          "body": "\nSynthetic bucket note.\n",
+          "kind": "dynamic",
+          "tags": [
+            "synthetic"
+          ],
+          "domains": [
+            "general"
+          ],
+          "created_at": "2026-10-02T00:00:00+00:00",
+          "importance_score": 7,
+          "valence": 0.7,
+          "arousal": 0.2
+        }
+      ]
+    },
+    {
+      "id": "openclaw-native",
+      "adapter": "openclaw",
+      "path": "openclaw",
+      "variant": "openclaw-plain/legacy/framed-notes",
+      "expected": [
+        {
+          "id": "MEMORY.md",
+          "body": "Synthetic durable decision.",
+          "kind": "permanent"
+        },
+        {
+          "id": "memory/2026-10-02.md",
+          "body": "Synthetic daily observation.",
+          "created_at": "2026-10-02T00:00:00+00:00"
+        },
+        {
+          "id": "memory/project-a.md",
+          "body": "PROJECT_A_SYNTHETIC: use port 4317; Friday remains unresolved."
+        },
+        {
+          "id": "memory/project-b.md",
+          "body": "PROJECT_B_EXCLUDED_SYNTHETIC: use port 8001."
+        }
+      ]
+    },
+    {
+      "id": "openclaw-legacy",
+      "adapter": "openclaw",
+      "path": "openclaw-legacy",
+      "variant": "openclaw-plain/legacy/framed-notes",
+      "writer_options": {
+        "output_mode": "structured"
+      },
+      "expected": [
+        {
+          "id": "legacy",
+          "name": "Legacy note",
+          "body": "\nSynthetic legacy note.\n",
+          "created_at": "2026-10-02T00:00:00+00:00"
+        }
+      ]
+    },
+    {
+      "id": "mem0-results",
+      "adapter": "mem0",
+      "path": "mem0-results",
+      "variant": "mem0-results",
+      "expected": [
+        {
+          "id": "same-id",
+          "body": "Synthetic user A.",
+          "tags": [
+            "synthetic"
+          ],
+          "scope": {
+            "user_id": "synthetic-a"
+          },
+          "created_at": "2026-10-02T00:00:00+00:00"
+        },
+        {
+          "id": "same-id",
+          "body": "Synthetic user B.",
+          "tags": [],
+          "scope": {
+            "user_id": "synthetic-b"
+          }
+        }
+      ]
+    },
+    {
+      "id": "mem0-array",
+      "adapter": "mem0",
+      "path": "mem0-array",
+      "variant": "mem0-array",
+      "expected": [
+        {
+          "id": "mem0-array-a",
+          "body": "Synthetic array note.",
+          "scope": {
+            "agent_id": "synthetic-agent",
+            "run_id": "synthetic-run"
+          }
+        }
+      ]
+    },
+    {
+      "id": "mem0-partial",
+      "adapter": "mem0",
+      "path": "mem0-partial",
+      "variant": "mem0-results",
+      "invalid": 1,
+      "expected": [
+        {
+          "id": "good-a",
+          "body": "Synthetic valid note."
+        }
+      ]
+    },
+    {
+      "id": "zep-facts",
+      "adapter": "zep",
+      "path": "zep-facts",
+      "variant": "zep-facts",
+      "expected": [
+        {
+          "id": "zep-fact-a",
+          "body": "Synthetic fact.",
+          "scope": {
+            "session_id": "synthetic-session"
+          },
+          "created_at": "2026-10-02T00:00:00+00:00"
+        }
+      ]
+    },
+    {
+      "id": "zep-results",
+      "adapter": "zep",
+      "path": "zep-results",
+      "variant": "zep-results",
+      "expected": [
+        {
+          "id": "zep-result-a",
+          "body": "Synthetic result.",
+          "scope": {
+            "session_id": "synthetic-session"
+          }
+        }
+      ]
+    },
+    {
+      "id": "zep-array",
+      "adapter": "zep",
+      "path": "zep-array",
+      "variant": "zep-facts-array",
+      "expected": [
+        {
+          "id": "zep-array-a",
+          "body": "Synthetic array fact.",
+          "scope": {
+            "scope": "unknown"
+          }
+        }
+      ]
+    },
+    {
+      "id": "zep-session",
+      "adapter": "zep",
+      "path": "zep-session",
+      "variant": "zep-session-summary",
+      "expected": [
+        {
+          "id": "zep-summary-a",
+          "body": "Synthetic session summary.",
+          "scope": {
+            "session_id": "synthetic-session"
+          }
+        }
+      ]
+    },
+    {
+      "id": "chatgpt-transcript",
+      "adapter": "chatgpt",
+      "path": "chatgpt",
+      "variant": "chatgpt-transcript-json",
+      "expected": [
+        {
+          "id": "chat-a",
+          "name": "Synthetic transcript",
+          "body": "user: Synthetic question.\n\nassistant: Synthetic answer."
+        }
+      ]
+    },
+    {
+      "id": "claude-transcript",
+      "adapter": "claude_export",
+      "path": "claude",
+      "variant": "claude_export-transcript-json",
+      "expected": [
+        {
+          "id": "claude-a",
+          "name": "Synthetic transcript",
+          "body": "human: Synthetic question.\n\nassistant: Synthetic answer."
+        }
+      ]
+    },
+    {
+      "id": "stream-summary",
+      "adapter": "stream-summary",
+      "path": "stream",
+      "variant": "memlink-stream-summary-v1",
+      "expected": [
+        {
+          "id": "stream-a",
+          "name": "Synthetic day",
+          "body": "Synthetic stream summary.",
+          "status": "archived",
+          "summary": "3 events",
+          "created_at": "2026-10-02T00:00:00+00:00"
+        }
+      ]
+    }
+  ]
+}

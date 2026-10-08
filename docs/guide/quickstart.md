@@ -1,21 +1,37 @@
-# Quick Start
+# Quick Start — installed local candidate
 
-This is an unpublished local 2.0.0 checkout. Use its local wheel, or run from the repository in PowerShell:
+This is a local unpublished **2.0.0** candidate. Install its wheel in a clean Python environment:
 
-```powershell
-$env:PYTHONPATH = (Resolve-Path python).Path
-python -m memlink.cli --version
-python -m memlink.cli formats
-python -m memlink.cli convert --from generic --to openclaw --source tests/fixtures/module01/full-workspace --target demo-output/openclaw --all --format json
-python -m memlink.cli validate --from openclaw --source demo-output/openclaw --level schema
+```sh
+python -m pip install /path/to/dist/memlink_bridge-2.0.0-py3-none-any.whl
+memlink --version
+memlink formats --manifest
 ```
 
-The demonstration target must be new/empty. If you already ran it, use a different new path or the explicit migrate options in the [CLI contract](cli.md). `demo-output/` is generated locally and excluded from Git. The output is readable Markdown plus a canonical archive and actual receipt. Default `partial` reports archive-only/transformed fields while completing the transfer; `--strict` blocks those unallowed impacts before committing.
+Only PyYAML ≥6.0.3 is required at runtime. For installation without an index, provide the candidate and PyYAML wheels with `--no-index --find-links /path/to/wheelhouse`. Core workflows do not need an AI API/key/token. Work in a new directory; existing exports/recordings are not overwritten.
 
-Existing approved memory workspaces use `migrate`, with default `skip` and explicit `replace`/`rename` policies. They do not require manual per-record classification or copying. Backups and per-file rollback limits are explained in the [CLI contract](cli.md).
+## A — Full Migration
 
-Supported source variants and roles appear in [Formats](../index.md). Mem0/Zep output is offline JSON; chat exports are transcripts. The [CLI contract](cli.md) documents options, exit codes and restore limits; [2.0 migration](migration-2.0.md) explains behavior changes.
+```sh
+memlink conformance --export-fixtures fixtures
+memlink convert --from generic --to openclaw --source fixtures/generic --target workspace --all --format json
+memlink validate --from openclaw --source workspace --level schema --format json
+memlink validate --from generic --source fixtures/generic --level roundtrip --intermediate openclaw --format json
+```
 
-For explicit full or selective reference sharing, use [Context Handoff](context-handoff.md).
-`handoff --all` needs no manual selection/review; `pack/select/handoff` can limit disclosure
-to a project. Both workflows verify locally and leave Full Migration available independently.
+This converts all two approved invented records, including archived, without per-record classification. Read the receipt's real accounting/field results and keep the archive for canonical recovery. Default best effort reports partial loss honestly and completes; explicit strict blocks unallowed changes. [Full Migration](full-migration.md) explains safe migrate into existing workspaces, backups and verification.
+
+## B — Context Handoff
+
+```sh
+memlink handoff --from openclaw --input fixtures/openclaw --all --secrets redact --out all-context --format json
+memlink verify all-context --format json
+memlink pack --from openclaw --input fixtures/openclaw --out private-pack --format json
+memlink select private-pack --project A --out selection-a.json --format json
+memlink handoff private-pack --selection selection-a.json --secrets redact --out project-a --format json
+memlink verify project-a --pack private-pack --format json
+```
+
+All needs no human selection/review; selective A excludes B/profile/config/skills. Keep pack/selection private. Default secret policy is warn; examples explicitly redact. See [Handoff](context-handoff.md), [Privacy](privacy.md) and [Compatibility](compatibility.md).
+
+These commands work in shell and PowerShell. Release readiness executes the corresponding actual README blocks in both available shells and verifies a fresh wheel outside the checkout. See [local release checks](releasing.md).

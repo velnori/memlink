@@ -1,5 +1,9 @@
 # MemLink
 
+**Move AI memory between tools — locally, with verifiable loss reports.** Migrate everything automatically, or hand off only the context you choose. No AI API required.
+
+Start with the two [installed Quickstarts](guide/quickstart.md): [Full Migration](guide/full-migration.md) or [all/selective Context Handoff](guide/context-handoff.md). Support comes from the [manifest/conformance](guide/compatibility.md), with [local release evidence](guide/releasing.md), [demos](guide/demos.md), [scale limits](guide/benchmark.md) and [privacy](guide/privacy.md).
+
 MemLink converts and safely migrates approved AI memory files through `Reader → Canonical Memory → Writer`. Full Migration is local, offline and automatic; no AI API, key or per-record review is required. This checkout is the unpublished 2.0.0 implementation; canonical-v1 is unchanged.
 
 | Format | Reader | Writer | Documented file variant |

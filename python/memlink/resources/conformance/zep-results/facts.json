@@ -1,0 +1,9 @@
+{
+  "results": [
+    {
+      "id": "zep-result-a",
+      "content": "Synthetic result.",
+      "session_id": "synthetic-session"
+    }
+  ]
+}

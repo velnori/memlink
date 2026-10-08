@@ -1,0 +1,13 @@
+{
+  "session_id": "synthetic-session",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Synthetic message."
+    }
+  ],
+  "summary": {
+    "uuid": "zep-summary-a",
+    "content": "Synthetic session summary."
+  }
+}

@@ -94,10 +94,20 @@ def _target_memories(memories: list[Memory], fmt: str, reserved_ids: set[str] | 
                 memory.id = seed[:12]
         canonical_key = file_key(sanitize_id(memory.id))
         if canonical_key in occupied:
-            memory.id = memory.id[:80] + "~" + seed[:20]
-            canonical_key = file_key(sanitize_id(memory.id))
-        if canonical_key in occupied:
-            raise ValueError("Unresolvable target ID collision")
+            base_id = memory.id
+            for attempt in range(1000):
+                suffix = seed if attempt == 0 else hashlib.sha256(f"{seed}:{attempt}".encode()).hexdigest()
+                # Foreign Ombre IDs must stay native hex; its serializer would
+                # otherwise remap a suffixed non-hex ID back onto an occupied ID.
+                if fmt == "ombre" and memory.source and memory.source.format != "ombre":
+                    memory.id = suffix[:12]
+                else:
+                    memory.id = base_id[:80] + "~" + suffix[:20]
+                canonical_key = file_key(sanitize_id(memory.id))
+                if canonical_key not in occupied:
+                    break
+            else:
+                raise ValueError("Unresolvable target ID collision")
         occupied.add(canonical_key)
         memory.checksum = content_checksum(memory.body)
     return result

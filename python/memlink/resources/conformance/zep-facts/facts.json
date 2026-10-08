@@ -1,0 +1,13 @@
+{
+  "session_id": "synthetic-session",
+  "facts": [
+    {
+      "uuid": "zep-fact-a",
+      "fact": "Synthetic fact.",
+      "created_at": "2026-10-02T00:00:00Z",
+      "opaque": {
+        "fixture": true
+      }
+    }
+  ]
+}

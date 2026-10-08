@@ -131,6 +131,23 @@ docs: clarify source_uri encoding rules
 
 If your PR adds a new format, include a field mapping table in the PR description showing how each source field maps to Canonical.
 
-## Questions?
+## Fixture and conformance contributions
+
+Use `memlink formats --manifest` and exact variants rather than brand-wide claims. Every fixture states direction, shape/version or review date/source, license/authorization and synthetic/official/real-redacted classification. Prefer invented data. Personal memories, credentials and private provenance are not allowed; real-redacted data needs explicit permission/privacy review and is not supplied here.
+
+`python/memlink/resources/conformance/suite.json` contains independently authored canonical subsets, scope and accounting. Never regenerate expected values from the tested Writer. Every golden change needs a visible input/expected diff, reason and affected field/native/archive/unsupported contract. A test failure alone is not a reason to change its oracle.
+
+```sh
+memlink conformance --export-fixtures fixtures
+memlink conformance --adapter openclaw --fixtures fixtures --report conformance.json
+```
+
+This runs outside the checkout after wheel installation without pytest or an AI API. Inspect every PASS/FAIL/NOT_RUN. Add meaningful regressions for behavior changes: malformed/ambiguous input, scoped duplicate IDs, native/receipt mappings, links/collisions, partial failure and default/strict. Retain public plugin signatures/registration; new adapters stay export-only until safe apply's complete transaction contract is verified. Update manifest and exact docs, then run existing tests/lint/type and readiness.
+
+Synthetic demos/benchmarks are engineering evidence. Do not fabricate users, testimonials or adoption. Feedback/case templates are opt-in, require public-use permission and contain no personal memory. Do not add runtime telemetry.
+
+## Questions and private security reports
 
 Open a [Discussions](https://github.com/velnori/memlink/discussions) thread. Happy to help you get started.
+
+Use [private reporting](SECURITY.md) for security issues, with a synthetic reproducer where possible.

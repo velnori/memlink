@@ -7,10 +7,7 @@ docs_dir: docs
 
 exclude_docs: |
   /manaul/
-  /relaunch/module-01-closeout.md
-  /relaunch/module-02-closeout.md
-  /relaunch/module-01-closure-patch-2026-10-03.md
-  /relaunch/evidence/
+  /relaunch/
   /superpowers/plans/
   /logo-ideas.md
   /logo-concepts/
@@ -27,6 +24,7 @@ theme:
 nav:
   - Home: index.md
   - Quick Start: guide/quickstart.md
+  - Full Migration: guide/full-migration.md
   - CLI: guide/cli.md
   - Context Handoff:
       - Workflow: guide/context-handoff.md
@@ -34,6 +32,15 @@ nav:
       - Codex: guide/handoff-codex.md
       - Claude Code: guide/handoff-claude-code.md
   - Migration to 2.0: guide/migration-2.0.md
+  - Compatibility and Loss: guide/compatibility.md
+  - Architecture: guide/architecture.md
+  - Privacy and Threat Model: guide/privacy.md
+  - No Network / API: guide/no-network.md
+  - Synthetic Demos: guide/demos.md
+  - Benchmark: guide/benchmark.md
+  - Local Release Readiness: guide/releasing.md
+  - Feedback Template: community/feedback.md
+  - Real Case Template: community/real-case.md
   - Design: DESIGN.md
   - Formats:
       - Ombre Brain: formats/ombre.md
