@@ -1,2 +1,7 @@
 # Independent conformance goldens require identical fixture bytes on every OS.
 python/memlink/resources/conformance/** text eol=lf
+
+# Preserve the exact bytes of the published, hash-verified handoff bundle.
+docs/assets/demos/project-a/** text eol=lf
+# The unedited CLI output includes a final blank line covered by its digest.
+docs/assets/demos/project-a/context.md whitespace=-blank-at-eof

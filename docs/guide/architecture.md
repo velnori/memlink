@@ -2,6 +2,16 @@
 
 MemLink remains an AI Memory Interchange Layer. A Reader parses an approved source into language-neutral Canonical records; a Writer serializes those records to an exact target file variant. Package 2.0.0 does not replace or renumber canonical-v1.
 
+## One bridge: n² → 2n
+
+For **n formats with both a Reader and Writer**, direct one-way converters require **n(n − 1)** routes, O(n²). Canonical reduces this to **n Readers + n Writers = 2n adapters**, O(n). Ten such formats would need 90 direct routes or 20 adapters. This is an adapter-maintenance comparison, not a performance benchmark or a claim of lossless native semantics.
+
+![The original canonical bridge: five Reader/Writer pairs connect both ways. ChatGPT Export, Claude Export and Stream Summary connect inward through Readers only. A dashed route marks a new-format plugin.](../assets/canonical-bridge.svg)
+
+Two-headed arrows identify the five existing Reader/Writer pairs. One-way arrows identify the three Reader-only formats, which contribute inputs but cannot be destinations. The dashed route is the [Plugin API](../api/plugin.md) extension point. Mem0/Zep routes represent offline file contracts; ChatGPT/Claude routes represent transcript readers. See [exact compatibility](compatibility.md).
+
+## Two workflows
+
 ```text
 Source files → Reader → Canonical → Writer → native files + archive + receipt
                           │

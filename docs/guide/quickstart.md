@@ -1,6 +1,21 @@
-# Quick Start — installed local candidate
+# Quick Start — Full Migration and Context Handoff
 
-This is a local unpublished **2.0.0** candidate. Install its wheel in a clean Python environment:
+This is an unpublished **2.0.0** local candidate. Start from the checkout in a clean Python **3.10–3.12** environment:
+
+```sh
+git clone https://github.com/velnori/memlink.git
+cd memlink
+python -m venv .venv
+```
+
+Activate it with `source .venv/bin/activate` on macOS/Linux, or `.\.venv\Scripts\Activate.ps1` in PowerShell. Then install from the checkout:
+
+```sh
+python -m pip install .
+memlink --version
+```
+
+Expected: `memlink 2.0.0`. The package name is `memlink-bridge`; the examples need this checkout or a locally built candidate wheel. If a wheel is already available, install it instead:
 
 ```sh
 python -m pip install /path/to/dist/memlink_bridge-2.0.0-py3-none-any.whl
@@ -8,7 +23,25 @@ memlink --version
 memlink formats --manifest
 ```
 
-Only PyYAML ≥6.0.3 is required at runtime. For installation without an index, provide the candidate and PyYAML wheels with `--no-index --find-links /path/to/wheelhouse`. Core workflows do not need an AI API/key/token. Work in a new directory; existing exports/recordings are not overwritten.
+Only PyYAML ≥6.0.3 is required at runtime. Installation may access the package index. For installation without an index, provide the candidate and PyYAML wheels with `--no-index --find-links /path/to/wheelhouse`. Core workflows do not need an AI API/key/token. Run A and B in the same new working directory, outside the checkout; existing exports/recordings are not overwritten.
+
+## Create a trial directory
+
+Keep the environment activated. From the checkout, create a **new sibling directory** and run A, then B there. Choose a different name if `memlink-trial` already exists.
+
+macOS / Linux (POSIX shell):
+
+```sh
+mkdir ../memlink-trial
+cd ../memlink-trial
+```
+
+PowerShell:
+
+```powershell
+New-Item -ItemType Directory -Path ../memlink-trial -ErrorAction Stop | Out-Null
+Set-Location ../memlink-trial
+```
 
 ## A — Full Migration
 

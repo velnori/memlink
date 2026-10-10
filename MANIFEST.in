@@ -12,6 +12,7 @@ recursive-include docs/guide *.md
 recursive-include docs/api *.md
 recursive-include docs/formats *.md
 recursive-include docs/community *.md
+recursive-include docs/assets *.svg *.png *.gif *.cast *.json *.md
 prune docs/manaul
 prune docs/relaunch
 prune .planning

@@ -1,8 +1,16 @@
 # MemLink
 
-**Move AI memory between tools — locally, with verifiable loss reports.** Migrate everything automatically, or hand off only the context you choose. No AI API required.
+**AI memory portability. Pandoc for AI memories.** Move approved memory files between tools, or hand off just the context another agent needs. Run locally and inspect what the destination preserves.
 
-Start with the two [installed Quickstarts](guide/quickstart.md): [Full Migration](guide/full-migration.md) or [all/selective Context Handoff](guide/context-handoff.md). Support comes from the [manifest/conformance](guide/compatibility.md), with [local release evidence](guide/releasing.md), [demos](guide/demos.md), [scale limits](guide/benchmark.md) and [privacy](guide/privacy.md).
+![MemLink: offline Full Migration and Context Handoff, with loss receipts and verification.](assets/memlink-hero.svg)
+
+| Your next step | Start here |
+|---|---|
+| Move all approved records into a supported file format | [Full Migration Quickstart](guide/quickstart.md#a-full-migration) |
+| Share all memory or just one project's reference context | [Context Handoff Quickstart](guide/quickstart.md#b-context-handoff) |
+| See the actual commands, outputs and verified synthetic context | [Two reproducible demos](guide/demos.md) |
+
+Check support with the [manifest/conformance](guide/compatibility.md), then inspect [local release evidence](guide/releasing.md), [scale limits](guide/benchmark.md) and [privacy](guide/privacy.md).
 
 MemLink converts and safely migrates approved AI memory files through `Reader → Canonical Memory → Writer`. Full Migration is local, offline and automatic; no AI API, key or per-record review is required. This checkout is the unpublished 2.0.0 implementation; canonical-v1 is unchanged.
 
@@ -17,7 +25,7 @@ MemLink converts and safely migrates approved AI memory files through `Reader �
 | Claude | yes | no | [Transcript export](formats/claude_export.md) |
 | Stream summary | yes | no | [Versioned summary Markdown](formats/stream-summary.md) |
 
-Start with [Quick Start](guide/quickstart.md). [CLI](guide/cli.md), [2.0 migration](guide/migration-2.0.md), [DESIGN](DESIGN.md) and [Plugin API](api/plugin.md) describe scope, identity, real readback receipts, safe apply and restore limits.
+The [canonical bridge](guide/architecture.md#one-bridge-n2-2n) explains **n² → 2n** for formats with both a Reader and Writer. [CLI](guide/cli.md), [2.0 migration](guide/migration-2.0.md), [DESIGN](DESIGN.md) and [Plugin API](api/plugin.md) describe scope, identity, real readback receipts, safe apply and restore limits.
 
 [Context Handoff](guide/context-handoff.md) provides explicit all-record sharing without
 human review, or digest-bound selective sharing from a private pack. Both paths are

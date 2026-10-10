@@ -1,0 +1,100 @@
+{
+  "schema": "memlink-receipt",
+  "version": "1",
+  "tool_version": "2.0.0",
+  "transaction_id": "75b1ef97c1c54ee2a3a665231c798a94",
+  "operation": "export",
+  "bundle_kind": "handoff",
+  "sources": [
+    {
+      "format": "openclaw",
+      "namespace": "openclaw:9c388cff762632edd706",
+      "approved_rules": [
+        "MEMORY.md",
+        "memory/**/*.md",
+        "USER.md",
+        "DREAMS.md"
+      ],
+      "snapshot_sha256": "fe7f2ac022aab84c657480075b199a803834a1ca4deaaeaecb1d7ced3dd0e7bd"
+    }
+  ],
+  "target": {
+    "format": "context-bundle",
+    "kind": "handoff"
+  },
+  "filters": {
+    "mode": "selection"
+  },
+  "excluded": [],
+  "records": [
+    {
+      "identity": {
+        "namespace": "openclaw:9c388cff762632edd706",
+        "native_id": "memory/project-a.md",
+        "scope": {
+          "scope": "unknown"
+        }
+      },
+      "id": "r-76e27508746de238e6450f5e6355cbe7214bb81b6fe3295806d46288b5509027",
+      "target_id": "r-76e27508746de238e6450f5e6355cbe7214bb81b6fe3295806d46288b5509027",
+      "outcome": "output",
+      "fields": {
+        "content": {
+          "status": "deterministic-text"
+        },
+        "unknown_fields": {
+          "status": "private-only"
+        }
+      }
+    }
+  ],
+  "plan": [
+    {
+      "path": "context.md",
+      "action": "create"
+    }
+  ],
+  "outputs": [
+    {
+      "path": "context.md",
+      "sha256": "72c35dbe0cb87864b80c6ddee6a991a0490d2a57d248f06f508b9d3888f3cfe2",
+      "bytes": 1205
+    }
+  ],
+  "readback": {
+    "status": "verified",
+    "method": "offline-bundle"
+  },
+  "backup": null,
+  "warnings": [
+    "Deterministic secret checks are advisory, not complete DLP; hashes are not signatures"
+  ],
+  "errors": [],
+  "status": "success",
+  "human_reviewed": false,
+  "review": null,
+  "policy": {
+    "secrets": "redact",
+    "literal_rules": 0,
+    "pattern_rules": 0
+  },
+  "accounting": {
+    "approved": 1,
+    "output": 1,
+    "excluded": 0
+  },
+  "safety": {
+    "detected": 0,
+    "redacted": 0,
+    "path_scrubbed": 0,
+    "text_escaped": 0
+  },
+  "budget": {
+    "max_bytes": 1048576,
+    "max_records": 1000,
+    "actual_bytes": 1205,
+    "actual_records": 1,
+    "truncate_at_record_boundary": false,
+    "truncated": false
+  }
+}

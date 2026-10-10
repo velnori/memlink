@@ -1,0 +1,100 @@
+{
+  "schema": "memlink-context-bundle",
+  "version": "1",
+  "kind": "handoff",
+  "tool_version": "2.0.0",
+  "bundle_id": "75b1ef97c1c54ee2a3a665231c798a94",
+  "created_at": "2026-10-08T18:27:20.746625+00:00",
+  "scope": {
+    "format": "openclaw",
+    "namespace": "openclaw:9c388cff762632edd706",
+    "rules": [
+      "MEMORY.md",
+      "memory/**/*.md",
+      "USER.md",
+      "DREAMS.md"
+    ]
+  },
+  "snapshot_sha256": "fe7f2ac022aab84c657480075b199a803834a1ca4deaaeaecb1d7ced3dd0e7bd",
+  "sources": [
+    {
+      "ref": "s-13f4c993974fabd9001e769b",
+      "format": "openclaw",
+      "path": "memory/project-a.md"
+    }
+  ],
+  "records": [
+    {
+      "record_id": "r-76e27508746de238e6450f5e6355cbe7214bb81b6fe3295806d46288b5509027",
+      "original_sha256": "8e98c6d8a69354385c9ef70ca5932d89e059546c6486750acdb9c1cbe5f147a0",
+      "identity": {
+        "namespace": "openclaw:9c388cff762632edd706",
+        "native_id": "memory/project-a.md",
+        "scope": {
+          "scope": "unknown"
+        }
+      },
+      "source": {
+        "ref": "s-13f4c993974fabd9001e769b",
+        "format": "openclaw",
+        "path": "memory/project-a.md"
+      },
+      "title": "project-a",
+      "summary": null,
+      "body": "PROJECT_A_SYNTHETIC: use port 4317; Friday remains unresolved.",
+      "kind": "dynamic",
+      "status": "active",
+      "state": "active",
+      "tags": [],
+      "project": "A",
+      "created_at": null,
+      "updated_at": null
+    }
+  ],
+  "approval": {
+    "mode": "selection",
+    "pack_sha256": "6985339d52a32d08e5896e85b2e9f71402e029caf3def4c4fbd6e27a72ae1921",
+    "pack_record_count": 6,
+    "pack_records_sha256": "66458641c79bfcee9a5997103938e1b4844608ecb1b19c95ea4073a6aa1c533e",
+    "requested": [
+      {
+        "record_id": "r-76e27508746de238e6450f5e6355cbe7214bb81b6fe3295806d46288b5509027",
+        "sha256": "8e98c6d8a69354385c9ef70ca5932d89e059546c6486750acdb9c1cbe5f147a0"
+      }
+    ],
+    "excluded": []
+  },
+  "policy": {
+    "secrets": "redact",
+    "literal_rules": 0,
+    "pattern_rules": 0
+  },
+  "safety": {
+    "detected": 0,
+    "redacted": 0,
+    "path_scrubbed": 0,
+    "text_escaped": 0
+  },
+  "human_reviewed": false,
+  "review": null,
+  "budget": {
+    "max_bytes": 1048576,
+    "max_records": 1000,
+    "actual_bytes": 1205,
+    "actual_records": 1,
+    "truncate_at_record_boundary": false,
+    "truncated": false
+  },
+  "files": [
+    {
+      "path": "context.md",
+      "sha256": "72c35dbe0cb87864b80c6ddee6a991a0490d2a57d248f06f508b9d3888f3cfe2",
+      "bytes": 1205
+    },
+    {
+      "path": "report.json",
+      "sha256": "71106218b05f0ee07c9470164298aee56a529193cd3ed6d91e6f0961b1dbf03d",
+      "bytes": 2231
+    }
+  ]
+}
