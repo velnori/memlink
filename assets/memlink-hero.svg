@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="360" viewBox="0 0 1280 360" role="img" aria-labelledby="title desc">
+  <title id="title">MemLink — AI memory portability</title>
+  <desc id="desc">Move your AI memory forward. Full Migration converts approved files to native files plus a canonical archive and loss receipt. Context Handoff creates selected reference context plus verification. Both workflows are offline.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#151323"/><stop offset="1" stop-color="#101b22"/>
+    </linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M1 1L9 5L1 9" fill="none" stroke="#d2bdff" stroke-width="1.7"/>
+    </marker>
+  </defs>
+  <rect width="1280" height="360" rx="20" fill="url(#bg)"/>
+  <g font-family="Arial, Helvetica, sans-serif">
+    <text x="48" y="56" fill="#cdb5f6" font-size="16" font-weight="700" letter-spacing="2">AI MEMORY PORTABILITY</text>
+    <g fill="#f4f1fc" font-size="54" font-weight="700" letter-spacing="-1.5">
+      <text x="48" y="126">Your AI memory.</text>
+      <text x="48" y="188">Ready for its next tool.</text>
+    </g>
+    <text x="48" y="238" fill="#cbd1df" font-size="21">Pandoc for AI memories.</text>
+    <g font-size="17" font-weight="700" fill="#aee4d5">
+      <text x="48" y="305">LOCAL FILES</text>
+      <text x="200" y="305">OFFLINE</text>
+      <text x="320" y="305">VERIFIABLE LOSS</text>
+    </g>
+    <rect x="698" y="49" width="534" height="118" rx="12" fill="#242039" stroke="#62507f"/>
+    <text x="722" y="79" fill="#d2bdff" font-size="17" font-weight="700" letter-spacing="1">FULL MIGRATION</text>
+    <text x="722" y="114" fill="#f4f1fc" font-size="21">Source files</text>
+    <path d="M850 106H910" stroke="#d2bdff" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="930" y="114" fill="#f4f1fc" font-size="21">Native files</text>
+    <text x="722" y="145" fill="#cbd1df" font-size="17">All approved records + archive + loss receipt</text>
+    <rect x="698" y="190" width="534" height="118" rx="12" fill="#162e2b" stroke="#36665c"/>
+    <text x="722" y="220" fill="#aee4d5" font-size="17" font-weight="700" letter-spacing="1">CONTEXT HANDOFF</text>
+    <text x="722" y="255" fill="#f4f1fc" font-size="21">Private pack</text>
+    <path d="M850 247H910" stroke="#d2bdff" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="930" y="255" fill="#f4f1fc" font-size="21">Chosen context</text>
+    <text x="722" y="286" fill="#cbd1df" font-size="17">Reference text + manifest + verification receipt</text>
+  </g>
+</svg>

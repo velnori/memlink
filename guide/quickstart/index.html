@@ -76,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#quick-start-installed-local-candidate" class="md-skip">
+        <a href="#quick-start-full-migration-and-context-handoff" class="md-skip">
           Skip to content
         </a>
       
@@ -317,6 +317,17 @@
       Table of contents
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#create-a-trial-directory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Create a trial directory
+      
+    </span>
+  </a>
+  
+</li>
       
         <li class="md-nav__item">
   <a href="#a-full-migration" class="md-nav__link">
@@ -1197,6 +1208,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#create-a-trial-directory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Create a trial directory
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#a-full-migration" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1238,13 +1260,32 @@
   
 
 
-<h1 id="quick-start-installed-local-candidate">Quick Start — installed local candidate</h1>
-<p>This is a local unpublished <strong>2.0.0</strong> candidate. Install its wheel in a clean Python environment:</p>
+<h1 id="quick-start-full-migration-and-context-handoff">Quick Start — Full Migration and Context Handoff</h1>
+<p>This is an unpublished <strong>2.0.0</strong> local candidate. Start from the checkout in a clean Python <strong>3.10–3.12</strong> environment:</p>
+<pre><code class="language-sh">git clone https://github.com/velnori/memlink.git
+cd memlink
+python -m venv .venv
+</code></pre>
+<p>Activate it with <code>source .venv/bin/activate</code> on macOS/Linux, or <code>.\.venv\Scripts\Activate.ps1</code> in PowerShell. Then install from the checkout:</p>
+<pre><code class="language-sh">python -m pip install .
+memlink --version
+</code></pre>
+<p>Expected: <code>memlink 2.0.0</code>. The package name is <code>memlink-bridge</code>; the examples need this checkout or a locally built candidate wheel. If a wheel is already available, install it instead:</p>
 <pre><code class="language-sh">python -m pip install /path/to/dist/memlink_bridge-2.0.0-py3-none-any.whl
 memlink --version
 memlink formats --manifest
 </code></pre>
-<p>Only PyYAML ≥6.0.3 is required at runtime. For installation without an index, provide the candidate and PyYAML wheels with <code>--no-index --find-links /path/to/wheelhouse</code>. Core workflows do not need an AI API/key/token. Work in a new directory; existing exports/recordings are not overwritten.</p>
+<p>Only PyYAML ≥6.0.3 is required at runtime. Installation may access the package index. For installation without an index, provide the candidate and PyYAML wheels with <code>--no-index --find-links /path/to/wheelhouse</code>. Core workflows do not need an AI API/key/token. Run A and B in the same new working directory, outside the checkout; existing exports/recordings are not overwritten.</p>
+<h2 id="create-a-trial-directory">Create a trial directory</h2>
+<p>Keep the environment activated. From the checkout, create a <strong>new sibling directory</strong> and run A, then B there. Choose a different name if <code>memlink-trial</code> already exists.</p>
+<p>macOS / Linux (POSIX shell):</p>
+<pre><code class="language-sh">mkdir ../memlink-trial
+cd ../memlink-trial
+</code></pre>
+<p>PowerShell:</p>
+<pre><code class="language-powershell">New-Item -ItemType Directory -Path ../memlink-trial -ErrorAction Stop | Out-Null
+Set-Location ../memlink-trial
+</code></pre>
 <h2 id="a-full-migration">A — Full Migration</h2>
 <pre><code class="language-sh">memlink conformance --export-fixtures fixtures
 memlink convert --from generic --to openclaw --source fixtures/generic --target workspace --all --format json

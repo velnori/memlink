@@ -569,6 +569,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -585,6 +603,47 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#one-bridge-n2-2n" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One bridge: n² → 2n
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#two-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two workflows
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -1131,6 +1190,36 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#one-bridge-n2-2n" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One bridge: n² → 2n
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#two-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two workflows
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1151,6 +1240,11 @@
 
 <h1 id="architecture-two-workflows-one-interchange-layer">Architecture: two workflows, one interchange layer</h1>
 <p>MemLink remains an AI Memory Interchange Layer. A Reader parses an approved source into language-neutral Canonical records; a Writer serializes those records to an exact target file variant. Package 2.0.0 does not replace or renumber canonical-v1.</p>
+<h2 id="one-bridge-n2-2n">One bridge: n² → 2n</h2>
+<p>For <strong>n formats with both a Reader and Writer</strong>, direct one-way converters require <strong>n(n − 1)</strong> routes, O(n²). Canonical reduces this to <strong>n Readers + n Writers = 2n adapters</strong>, O(n). Ten such formats would need 90 direct routes or 20 adapters. This is an adapter-maintenance comparison, not a performance benchmark or a claim of lossless native semantics.</p>
+<p><img alt="The original canonical bridge: five Reader/Writer pairs connect both ways. ChatGPT Export, Claude Export and Stream Summary connect inward through Readers only. A dashed route marks a new-format plugin." src="../../assets/canonical-bridge.svg" /></p>
+<p>Two-headed arrows identify the five existing Reader/Writer pairs. One-way arrows identify the three Reader-only formats, which contribute inputs but cannot be destinations. The dashed route is the <a href="../../api/plugin/">Plugin API</a> extension point. Mem0/Zep routes represent offline file contracts; ChatGPT/Claude routes represent transcript readers. See <a href="../compatibility/">exact compatibility</a>.</p>
+<h2 id="two-workflows">Two workflows</h2>
 <pre><code class="language-text">Source files → Reader → Canonical → Writer → native files + archive + receipt
                           │
                           └→ private pack → all / select → controlled context + receipt

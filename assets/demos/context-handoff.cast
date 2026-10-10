@@ -1,0 +1,7 @@
+{"version": 2, "width": 112, "height": 28, "title": "context-handoff / captured stdout / edited reading pauses"}
+[0.0, "o", "\u001b[2J\u001b[H$ memlink pack --from openclaw --input fixtures/openclaw --include-user --include-dreams --out private-pack\r\nStatus: success\r\nRecords: 6\r\nHuman reviewed: false\r\nWarning: Private archive: contains complete approved sources; do not share/upload by default\r\nWarning: Deterministic secret checks are advisory, not complete DLP; hashes are not signatures\r\n\r\n[exit 0; expected 0]\r\n"]
+[7.0, "o", "\u001b[2J\u001b[H$ memlink select private-pack --project A --out selection-a.json\r\nStatus: selected\r\nRecords: 1\r\nHuman reviewed: false\r\n\r\n[exit 0; expected 0]\r\n"]
+[14.0, "o", "\u001b[2J\u001b[H$ memlink handoff private-pack --selection selection-a.json --secrets redact --out project-a\r\nStatus: success\r\nRecords: 1\r\nHuman reviewed: false\r\nWarning: Deterministic secret checks are advisory, not complete DLP; hashes are not signatures\r\n\r\n[exit 0; expected 0]\r\n"]
+[21.0, "o", "\u001b[2J\u001b[H$ memlink verify project-a --pack private-pack\r\nStatus: verified\r\nRecords: 1\r\nHuman reviewed: false\r\nWarning: Deterministic secret checks are advisory, not complete DLP; hashes are not signatures\r\nManifest SHA256: 91df61f713ffa4098d62e33e284b8e5668dd46b48bb068e994a1a4b686ce5764\r\n\r\n[exit 0; expected 0]\r\n"]
+[28.0, "o", "\u001b[2J\u001b[H$ memlink verify tampered\r\nArtifact digest/size mismatch\r\n\r\n[exit 2; expected 2]\r\n"]
+[35.0, "o", "\r\n"]

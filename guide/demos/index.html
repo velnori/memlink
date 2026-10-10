@@ -650,6 +650,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Synthetic Demos
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -666,6 +684,64 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#two-visible-reproducible-walkthroughs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two visible, reproducible walkthroughs
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Two visible, reproducible walkthroughs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#recreate-the-presentation-media" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recreate the presentation media
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#full-engineering-demonstration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Full engineering demonstration
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -1131,6 +1207,53 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#two-visible-reproducible-walkthroughs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two visible, reproducible walkthroughs
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Two visible, reproducible walkthroughs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#recreate-the-presentation-media" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recreate the presentation media
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#full-engineering-demonstration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Full engineering demonstration
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1150,6 +1273,61 @@
 
 
 <h1 id="synthetic-demonstrations-and-recordings">Synthetic demonstrations and recordings</h1>
+<h2 id="two-visible-reproducible-walkthroughs">Two visible, reproducible walkthroughs</h2>
+<p>The README media comes from <strong>real installed 2.0.0 CLI processes</strong>, with the existing
+Python network sentinel. The GIFs add captured input/output file excerpts and seven-second
+reading pauses. They are <strong>paced replays</strong>, not real-time videos or performance measurements.
+Commands use default human-readable output; the marked README Quickstarts use JSON.</p>
+<table>
+<thead>
+<tr>
+<th>Demo</th>
+<th>Actual input → output</th>
+<th>Verification</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Full Migration</td>
+<td>Two generic Markdown records, one archived → two OpenClaw notes, canonical archive and receipt</td>
+<td><code>partial</code> / exit 0; native readback verified; schema + canonical roundtrip pass; strict Mem0 conversion exits 5 and creates no target</td>
+</tr>
+<tr>
+<td>Context Handoff</td>
+<td>Six approved synthetic private records, including optional USER/DREAMS → one Project A record</td>
+<td><code>human_reviewed=false</code>; <code>verify --pack</code> passes; B/profile/config/skill marker values absent; tampered copy exits 2</td>
+</tr>
+</tbody>
+</table>
+<p><img alt="Full Migration: captured files, real conversion and verification, strict rejection." src="../../assets/demos/full-migration.gif" /></p>
+<p><a href="../../assets/demos/full-migration.png">Static output view</a> · <a href="../../assets/demos/full-migration.cast">CLI stdout replay (.cast)</a></p>
+<p><img alt="Context Handoff: captured input, private pack, Project A selection, verification and tamper rejection." src="../../assets/demos/context-handoff.gif" /></p>
+<p><a href="../../assets/demos/context-handoff.png">Static output view</a> · <a href="../../assets/demos/context-handoff.cast">CLI stdout replay (.cast)</a></p>
+<p>Read the <a href="../../assets/demos/project-a/context/">actual synthetic context</a>, its
+<a href="../../assets/demos/project-a/manifest.json">manifest</a> and <a href="../../assets/demos/project-a/report.json">receipt</a>.
+These three files form a valid synthetic public handoff bundle. The private pack is not supplied.
+<a href="../../assets/demos/recording/">Verbatim captured output</a> and <a href="../../assets/demos/recording.json">machine recording</a>
+include all 13 command arguments, actual stdout/stderr, expected/actual exits and tested canaries.
+Every command recorded zero intercepted network attempts. Hashes prove consistency, not authorship.</p>
+<p>The smaller packaged conformance fixture used here has <strong>one</strong> Project A record.
+The earlier <code>tests/fixtures/module02</code> tutorial uses a different, larger A scenario.
+Counts and promises should always be read with their named fixture set.</p>
+<h3 id="recreate-the-presentation-media">Recreate the presentation media</h3>
+<p>From the checkout, use an interpreter with the <strong>installed local candidate and PyYAML ≥6.0.3</strong>:</p>
+<pre><code class="language-sh">python scripts/presentation_demo.py --python /path/to/installed/python --out demo-output/presentation-run --assets demo-output/presentation-assets
+</code></pre>
+<p>The <code>--python</code> interpreter executes the CLI with <code>memlink.verification</code>; it does not import
+from <code>PYTHONPATH</code>. The script reuses <code>conformance --export-fixtures</code> and requires new output
+and asset directories. The default recording needs only Python's standard library in the authoring
+environment. Add <code>--media</code> when <strong>Pillow is already available there</strong> to produce GIF/PNG assets;
+Pillow is an optional authoring tool, not a MemLink runtime dependency. <code>--font /path/to/mono.ttf</code>
+selects an existing local monospace font when the platform font is unavailable.</p>
+<p>The actual commands, file excerpts and field values are saved alongside the media. The script
+checks that sources are unchanged, the strict target is absent, only the three public bundle files
+are present, excluded markers and absolute source roots are absent, and the original public bundle
+remains valid after a <strong>separate copy</strong> is tampered with. Do not replace these fixtures with personal
+memory when creating public media.</p>
+<h2 id="full-engineering-demonstration">Full engineering demonstration</h2>
 <p>Every bundled fixture is invented and MIT-licensed. No customer or real-redacted sample is supplied. Use the installed local candidate and a <strong>new</strong> output directory:</p>
 <pre><code class="language-sh">python -m memlink.demo --out synthetic-demo
 </code></pre>
